@@ -212,6 +212,7 @@ Eshell cannot handle ncurses programs and in certain interpreters (Python, GHCi)
 #+END_SRC
 ** and vterm
 I mean,if u have to be serious, I actually prefer to use vterm-toggle
+(Still is CentaurEmacs)
 #+BEGIN_SRC emacs-lisp
   (use-package vterm
 	:ensure t
@@ -220,7 +221,7 @@ I mean,if u have to be serious, I actually prefer to use vterm-toggle
                      (interactive)
                      (and (fboundp 'shell-pop-toggle)
                           (shell-pop-toggle)))))
-    :init (setq vterm-always-compile-module t))
+    	:init (setq vterm-always-compile-module t))
 
   (use-package multi-vterm
 	:ensure t
@@ -494,5 +495,5 @@ Company is the autocompletion frontend that takes all the backends and gives you
     (define-key company-active-map (kbd "C-p") #'company-select-previous)
     (define-key company-active-map (kbd "SPC") #'company-abort)
     :hook
-    ((java-mode c-mode c++-mode) . company-mode))
+    ((markdown-mode lsp-mode) . company-mode))
 #+END_SRC
