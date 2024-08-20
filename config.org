@@ -15,7 +15,7 @@ Currently, the appeal of Witchmacs is seeing a cute Marisa picture everytime you
 btw,my main reason for using emacs is that I don't have the right tools on Linux to write my manuscripts. So, the reason for using witchmacs is largely because of being too lazy to toss.
 * Quick install
 #+BEGIN_SRC 
-git clone https://github.com/snackon/Witchmacs ~/.emacs.d
+git clone --depth=1 https://github.com/snackon/Witchmacs ~/.emacs.d
 #+END_SRC
 After running this command, the first time you run Emacs will download all of the specified packages in the config.org file, so please be patient!
 * Dependencies
