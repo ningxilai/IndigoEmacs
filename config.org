@@ -23,7 +23,7 @@ Yes - No! layers! onions have layers! ogres have layers!
 As opposed to many other Emacs distributions, Witchmacs has ZERO customization layers which means you can just jump in, look at the config file and start editing away! After all, Emacs works best when it's customized to your own liking!
 * Quick install
 #+BEGIN_SRC 
-git clone --depth=1 https://github.com/ningxilai/Witchmacs_31.50 ~/.emacs.d && git clone --depth=1 https://github.com/radian-software/straight.el ~/.emacs.d/straight/repos/straight.el
+git clone --depth=1 https://github.com/ningxilai/Teremacs ~/.emacs.d && git clone --depth=1 https://github.com/radian-software/straight.el ~/.emacs.d/straight/repos/straight.el
 #+END_SRC
 After running this command, the first time you run Emacs will download all of the specified packages in the config.org file, so please be patient!
 * Things-to-do
@@ -36,7 +36,7 @@ After running this command, the first time you run Emacs will download all of th
 - +Clean up/organize init.el+
  + Clean up/organize config.org
 - Optimize startup time
-* QoL section
+* Base
 Minor quality-of-life modifications for a more pleasant Emacs experience
 ** Enable line numbers
 Emacs breaks certain modes when it has line-numbers-mode enabled, (like docview or ansi-term) so I utilize the approach of only enabling it on some major modes rather than globally
