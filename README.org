@@ -1,4 +1,0 @@
-* Quick install
-#+BEGIN_SRC emacs-lisp
-git clone --depth=1 https://github.com/ningxilai/Teremacs ~/.emacs.d && git clone --depth=1 https://github.com/radian-software/straight.el ~/.emacs.d/straight/repos/straight.el
-#+END_SRC
