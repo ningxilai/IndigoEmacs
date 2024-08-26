@@ -1,25 +1,48 @@
-;; Package Manager
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (load bootstrap-file nil 'nomessage))
+(setq package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
+                         ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
+                         ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
 
-;; Make emacs startup faster
+(load-file (expand-file-name "config.el" user-emacs-directory))
+
 (setq gc-cons-threshold (* 100 1024 1024))
- 
-(setq package-archives '(("gnu"    . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                         ("nongnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
-                         ("melpa"  . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
-(package-initialize) ;; You might already have this line
 
-;; Initialize use-package
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
+(setq fonts '("IBM Plex Mono" "Noto Sans Mono CJK SC"))
+  (set-fontset-font t 'unicode "Noto Color Emoji" nil 'prepend)
+  (set-face-attribute 'default nil :font
+                      (format "%s:pixelsize=%d" (car fonts) 14))
 
-;; Load config.org for init.el configuration
-(org-babel-load-file (expand-file-name "~/.emacs.d/config.org"))
+(use-package dashboard
+  :ensure t
+  :defer t
+    :hook (after-init . 'dashboard-mode-hook)
+  :preface
+  (defun update-config ()
+    "Update Witchmacs to the latest version."
+    (interactive)
+    (let ((dir (expand-file-name user-emacs-directory)))
+      (if (file-exists-p dir)
+          (progn
+            (message "Witchmacs is updating!")
+            (cd dir)
+            (shell-command "git pull")
+            (message "Update finished. Switch to the messages buffer to see changes and then restart Emacs"))
+        (message "\"%s\" doesn't exist." dir))))
+
+  (defun create-scratch-buffer ()
+    "Create a scratch buffer"
+    (interactive)
+    (switch-to-buffer (get-buffer-create "*scratch*"))
+    (lisp-interaction-mode))
+  :config
+  (dashboard-setup-startup-hook)
+  (setq dashboard-items '((recents . 5)))
+  (setq dashboard-banner-logo-title "W I T C H M A C S - The cutest Emacs distribution!")
+  (setq dashboard-startup-banner "~/.emacs.d/marivector.png")
+  (setq dashboard-center-content t)
+  (setq dashboard-show-shortcuts nil)
+  (setq dashboard-set-init-info t)
+  (setq dashboard-init-info (format "%d packages loaded in %s"
+                                    (length package-activated-list) (emacs-init-time)))
+  (setq dashboard-set-footer t)
+)
+
