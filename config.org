@@ -12,17 +12,20 @@ Witchmacs is a very simple and basic configuration file for Emacs. From here you
 What's the difference between a villain and a super villain? Presentation!
 #+END_QUOTE
 Currently, the appeal of Witchmacs is seeing a cute Marisa picture everytime you start up Emacs. Also, it is a very basic config which means you can easily add, edit or remove things as you like. You can use this as a building block when making your OWN Emacs config!
-btw,my main reason for using emacs is that I don't have the right tools on Linux to write my manuscripts. So, the reason for using witchmacs is largely because of being too lazy to toss.
+
+#+BEGIN_QUOTE
+Ogres are like onions
+
+They smell?
+
+Yes - No! layers! onions have layers! ogres have layers!
+#+END_QUOTE
+As opposed to many other Emacs distributions, Witchmacs has ZERO customization layers which means you can just jump in, look at the config file and start editing away! After all, Emacs works best when it's customized to your own liking!
 * Quick install
 #+BEGIN_SRC 
-git clone --depth=1 https://github.com/snackon/Witchmacs ~/.emacs.d
+git clone --depth=1 https://github.com/snackon/Witchmacs ~/.emacs.d && git clone --depth=1 https://github.com/radian-software/straight.el ~/.emacs.d/straight/repos/straight.el
 #+END_SRC
 After running this command, the first time you run Emacs will download all of the specified packages in the config.org file, so please be patient!
-* Dependencies
-=Holo-Layer=
-#+BEGIN_SRC 
-sudo pacman -S pyqt6
-#+END_SRC
 * Things-to-do
 - Add and configure some extra packages
 - +Make dashboard cooler+
@@ -35,13 +38,6 @@ sudo pacman -S pyqt6
 - Optimize startup time
 * QoL section
 Minor quality-of-life modifications for a more pleasant Emacs experience
-** Start elpaca
-#+BEGIN_SRC emacs-lisp
-;; progfolio/elpaca/README.md
-(setq use-package-always-defer t)
-(elpaca elpaca-use-package
-  (elpaca-use-package-mode))
-#+END_SRC
 ** Enable line numbers
 Emacs breaks certain modes when it has line-numbers-mode enabled, (like docview or ansi-term) so I utilize the approach of only enabling it on some major modes rather than globally
 #+BEGIN_SRC emacs-lisp
@@ -138,6 +134,21 @@ Super - Control - <arrow>
 #+BEGIN_SRC emacs-lisp
 (setq use-package-always-defer t)
 #+END_SRC
+** Copy for CentaurEmacs
+#+BEGIN_SRC emacs-lisp
+(setopt use-short-answers t)
+(setq org-log-done 'time)
+(setq recentf-max-saved-items 500)
+(recentf-mode)
+(global-hl-line-mode)
+(winner-mode)
+(save-place-mode)
+(savehist-mode)
+(global-auto-revert-mode)
+(auto-save-visited-mode t)
+#+END_SRC
+
+
 * =Org= mode
 ** Description
 One of the main selling points of Emacs! no Emacs distribution is complete without sensible and well-defined org-mode defaults
@@ -210,37 +221,27 @@ Eshell cannot handle ncurses programs and in certain interpreters (Python, GHCi)
 
   (global-set-key (kbd "<s-C-return>") 'eshell-other-window)
 #+END_SRC
-** and vterm
-I mean,if u have to be serious, I actually prefer to use vterm-toggle
-(Still is CentaurEmacs)
-#+BEGIN_SRC emacs-lisp
-  (use-package vterm
-	:ensure t
-	:bind (:map vterm-mode-map
-           ([f9] . (lambda ()
-                     (interactive)
-                     (and (fboundp 'shell-pop-toggle)
-                          (shell-pop-toggle)))))
-    	:init (setq vterm-always-compile-module t))
-
-  (use-package multi-vterm
-	:ensure t
-	:bind ("C-<f9>" . multi-vterm)
-    :custom (multi-vterm-buffer-name "vterm")
-    :config
-    (with-no-warnings
-      ;; Use `pop-to-buffer' instead of `switch-to-buffer'
-      (defun my-multi-vterm ()
-        "Create new vterm buffer."
-        (interactive)
-        (let ((vterm-buffer (multi-vterm-get-buffer)))
-          (setq multi-vterm-buffer-list
-                (nconc multi-vterm-buffer-list (list vterm-buffer)))
-          (set-buffer vterm-buffer)
-          (multi-vterm-internal)
-          (pop-to-buffer vterm-buffer)))
-      (advice-add #'multi-vterm :override #'my-multi-vterm)))
-#+END_SRC	
+** Vterm && Vterm-Toggle
+#+BEGIN_SRC
+(use-package vterm
+  :ensure t
+  :config (setq vterm-shell "fish"))
+(use-package vterm-toggle
+  :ensure t
+  :config
+  (setq vterm-toggle-fullscreen-p nil)
+(add-to-list 'display-buffer-alist
+             '((lambda (buffer-or-name _)
+                   (let ((buffer (get-buffer buffer-or-name)))
+                     (with-current-buffer buffer
+                       (or (equal major-mode 'vterm-mode)
+                           (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+               (display-buffer-reuse-window display-buffer-in-side-window)
+               (side . bottom)
+               ;;(dedicated . t) ;dedicated is supported in emacs27
+               (reusable-frames . visible)
+               (window-height . 0.3))))
+#+END_SRC
 * Use-package section
 ** Initialize =auto-package-update=
 *** Description
@@ -255,27 +256,42 @@ Auto-package-update automatically updates and removes old packages
     (setq auto-package-update-hide-results t)
     (auto-package-update-maybe))
 #+END_SRC
-** Initialize =smart-mode-line=
+** Initialize =diminish=
 *** Description
-+I tried spaceline and didn't like it. What I did like was its theme+
-I just think the aesthetics of Spacemacs are terrible.
+Diminish hides minor modes to prevent cluttering your mode line
 *** Code
 #+BEGIN_SRC emacs-lisp
-  (use-package smart-mode-line
-   :ensure t
-   :config (setq sml/theme 'light))
-(use-package smart-mode-line-powerline-theme
-   :ensure t)
+  (use-package diminish
+    :ensure t)
 #+END_SRC
-** Initialize =powerline=
-*** Description
-+I prefer powerline over spaceline, but the default powerline themes don't work for me for whatever reason, so I use the spaceline theme+
-I really don't know which function is working..
-*** Code
+*** Historical
+22/04/2019: This macro was provided by user [[https://gist.github.com/ld34/44d100b79964407e5ddf41035e3cd32f][ld43]] after I couldn’t figure out how to make diminish work by being at the top of the config file.
+
 #+BEGIN_SRC emacs-lisp
-  (use-package powerline
-	:ensure t)
+  ;(defmacro diminish-built-in (&rest modes)
+  ;  "Accepts a list MODES of built-in emacs modes and generates `with-eval-after-load` diminish forms based on the file implementing the mode functionality for each mode."
+  ;  (declare (indent defun))
+  ;  (let* ((get-file-names (lambda (pkg) (file-name-base (symbol-file pkg))))
+  ;	 (diminish-files (mapcar get-file-names modes))
+  ;	 (zip-diminish   (-zip modes diminish-files)))
+  ;    `(progn
+  ;       ,@(cl-loop for (mode . file) in zip-diminish
+  ;		  collect `(with-eval-after-load ,file
+  ;			     (diminish (quote ,mode)))))))
+  ; This bit goes in init.el
+  ;(diminish-built-in
+  ;  beacon-mode
+  ;  which-key-mode
+  ;  page-break-lines-mode
+  ;  undo-tree-mode
+  ;  eldoc-mode
+  ;  abbrev-mode
+  ;  irony-mode
+  ;  company-mode
+  ;  meghanada-mode)
 #+END_SRC
+
+27/05/2019: Since the diminish functionality was always built-in in use-package, there was never a point in using a diminish config. lol silly me
 ** Initialize =dashboard=
 *** Description
 The frontend of Witchmacs; without this there'd be no Marisa in your Emacs startup screen
@@ -356,17 +372,7 @@ If you pay close attention to the code in dashboard, you'll  notice that it uses
   ;
   ;(dashboard-center-line)
 #+END_SRC
-** Initialize =which-key=
-*** Description
-Incredibly useful package; if you are in the middle of a command and don't know what to type next, just wait a second and you'll get a nice buffer with all possible completions
-*** Code
-#+BEGIN_SRC emacs-lisp
-  (use-package which-key
-    :ensure t
-    :diminish which-key-mode
-    :init
-    (which-key-mode))
-#+END_SRC
+* Editor-Utils
 ** Initialize =swiper=
 *** Description
 When doing C-s to search, you get this very nice and neat mini-buffer that you can traverse with the arrow keys (or C-n and C-p) and then press <RET> to select where you want to go
@@ -375,22 +381,6 @@ When doing C-s to search, you get this very nice and neat mini-buffer that you c
   (use-package swiper
 	:ensure t
 	:bind ("C-s" . 'swiper))
-#+END_SRC
-** Initialize =holo-layer=
-*** Description
-+You might find beacon an unnecesary package but I find it very neat. It briefly highlights the cursor position when switching to a new window or buffer+
-by CentaurEmacs
-*** Code
-#+BEGIN_SRC emacs-lisp
-;  (use-package beacon
-;   :ensure t
-;   :diminish beacon-mode
-;    :init
-;    (beacon-mode 1))
-
-(use-package holo-layer
-  :ensure (:host github :repo "manateelazycat/holo-layer")
-  :config (holo-layer-enable))
 #+END_SRC
 ** Initialize =avy=
 *** Description
@@ -401,6 +391,76 @@ Avy is a very useful package; instead of having to move your cursor to a line th
 	:ensure t
 	:bind
 	("M-s" . avy-goto-char))
+#+END_SRC
+** Initialize =embark=
+#+BEGIN_SRC emacs-lisp
+
+(use-package vertico
+  :ensure t
+  :custom
+  (vertico-cycle t)
+  :hook (after-init . vertico-mode)
+  )
+
+(use-package marginalia
+  :ensure t
+  :config
+  (marginalia-mode)
+  )
+
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none))))
+                 )
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode)
+  )
+
+(use-package consult
+  :ensure t
+   :init
+  (setq consult-async-input-debounce 1.0)
+  ;; Use Consult to select xref locations with preview
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+        )
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion--styles '(orderless basic))
+  (completion--category-overrides '((file(styles basic partial-completion))))
+  )
 #+END_SRC
 ** Initialize =switch-window=
 *** Description
@@ -418,28 +478,6 @@ Switch window is a neat package because instead of having to painstakingly do C 
 		  '("a" "s" "d" "f" "j" "k" "l"))
 	:bind
 	([remap other-window] . switch-window))
-#+END_SRC
-** Initialize =ido= and =ido-vertical=
-*** Description
-For the longest time I used the default way of switching and killing buffers in Emacs. Same for finding files. Ido-mode made these three tasks IMMENSELY easier and more intuitive. Please not that I still use the default way M - x works because I believe all you really need for it is which-key
-*** Code
-#+BEGIN_SRC emacs-lisp
-  (use-package ido
-    :init
-    (ido-mode 1)
-    :config
-    (setq ido-enable-flex-matching nil)
-    (setq ido-create-new-buffer 'always)
-    (setq ido-everywhere t))
-
-  (use-package ido-vertical-mode
-    :ensure t
-    :init
-    (ido-vertical-mode 1))
-  ; This enables arrow keys to select while in ido mode. If you want to
-  ; instead use the default Emacs keybindings, change it to
-  ; "'C-n-and-C-p-only"
-  (setq ido-vertical-define-keys 'C-n-C-p-up-and-down)
 #+END_SRC
 ** Initialize =async=
 *** Description
@@ -477,23 +515,66 @@ Utilize asynchronous processes whenever possible
   (use-package abbrev
     :diminish abbrev-mode)
 #+END_SRC
-* Programming section
+* Company
 ** Initialize =company=
 *** Description
 Company is the autocompletion frontend that takes all the backends and gives you possible autocompletions when writing programs
 *** Code
 #+BEGIN_SRC emacs-lisp
-  (use-package company
-    :ensure t
-    :diminish (company-mode)
-    :config
-    (setq company-idle-delay 0)
-    (setq company-minimum-prefix-length 3)
-    (define-key company-active-map (kbd "M-n") nil)
-    (define-key company-active-map (kbd "M-p") nil)
-    (define-key company-active-map (kbd "C-n") #'company-select-next)
-    (define-key company-active-map (kbd "C-p") #'company-select-previous)
-    (define-key company-active-map (kbd "SPC") #'company-abort)
-    :hook
-    ((markdown-mode lsp-mode) . company-mode))
+(use-package company
+  :ensure t
+  :straight t
+  :diminish (emacs-lisp-mode company-mode)
+  :config
+  (setq company-idle-delay 0)
+  (setq company-minimum-prefix-length 3)
+  (define-key company-active-map (kbd "M-n") nil)
+  (define-key company-active-map (kbd "M-p") nil)
+  (define-key company-active-map (kbd "C-n") #'company-select-next)
+  (define-key company-active-map (kbd "C-p") #'company-select-previous)
+  (define-key company-active-map (kbd "SPC") #'company-abort)
+  :hook
+;;  ((emacs-lisp-mode) . company-mode)
+  (add-hook 'after-init-hook 'global-company-mode)
+  )
+#+END_SRC
+* UI
+** Initialize DoomTheme
+*** Description
+DoomOne&DoomModeline
+*** Code
+#+BEGIN_SRC
+
+(use-package doom-themes
+  :ensure t
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  :init  (load-theme 'doom-one t)
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+  (doom-themes-neotree-config)
+  ;; or for treemacs users
+  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+  (doom-themes-treemacs-config)
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
+
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode)
+  )
+
+#+END_SRC
+** Other
+*** Initialize Fonts
+*** Code
+#+BEGIN_SRC
+(setq fonts '("IBM Plex Mono" "Noto Sans Mono CJK SC"))
+  (set-fontset-font t 'unicode "Noto Color Emoji" nil 'prepend)
+  (set-face-attribute 'default nil :font
+                      (format "%s:pixelsize=%d" (car fonts) 14))
 #+END_SRC
