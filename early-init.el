@@ -1,19 +1,16 @@
-;;;by CentaurEmacs/early-init.el && ItyIty/VanillaDoom/early-init.el
+;;; early-init.el --- early bird  -*- no-byte-compile: t -*-
 
-(setq native-comp-deferred-compilation nil ;; obsolete since 29.1
-      native-comp-jit-compilation nil)
+;;by CentaurEmacs/early-init.el
+
+(setq native-comp-deferred-compilation t ;; obsolete since 29.1
+      native-comp-jit-compilation t)
+
+(setq gc-cons-threshold (* 32 1024 1024))
+
+(add-to-list 'default-frame-alist
+	     '(font .  "IBM Plex Mono"))
 
 (setq package-enable-at-startup t)
-
-(setq use-package-enable-imenu-support t)
-
-(prefer-coding-system 'utf-8)
-
-(set-charset-priority 'unicode)
-
-(setq system-time-locale "C")
-
-(setq frame-inhibit-implied-resize t)
 
 (push '(menu-bar-lines . 0) default-frame-alist)
 
@@ -23,11 +20,7 @@
 
 (setq-default mode-line-format t)
 
-(setq gc-cons-threshold most-positive-fixnum)
-
 (setq inhibit-startup-message t)
 
-(add-to-list 'default-frame-alist
-	     '(font . "IBM Plex Mono"))
-
-;;end
+(set-language-environment "UTF-8")
+;;; early-init.el ends here
