@@ -1,5 +1,5 @@
 
-      [[./needle.png]]
+      [[./ivory.png]]
 
                      *Indigo Emacs* /- Emacs made Literary/
                         /Copyright(c) 2024 - IrisLennon/
