@@ -1,4 +1,5 @@
-;;; init.el --- Isaac's Emacs configuration
+;;; init.el --- fork by IrisLennon
+;;; Isaac's Emacs configuration
 
 ;; Copyright (c) 2016-2022 Isaac Gu
 
@@ -65,8 +66,8 @@
 ;; -------------------------------------------------------------------
 
 ;; Personal Infomation
-(setq user-full-name "Isaac Gu")
-(setq user-mail-address "imjiaxi@gmail.com")
+(setq user-full-name "Iris Lennon")
+(setq user-mail-address "xxx@outlook.com")
 
 ;; set unicode encoding
 (prefer-coding-system 'utf-8)
