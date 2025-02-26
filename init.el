@@ -14,57 +14,24 @@
 (setq delete-by-moving-to-trash t)
 (setq trash-directory "~/.Trash/")
 
-;; -------------------------------------
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
-(setq use-package-compute-statistics t)
-
-;; performance
-;; https://www.masteringemacs.org/article/speed-up-emacs-libjansson-native-elisp-compilation
-(if (and (fboundp 'native-comp-available-p)
-         (native-comp-available-p))
-    (setq comp-deferred-compilation t
-          package-native-compile t)
-  (message "Native complation is *not* available, lsp performance will suffer..."))
-
-(unless (functionp 'json-serialize)
-  (message "Native JSON is *not* available, lsp performance will suffer..."))
+(setq comp-deferred-compilation t
+      package-native-compile t)
 
 ;; do not steal focus while doing async compilations
 (setq warning-suppress-types '((comp)))
 
 ;; ----------------------------------------
 
-(straight-use-package 'use-package)
-
-(setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
-(electric-pair-mode 1)
-
 (use-package doom-themes
   :ensure t
   :init (load-theme 'doom-one t))
 (use-package doom-modeline
-  :straight t
+  :ensure t
   :init (doom-modeline-mode 1))
 (use-package smart-mode-line
   :ensure t
   :init (sml/setup)
   :config (setq sml/theme 'respectful))
-
 (use-package nyan-mode
   :ensure t
   :defer t
@@ -75,6 +42,14 @@
   :init (page-break-lines-mode)
   :defer (add-hook 'after-init 'page-break-line-mode)
   :diminish (page-break-lines-mode visual-line-mode)
+  )
+
+(use-package desktop
+  :config
+  (setq desktop-load-locked-desktop t) ; don't popup dialog ask user, load anyway
+  (setq desktop-restore-frames t) ; don't restore any frame
+  :init
+  (desktop-save-mode 1)
   )
 
 (use-package company
@@ -109,15 +84,9 @@
   )
 
 (use-package org-modern
-  :straight t
-  :config
-  (with-eval-after-load 'org (global-org-modern-mode))
-  )
-
-(use-package org-superstar
   :ensure t
   :config
-  (add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
+  (with-eval-after-load 'org (global-org-modern-mode))
   )
 
 (use-package htmlize
@@ -135,8 +104,8 @@
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
   :ensure t
-  :hook (prog-mode . rainbow-delimiters-mode))
-
+  :hook (prog-mode . rainbow-delimiters-mode)
+  )
 
 ;; indent
 
@@ -154,10 +123,7 @@
 
 (use-package indent-bars
   :commands indent-bars-mode
-  :straight (indent-bars
-             :type git
-             :host github
-             :repo "jdtsmith/indent-bars")
+  :vc (:url "https://github.com/jdtsmith/indent-bars")
   :hook ((yaml-mode . indent-bars-mode)
          (yaml-ts-mode . indent-bars-mode)
          (python-mode . indent-bars-mode)
@@ -177,17 +143,6 @@
   (outline-indent-ellipsis "->")
   :config (outline-indent-insert-heading))
 
-(use-package dtrt-indent
-  :ensure t
-  :commands (dtrt-indent-global-mode
-             dtrt-indent-mode
-             dtrt-indent-adapt
-             dtrt-indent-undo
-             dtrt-indent-diagnosis
-             dtrt-indent-highlight)
-  :config
-  (dtrt-indent-global-mode))
-
 (use-package block-nav
   :ensure t)
 
@@ -206,12 +161,11 @@
                 '(("C"     (astyle "--mode=c"))
                   ("Shell" (shfmt "-i" "4" "-ci")))))
 
-
 (use-package dimmer
     :ensure t)
 
 (use-package dogears
-  :straight t
+  :ensure t
   :hook (after-init . dogears-mode)
   :bind (:map global-map
               ("M-g d" . dogears-go)
@@ -237,24 +191,22 @@
 
 ;; markdown-mode
 (use-package markdown-mode
-  :straight t
-  :mode ("\\.md\\'" "\\.markdown\\'")
-  :custom
-  (markdown-command "pandoc --quiet --mathjax --no-highlight -f markdown")
-  (markdown-css-paths '("view-source:https://sile-typesetter.org/main.css"))
-  )
-
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown")
+  :bind (:map markdown-mode-map
+              ("C-c C-e" . markdown-do)))
 ;; web-mode
 (use-package web-mode
-  :straight t
+  :ensure t
   :mode (("\\.html?$" . web-mode)
          ("\\.jsx?$"  . web-mode)
          ("\\.php$"   . web-mode)
          ("\\.s?css$"  . web-mode)))
 
-;; Epub reader
+;; epub reader
 (use-package nov
-  :straight t
+  :ensure t
   :mode ("\\.epub\\'" . nov-mode)
   :hook (nov-mode . my-nov-setup)
   :init
@@ -278,7 +230,6 @@
 
 ;; -------------------------------------
 
-;; which-key
 (use-package which-key
   :ensure t
   :config (which-key-mode))
@@ -300,64 +251,57 @@
   ([remap other-window] . switch-window))
 
 (use-package async
-    :ensure t)
+  :ensure t
+  )
 
 (use-package undo-tree
   :diminish undo-tree-mode
-    :ensure t
-    )
-
-;; focus
-
-(use-package typo
-  :straight (:host github :repo "jorgenschaefer/typoel")
-  :config
-  (typo-global-mode 1)
-  (add-hook 'text-mode-hook 'typo-mode)
-  )
-
-(use-package writeroom-mode
   :ensure t
-  :config
-  (add-hook 'writeroom-mode #'logos-focus-mode)
-  (add-hook 'writeroom-mode #'markdown-mode-hook)
   )
 
 ;; -------------------------------------
 
+(use-package typo
+  :ensure t
+  )
+
+(use-package writeroom-mode
+  :ensure t
+  :hook (markdown-mode . writeroom-mode)
+  )
+
+;; -------------------------------------
 ;; shell-var
 (use-package exec-path-from-shell
   :ensure t
   :init (exec-path-from-shell-initialize))
-
 ;; environment path
-(let ((envpath '("/usr/local/bin/" "~/.cargo/bin/" "~/.dotnet/tools/" "~/.local/bin/")))
+(let ((envpath '("/usr/local/bin/" "~/.cargo/bin/" "~/.dotnet/tools/" "~/.local/bin/" "~/.cabal/bin")))
   (setenv "PATH" (mapconcat 'identity (add-to-list 'envpath (getenv "PATH") t) ":"))
   (setq exec-path (append envpath exec-path)))
-
 ;; pair
 (global-prettify-symbols-mode t)
-(setq electric-pair-pairs '(
-                            (?\{ . ?\})
-                            (?\( . ?\))
-                            (?\[ . ?\])
-                            (?\" . ?\")
-                            ))
-(electric-pair-mode t)
+(use-package electric
+  :config
+  (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
+  (setq electric-pair-pairs '(
+                              (?\{ . ?\})
+                              (?\( . ?\))
+                              (?\[ . ?\])
+                              (?\" . ?\")
+                              ))
+  :init
+  (electric-pair-mode t)
+  (electric-indent-mode t)
+  (electric-layout-mode t)
+  )
+
 (global-hl-line-mode t)
 
 ;; Eshell
 
 (use-package eat
-  :straight
-  (:type git
-	 :host codeberg
-	 :repo "akib/emacs-eat"
-	 :files ("*.el" ("term" "term/*.el") "*.texi"
-		 "*.ti" ("terminfo/e" "terminfo/e/*")
-		 ("terminfo/65" "terminfo/65/*")
-		 ("integration" "integration/*")
-		 (:exclude ".dir-locals.el" "*-tests.el")))
+  :ensure t
   :config
   ;; For `eat-eshell-mode'.
   (add-hook 'eshell-load-hook #'eat-eshell-mode)
@@ -370,8 +314,7 @@
   :init (setq vterm-toggle-fullscreen-p nil)
   :config (setq vterm-shell "zsh"))
 (use-package vterm-toggle
-    :ensure t)
-
+  :ensure t)
 
 (setq eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
 (setq eshell-prompt-function
@@ -431,8 +374,6 @@
 (setq save-abbrevs nil)
 
 ;; calendar [built-in]
-(setq calendar-location-name "Beijing, China")
-(setq calendar-chinese-all-holidays-flag t)
 (setq mark-diary-entries-in-calendar t)
 (setq mark-holidays-in-calendar t)
 (global-set-key (kbd "C-c k") 'calendar)
@@ -448,11 +389,6 @@
 (mapc (lambda (hook) (add-hook hook 'display-line-numbers-mode))
       (list 'prog-mode-hook 'bibtex-mode-hook))
 
-;; electric [built-in]
-(electric-pair-mode t)
-(electric-indent-mode t)
-(electric-layout-mode t)
-
 ;; flyspell [built-in]
 (add-hook 'text-mode-hook 'flyspell-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-mode)
@@ -464,15 +400,6 @@
 ;; org-mode [built-in]
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
-(defun org-publish-site ()
-  "A function for publishing a site.
-The site configuration is defined in index.org."
-  (interactive)
-  (let ((index-file (expand-file-name "index.org" org-directory)))
-    (find-file index-file)
-    (org-babel-load-file index-file)
-    (kill-this-buffer)))
-(global-set-key (kbd "C-c p") 'org-publish-site)
 
 ;; savehist [built-in]
 (savehist-mode t)
@@ -506,7 +433,10 @@ The site configuration is defined in index.org."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(doom-one))
- '(custom-safe-themes))
+ '(custom-safe-themes nil)
+ '(package-selected-packages nil)
+ '(package-vc-selected-packages
+   '((indent-bars :url "https://github.com/jdtsmith/indent-bars"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
