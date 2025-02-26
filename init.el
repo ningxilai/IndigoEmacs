@@ -65,21 +65,6 @@
   :init (sml/setup)
   :config (setq sml/theme 'respectful))
 
-(use-package dashboard
-  :straight t
-  :defer t
-  :init (dashboard-setup-startup-hook)
-  :config
-  ;; Dashboard customization settings
-  (setq dashboard-startup-banner "~/.emacs.d/ivory.png")
-  (setq dashboard-center-content t)
-  (setq dashboard-items '((recents  . 5)
-                          ;; (bookmarks . 5)
-                          ;; (projects . 5)
-                          ;; (agenda . 5)
-                          ;; (registers . 5)
-                          )))
-
 (use-package nyan-mode
   :ensure t
   :defer t
