@@ -3,6 +3,9 @@
                          ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
 (package-initialize) ;; You might already have this line
 
+(setq use-package-always-ensure t
+      package-native-compile t)
+
 ;; -------------------------------------
 
 ;; backup and autosave
@@ -13,12 +16,6 @@
 ;; move to trash
 (setq delete-by-moving-to-trash t)
 (setq trash-directory "~/.Trash/")
-
-(setq comp-deferred-compilation t
-      package-native-compile t)
-
-;; do not steal focus while doing async compilations
-(setq warning-suppress-types '((comp)))
 
 ;; ----------------------------------------
 
@@ -64,6 +61,12 @@
 	company-dabbrev-code-everywhere t
 	company-dabbrev-code-completion-styles '(basic substring flex)))
 
+(use-package good-scroll
+  :diminish
+  :hook (after-init . good-scroll-mode)
+  :bind (([remap next] . good-scroll-up-full-screen)
+         ([remap prior] . good-scroll-down-full-screen)))
+
 ;; ----------------------------------------
 
 (use-package org
@@ -104,8 +107,7 @@
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
   :ensure t
-  :hook (prog-mode . rainbow-delimiters-mode)
-  )
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 ;; indent
 
@@ -147,10 +149,6 @@
   :ensure t)
 
 ;; -------------------------------------
-
-(use-package rainbow-delimiters
-  :ensure t
-  :config (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
 
 (use-package format-all
   :ensure t
@@ -410,15 +408,6 @@
 
 ;; saveplace [built-in]
 (save-place-mode t)
-
-;; use-package [built-in]
-(setq use-package-always-ensure t)
-
-(use-package good-scroll
-      :diminish
-      :hook (after-init . good-scroll-mode)
-      :bind (([remap next] . good-scroll-up-full-screen)
-             ([remap prior] . good-scroll-down-full-screen)))
 
 ;; flymake [built]
 (use-package flymake
