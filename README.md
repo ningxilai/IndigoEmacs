@@ -2,8 +2,8 @@ Indigo Emacs
 --------------------
 Install:
 ```bash
-git clone --depth 1 https://github.com/ningxilai/IndigoEmacs ~/.emacs.d
-git clone --depth 1 https://github.com/radian-software/straight.el ~/.emacs.d/straight/repos/straight.el
+git clone --depth 1 https://github.com/ningxilai/IndigoEmacs $XDG_CONFIG_HOME/emacs
+git clone --depth 1 https://github.com/radian-software/straight.el $XDG_CONFIG_HOME/emacs/straight/repos/straight.el
 ```
 --------------------
 Acknowledge:
