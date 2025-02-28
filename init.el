@@ -10,6 +10,7 @@
 
 ;; backup and autosave
 (savehist-mode 1)
+
 (setq version-control t)
 (setq delete-old-versions t)
 
@@ -41,6 +42,8 @@
   :diminish (page-break-lines-mode visual-line-mode)
   )
 
+;; -------------------------------------
+
 (use-package desktop
   :config
   (setq desktop-load-locked-desktop t) ; don't popup dialog ask user, load anyway
@@ -67,6 +70,30 @@
   :bind (([remap next] . good-scroll-up-full-screen)
          ([remap prior] . good-scroll-down-full-screen)))
 
+(use-package auto-save
+  :vc (:url "https://github.com/manateelazycat/auto-save")
+  :hook
+  (text-mode . auto-save-enable)
+  (prog-mode . auto-save-enable)
+  :config
+  (setq auto-save-silent t)   ; quietly save
+  (setq auto-save-delete-trailing-whitespace t)  ; automatically delete spaces at the end of the line when saving
+  (setq auto-save-disable-predicates
+        '((lambda ()
+            (string-suffix-p
+             "gpg"
+             (file-name-extension (buffer-name)) t)))))
+
+(use-package bicycle
+  :after outline
+  :bind (:map outline-minor-mode-map
+              ([C-tab] . bicycle-cycle)
+              ([S-tab] . bicycle-cycle-global))
+  :hook
+  (prog-mode-hook  . outline-minor-mode)
+  (prog-mode-hook . hs-minor-mode)
+  )
+
 ;; ----------------------------------------
 
 (use-package org
@@ -81,7 +108,7 @@
   ;; Use the current window for C-c ' source editing
   (setq org-src-window-setup 'current-window
 	org-support-shift-select t)
-  
+
   ;; I like to press enter to follow a link. mouse clicks also work.
   (setq org-return-follows-link t)
   )
@@ -97,7 +124,7 @@
   )
 
 ;; ----------------------------------------
-		
+
 ;; aggressive-indent
 (use-package aggressive-indent
   :ensure t
@@ -150,6 +177,14 @@
 
 ;; -------------------------------------
 
+(use-package treesit-auto
+  :ensure t
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
+
 (use-package format-all
   :ensure t
   :commands format-all-mode
@@ -160,7 +195,12 @@
                   ("Shell" (shfmt "-i" "4" "-ci")))))
 
 (use-package dimmer
-    :ensure t)
+  :ensure t
+  :init (dimmer-mode t)
+  :config
+  (dimmer-configure-which-key)
+  (dimmer-configure-helm)
+  )
 
 (use-package dogears
   :ensure t
@@ -357,14 +397,14 @@
 ;; symbols
 (global-prettify-symbols-mode +1)
 
-;; ;; fonts
-;; (setq fonts '("IBM Plex Mono" "Noto Sans Mono CJK JP"))
-;; (set-fontset-font t 'unicode "Noto Sans" nil 'prepend)
-;; (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal))
-;; (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
-;; 
-;; (set-face-attribute 'default nil :font
-;;                     (format "%s:pixelsize=%d" (car fonts) 14))
+;; fonts
+(setq fonts '("IBM Plex Mono" "Noto Sans Mono CJK JP"))
+(set-fontset-font t 'unicode "Noto Sans" nil 'prepend)
+(set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal))
+(set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
+
+(set-face-attribute 'default nil :font
+                    (format "%s:pixelsize=%d" (car fonts) 14))
 
 ;; -------------------------------------
 
