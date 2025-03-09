@@ -2,17 +2,16 @@
 ;; early-init.el
 ;; seagle0128/CentaurEmacs && ltylty/.emacs.d
 
+(tab-bar-mode -1)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
+(horizontal-scroll-bar-mode -1)
 
 (setq gc-cons-threshold (* 100 1024 1024))
 (setq inhibit-startup-message t)
 (setq initial-major-mode 'fundamental-mode)
 (setq default-frame-alist '((fullscreen . maximized)))
-(setopt use-short-answers t)
-(setq native-comp-deferred-compilation t ;; obsolete since 29.1
-      native-comp-jit-compilation t)
 
 (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
 (setq-default indent-tabs-mode nil)
@@ -55,6 +54,11 @@
 ;; (add-to-list 'default-frame-alist
 ;; 	     '(font .  "IBM Plex Mono"))
 
-(setq package-enable-at-startup t)
+(setopt use-short-answers t)
+(setq native-comp-deferred-compilation t ;; obsolete since 29.1
+      native-comp-jit-compilation t
+      package-enable-at-startup t
+      use-package-always-ensure t
+      package-native-compile t)
 
 ;;; early-init.el ends here

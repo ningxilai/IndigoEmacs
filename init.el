@@ -3,9 +3,6 @@
                          ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
 (package-initialize) ;; You might already have this line
 
-(setq use-package-always-ensure t
-      package-native-compile t)
-
 ;; -------------------------------------
 
 ;; backup and autosave
@@ -16,7 +13,7 @@
 
 ;; move to trash
 (setq delete-by-moving-to-trash t)
-(setq trash-directory "~/.Trash/")
+(setq trash-directory "~/Trash/")
 
 ;; ----------------------------------------
 
@@ -28,8 +25,8 @@
   :init (doom-modeline-mode 1))
 (use-package smart-mode-line
   :ensure t
-  :init (sml/setup)
-  :config (setq sml/theme 'respectful))
+  :defer (sml/setup)
+  :init (setq sml/theme 'respectful))
 (use-package nyan-mode
   :ensure t
   :defer t
@@ -37,7 +34,7 @@
 
 (use-package page-break-lines
   :ensure t
-  :init (page-break-lines-mode)
+  :hook (after-init-hook . page-break-lines-mode)
   :defer (add-hook 'after-init 'page-break-line-mode)
   :diminish (page-break-lines-mode visual-line-mode)
   )
@@ -273,8 +270,7 @@
   :config (which-key-mode))
 
 (use-package amx
-  :ensure t
-  :init (amx-mode 1))
+  :config (amx-mode 1))
 
 (use-package switch-window
   :ensure t
@@ -298,6 +294,17 @@
   )
 
 ;; -------------------------------------
+
+(use-package lsp-mode
+  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+         (markdown-mode . lsp)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp)
+
+;; optionally
+(use-package lsp-ui
+  :commands lsp-ui-mode)
 
 (use-package typo
   :ensure t
