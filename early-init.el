@@ -57,8 +57,12 @@
 (setopt use-short-answers t)
 (setq native-comp-deferred-compilation t ;; obsolete since 29.1
       native-comp-jit-compilation t
-      package-enable-at-startup t
+      package-enable-at-startup nil
       use-package-always-ensure t
       package-native-compile t)
+
+(setq package-user-dir
+      (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
+			user-emacs-directory))
 
 ;;; early-init.el ends here
