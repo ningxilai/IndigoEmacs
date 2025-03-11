@@ -35,8 +35,8 @@
 (use-package page-break-lines
   :ensure t
   :hook (after-init-hook . page-break-lines-mode)
-  :defer (add-hook 'after-init 'page-break-line-mode)
   :diminish (page-break-lines-mode visual-line-mode)
+  :init (page-break-lines-mode t)
   )
 
 ;; -------------------------------------
@@ -122,12 +122,6 @@
 
 ;; ----------------------------------------
 
-;; aggressive-indent
-(use-package aggressive-indent
-  :ensure t
-  :config
-  (global-aggressive-indent-mode t))
-
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
   :ensure t
@@ -149,7 +143,6 @@
 
 (use-package indent-bars
   :commands indent-bars-mode
-  :vc (:url "https://github.com/jdtsmith/indent-bars")
   :hook ((yaml-mode . indent-bars-mode)
          (yaml-ts-mode . indent-bars-mode)
          (python-mode . indent-bars-mode)
@@ -228,7 +221,7 @@
 (use-package markdown-mode
   :ensure t
   :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown")
+  :config (setq markdown-command "multimarkdown")
   :bind (:map markdown-mode-map
               ("C-c C-e" . markdown-do)))
 ;; web-mode
@@ -269,21 +262,6 @@
   :ensure t
   :config (which-key-mode))
 
-(use-package amx
-  :config (amx-mode 1))
-
-(use-package switch-window
-  :ensure t
-  :config
-  (setq switch-window-input-style 'minibuffer)
-  (setq switch-window-increase 4)
-  (setq switch-window-threshold 2)
-  (setq switch-window-shortcut-style 'qwerty)
-  (setq switch-window-qwerty-shortcuts
-	'("0" "1" "2" "3" "4" "5" "6"))
-  :bind
-  ([remap other-window] . switch-window))
-
 (use-package async
   :ensure t
   )
@@ -292,6 +270,22 @@
   :diminish undo-tree-mode
   :ensure t
   )
+
+(use-package counsel
+  :ensure t
+  :bind ("M-x" . counsel-M-x)
+  ( "C-x C-f" . counsel-find-file))
+(use-package ivy
+  :ensure t
+  :init
+  (counsel-mode 1)
+  (ivy-mode 1)
+  :config
+  (setq ivy-use-virtual-buffers t
+        ivy-count-format "%d/%d "))
+(use-package swiper
+  :ensure t
+  :bind ("C-s" . 'swiper))
 
 ;; -------------------------------------
 
@@ -305,6 +299,8 @@
 ;; optionally
 (use-package lsp-ui
   :commands lsp-ui-mode)
+
+(use-package lsp-ivy)
 
 (use-package typo
   :ensure t
@@ -347,35 +343,12 @@
 
 (use-package eat
   :ensure t
-  :config
+  :hook
   ;; For `eat-eshell-mode'.
-  (add-hook 'eshell-load-hook #'eat-eshell-mode)
+  (eshell-load-hook . eat-eshell-mode-hook)
   ;; For `eat-eshell-visual-command-mode'.
-  (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode)
+  (eshell-load-hook . eat-eshell-visual-command-mode-hook)
   )
-
-(use-package vterm
-  :ensure t
-  :init (setq vterm-toggle-fullscreen-p nil)
-  :config (setq vterm-shell "zsh"))
-(use-package vterm-toggle
-  :ensure t)
-
-(setq eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
-(setq eshell-prompt-function
-      (lambda nil
-        (concat
-         (if (string= (eshell/pwd) (getenv "HOME"))
-             (propertize "~" 'face `(:foreground "#99CCFF"))
-           (replace-regexp-in-string
-            (getenv "HOME")
-            (propertize "~" 'face `(:foreground "#99CCFF"))
-            (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
-         (if (= (user-uid) 0)
-             (propertize " α " 'face `(:foreground "#FF6666"))
-         (propertize " λ " 'face `(:foreground "#A6E22E"))))))
-
-(setq eshell-highlight-prompt t)
 
 (defalias 'open 'find-file-other-window)
 (defalias 'clean 'eshell/clear-scrollback)
@@ -419,8 +392,6 @@
 (setq save-abbrevs nil)
 
 ;; calendar [built-in]
-(setq mark-diary-entries-in-calendar t)
-(setq mark-holidays-in-calendar t)
 (global-set-key (kbd "C-c k") 'calendar)
 
 ;; dired [built-in]
@@ -431,12 +402,9 @@
 
 ;; display-line-numbers [built-in]
 (setq display-line-numbers-type 'relative)
-(mapc (lambda (hook) (add-hook hook 'display-line-numbers-mode))
-      (list 'prog-mode-hook 'bibtex-mode-hook))
 
 ;; flyspell [built-in]
 (add-hook 'text-mode-hook 'flyspell-mode)
-(add-hook 'LaTeX-mode-hook 'flyspell-mode)
 (add-hook 'markdown-mode-hook 'flyspell-mode)
 
 ;; hideshow [built-in]
@@ -445,9 +413,6 @@
 ;; org-mode [built-in]
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
-
-;; savehist [built-in]
-(savehist-mode t)
 
 ;; recentf [built-in]
 (setq recentf-max-saved-items 500)
@@ -471,8 +436,7 @@
  '(custom-enabled-themes '(doom-one))
  '(custom-safe-themes nil)
  '(package-selected-packages nil)
- '(package-vc-selected-packages
-   '((indent-bars :url "https://github.com/jdtsmith/indent-bars"))))
+ )
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
