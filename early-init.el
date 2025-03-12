@@ -13,6 +13,7 @@
 (setq inhibit-startup-message t)
 (setq initial-major-mode 'fundamental-mode)
 (setq default-frame-alist '((fullscreen . maximized)))
+
 (setq flymake-show-diagnostics-at-end-of-line 'short)
 
 (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
@@ -26,7 +27,16 @@
 ;; no ring-bell
 (setq ring-bell-function 'ignore)
 ;; nice scrolling
-(setq scroll-margin 3)
+(setq scroll-step 1
+      scroll-preserve-screen-position t
+      scroll-margin 3
+      scroll-conservatively 10
+      maximum-scroll-margin 0.3
+      scroll-up-aggressively 0.0
+      scroll-down-aggressively 0.0)
+
+(pixel-scroll-precision-mode 1)
+(setq pixel-scroll-precision-interpolate-page t)
 ;; word wrap for CJK
 (setq word-wrap-by-category t)
 ;; enable syntax highlight
@@ -70,5 +80,7 @@
 (setq package-user-dir
       (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
 			user-emacs-directory))
+
+(setq warning-minimum-level :emergency)
 
 ;;; early-init.el ends here

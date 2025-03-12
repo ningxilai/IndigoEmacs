@@ -18,28 +18,20 @@
 (setq delete-by-moving-to-trash t)
 (setq trash-directory "~/Trash/")
 
+;;  (defalias 'yes-or-no-p 'y-or-n-p)
 ;; ----------------------------------------
 
-(use-package doom-themes
-  :ensure t
-  :init (load-theme 'doom-one t))
+(use-package nano
+ :vc (:url "https://github.com/rougier/nano-emacs")
+ :config (setq nano-font-size 14))
 
-(use-package smart-mode-line
-  :ensure t
-  :defer (sml/setup)
-  :config (setq sml/theme 'respectful))
-
-(use-package nyan-mode
-  :ensure t
-  :defer t
-  :hook (after-init . nyan-mode))
+;; (require-theme 'nano-dark)
 
 (use-package page-break-lines
   :ensure t
   :hook (after-init-hook . page-break-lines-mode)
   :diminish (page-break-lines-mode visual-line-mode)
-  :init (page-break-lines-mode t)
-  )
+  :init (page-break-lines-mode t))
 
 ;; -------------------------------------
 
@@ -48,12 +40,10 @@
   (setq desktop-load-locked-desktop nil) ; popup dialog ask user, don't load anyway
   (setq desktop-restore-frames nil) ; don't restore any frame
   :init
-  (desktop-save-mode 1)
-  )
+  (desktop-save-mode 1))
 
 (use-package good-scroll
-  :diminish
-  :hook (after-init . good-scroll-mode)
+  :diminish (good-scroll-mode 1)
   :bind (([remap next] . good-scroll-up-full-screen)
          ([remap prior] . good-scroll-down-full-screen)))
 
@@ -426,7 +416,7 @@
   )
 
 (use-package undo-tree
-  :diminish undo-tree-mode
+  :diminish (undo-tree-mode 1)
   :ensure t
   )
 ;; -------------------------------------
@@ -576,9 +566,21 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(doom-one))
+ '(custom-enabled-themes '(nano-dark-theme))
  '(custom-safe-themes nil)
- '(package-selected-packages nil))
+ '(package-selected-packages
+   '(aggressive-indent async auto-save bicycle block-nav cape consult
+                       corfu counsel dimmer dogears doom-modeline
+                       doom-themes eat embark exec-path-from-shell
+                       format-all good-scroll htmlize indent-bars
+                       lsp-ivy lsp-ui marginalia nano nano-theme nov
+                       nyan-mode orderless org-modern outline-indent
+                       page-break-lines rainbow-delimiters
+                       smart-mode-line smooth-scroll switch-window
+                       treesit-auto typo undo-tree vertico
+                       vterm-toggle web-mode writeroom-mode))
+ '(package-vc-selected-packages '((nano :url "https://github.com/rougier/nano-emacs")))
+ '(warning-suppress-log-types '((package reinitialization))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
