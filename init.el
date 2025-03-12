@@ -1,6 +1,9 @@
-(setq package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                         ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
-                         ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+;;; init.el --- my emacs init file -*- lexical-binding:t; -*-
+
+(setq package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
+                         ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
+                         ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
+
 (package-initialize) ;; You might already have this line
 
 ;; -------------------------------------
@@ -20,13 +23,12 @@
 (use-package doom-themes
   :ensure t
   :init (load-theme 'doom-one t))
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode 1))
+
 (use-package smart-mode-line
   :ensure t
   :defer (sml/setup)
-  :init (setq sml/theme 'respectful))
+  :config (setq sml/theme 'respectful))
+
 (use-package nyan-mode
   :ensure t
   :defer t
@@ -43,23 +45,11 @@
 
 (use-package desktop
   :config
-  (setq desktop-load-locked-desktop t) ; don't popup dialog ask user, load anyway
-  (setq desktop-restore-frames t) ; don't restore any frame
+  (setq desktop-load-locked-desktop nil) ; popup dialog ask user, don't load anyway
+  (setq desktop-restore-frames nil) ; don't restore any frame
   :init
   (desktop-save-mode 1)
   )
-
-(use-package company
-  :ensure t
-  :defer t
-  :hook (after-init . global-company-mode)
-  :config
-  (setq company-backends '((company-capf company-dabbrev-code))
-	company-minimum-prefix-length 1
-	company-dabbrev-code-ignore-case t
-	company-dabbrev-code-modes t
-	company-dabbrev-code-everywhere t
-	company-dabbrev-code-completion-styles '(basic substring flex)))
 
 (use-package good-scroll
   :diminish
@@ -81,15 +71,9 @@
              "gpg"
              (file-name-extension (buffer-name)) t)))))
 
-(use-package bicycle
-  :after outline
-  :bind (:map outline-minor-mode-map
-              ([C-tab] . bicycle-cycle)
-              ([S-tab] . bicycle-cycle-global))
-  :hook
-  (prog-mode-hook  . outline-minor-mode)
-  (prog-mode-hook . hs-minor-mode)
-  )
+(use-package editorconfig
+  :ensure t
+  :init (editorconfig-mode +1))
 
 ;; ----------------------------------------
 
@@ -258,9 +242,184 @@
 
 ;; -------------------------------------
 
-(use-package which-key
+(use-package embark
   :ensure t
-  :config (which-key-mode))
+  :init
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+  :config
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none))))
+  :bind
+  (("C-." . embark-act))
+  )
+
+(use-package marginalia
+  :ensure t
+  :init (marginalia-mode)
+  :bind (:map minibuffer-local-map
+	      ("M-A" . marginalia-cycle)))
+
+(use-package vertico
+  :ensure t
+  :bind
+  (:map vertico-map
+        ("<tab>" . vertico-insert)    ; Choose selected candidate
+        ("<escape>" . minibuffer-keyboard-quit) ; Close minibuffer
+        ;; NOTE 2022-02-05: Cycle through candidate groups
+        ("C-M-n" . vertico-next-group)
+        ("C-M-p" . vertico-previous-group))
+  :custom
+  (vertico-count 20)                    ; Number of candidates to display
+  (vertico-resize t)
+  (vertico-cycle nil) ; Go from last to first candidate and first to last (cycle)?
+  :init
+  (vertico-mode))
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+(use-package consult
+  ;; Replace bindings. Lazily loaded due by `use-package'.
+  :bind (;; C-c bindings in `mode-specific-map'
+         ("C-c M-x" . consult-mode-command)
+         ("C-c h" . consult-history)
+         ("C-c k" . consult-kmacro)
+         ("C-c m" . consult-man)
+         ("C-c i" . consult-info)
+         ([remap Info-search] . consult-info)
+         ;; C-x bindings in `ctl-x-map'
+         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+         ;; Custom M-# bindings for fast register access
+         ("M-#" . consult-register-load)
+         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+         ("C-M-#" . consult-register)
+         ;; Other custom bindings
+         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+         ;; M-g bindings in `goto-map'
+         ("M-g e" . consult-compile-error)
+         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+         ("M-g g" . consult-goto-line)             ;; orig. goto-line
+         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g m" . consult-mark)
+         ("M-g k" . consult-global-mark)
+         ("M-g i" . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ;; M-s bindings in `search-map'
+         ("M-s d" . consult-find)
+         ("M-s D" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ;; Isearch integration
+         ("M-s e" . consult-isearch-history)
+         :map isearch-mode-map
+         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+         ;; Minibuffer history
+         :map minibuffer-local-map
+         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+
+  ;; Enable automatic preview at point in the *Completions* buffer. This is
+  ;; relevant when you use the default completion UI.
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+
+  ;; The :init configuration is always executed (Not lazy)
+  :init
+
+  ;; Optionally configure the register formatting. This improves the register
+  ;; preview for `consult-register', `consult-register-load',
+  ;; `consult-register-store' and the Emacs built-ins.
+  (setq register-preview-delay 0.5
+        register-preview-function #'consult-register-format)
+
+  ;; Optionally tweak the register preview window.
+  ;; This adds thin lines, sorting and hides the mode line of the window.
+  (advice-add #'register-preview :override #'consult-register-window)
+
+  ;; Use Consult to select xref locations with preview
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+
+  ;; Configure other variables and modes in the :config section,
+  ;; after lazily loading the package.
+  :config
+
+  ;; Optionally configure preview. The default value
+  ;; is 'any, such that any key triggers the preview.
+  ;; (setq consult-preview-key 'any)
+  ;; (setq consult-preview-key "M-.")
+  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+  ;; For some commands and buffer sources it is useful to configure the
+  ;; :preview-key on a per-command basis using the `consult-customize' macro.
+  (consult-customize
+   consult-theme :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep
+   consult-bookmark consult-recent-file consult-xref
+   consult--source-bookmark consult--source-file-register
+   consult--source-recent-file consult--source-project-recent-file
+   ;; :preview-key "M-."
+   :preview-key '(:debounce 0.4 any))
+
+  ;; Optionally configure the narrowing key.
+  ;; Both < and C-+ work reasonably well.
+  (setq consult-narrow-key "<") ;; "C-+"
+
+  ;; Optionally make narrowing help available in the minibuffer.
+  ;; You may want to use `embark-prefix-help-command' or which-key instead.
+  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
+
+  ;; By default `consult-project-function' uses `project-root' from project.el.
+  ;; Optionally configure a different project root function.
+  ;;;; 1. project.el (the default)
+  ;; (setq consult-project-function #'consult--default-project--function)
+  ;;;; 2. vc.el (vc-root-dir)
+  ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
+  ;;;; 3. locate-dominating-file
+  ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
+  ;;;; 4. projectile.el (projectile-project-root)
+  ;; (autoload 'projectile-project-root "projectile")
+  ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
+  ;;;; 5. No project support
+  ;; (setq consult-project-function nil)
+  )
+
+(use-package corfu
+  :ensure t
+  :init
+  (setq corfu-auto t)
+  (setq corfu-quit-at-boundary t)
+  (global-corfu-mode))
+
+(use-package orderless
+  :ensure t
+  :demand t
+  :config
+  (setq completion-styles '(orderless partial-completion)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles . (partial-completion))))))
+
+(use-package cape
+  :ensure t)
 
 (use-package async
   :ensure t
@@ -270,58 +429,42 @@
   :diminish undo-tree-mode
   :ensure t
   )
-
-(use-package counsel
-  :ensure t
-  :bind ("M-x" . counsel-M-x)
-  ( "C-x C-f" . counsel-find-file))
-(use-package ivy
-  :ensure t
-  :init
-  (counsel-mode 1)
-  (ivy-mode 1)
-  :config
-  (setq ivy-use-virtual-buffers t
-        ivy-count-format "%d/%d "))
-(use-package swiper
-  :ensure t
-  :bind ("C-s" . 'swiper))
-
 ;; -------------------------------------
 
 (use-package lsp-mode
+  :ensure t
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (markdown-mode . lsp)
          ;; if you want which-key integration
          (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp)
+  :custom (lsp-completion-provide :none))
 
 ;; optionally
 (use-package lsp-ui
+  :ensure t
   :commands lsp-ui-mode)
 
-(use-package lsp-ivy)
+(use-package lsp-ivy
+  :ensure t)
 
 (use-package typo
-  :ensure t
-  )
+  :ensure t)
 
 (use-package writeroom-mode
   :ensure t
-  :hook (markdown-mode . writeroom-mode)
-  )
+  :hook (markdown-mode . writeroom-mode))
 
 ;; -------------------------------------
 ;; shell-var
 (use-package exec-path-from-shell
   :ensure t
-  :init (exec-path-from-shell-initialize))
+  :init (when (daemonp)
+          (exec-path-from-shell-initialize)))
+
 ;; environment path
-(let ((envpath '("/usr/local/bin/" "~/.cargo/bin/" "~/.dotnet/tools/" "~/.local/bin/" "~/.cabal/bin")))
-  (setenv "PATH" (mapconcat 'identity (add-to-list 'envpath (getenv "PATH") t) ":"))
-  (setq exec-path (append envpath exec-path)))
+;; envpath '("/usr/local/bin/" "~/.cargo/bin/" "~/.dotnet/tools/" "~/.local/bin/" "~/.cabal/bin")
+
 ;; pair
-(global-prettify-symbols-mode t)
 (use-package electric
   :config
   (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
@@ -378,7 +521,7 @@
 (global-prettify-symbols-mode +1)
 
 ;; fonts
-(setq fonts '("IBM Plex Mono" "Noto Sans Mono CJK JP"))
+(setq-local fonts '("IBM Plex Mono" "Noto Sans Mono CJK JP"))
 (set-fontset-font t 'unicode "Noto Sans" nil 'prepend)
 (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal))
 (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
@@ -435,8 +578,7 @@
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(doom-one))
  '(custom-safe-themes nil)
- '(package-selected-packages nil)
- )
+ '(package-selected-packages nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

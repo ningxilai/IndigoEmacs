@@ -1,6 +1,7 @@
-;;; package-enable-at-startup -*- no-byte-compile:t -*-
-;; early-init.el
+;;; early-init.el -*- no-byte-compile:t -*-
 ;; seagle0128/CentaurEmacs && ltylty/.emacs.d
+
+;;; Code:
 
 (tab-bar-mode -1)
 (tool-bar-mode -1)
@@ -12,11 +13,10 @@
 (setq inhibit-startup-message t)
 (setq initial-major-mode 'fundamental-mode)
 (setq default-frame-alist '((fullscreen . maximized)))
+(setq flymake-show-diagnostics-at-end-of-line 'short)
 
 (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
 (setq-default indent-tabs-mode nil)
-(setq-default default-tab-width 4)
-(setq-default c-basic-offset 4)
 
 (set-language-environment "UTF-8")
 ;; set unicode encoding
@@ -26,7 +26,7 @@
 ;; no ring-bell
 (setq ring-bell-function 'ignore)
 ;; nice scrolling
-(setq scroll-margin 5)
+(setq scroll-margin 3)
 ;; word wrap for CJK
 (setq word-wrap-by-category t)
 ;; enable syntax highlight
@@ -35,12 +35,17 @@
 (delete-selection-mode t)
 ;; auto revert external changes
 (global-auto-revert-mode t)
-;; always load newest byte code
-(setq load-prefer-newer t)
+
+(global-prettify-symbols-mode t)
+
 ;; highlight current line
 (global-hl-line-mode t)
 ;; display time in mode line
 (display-time-mode t)
+
+;; always load newest byte code
+(setq load-prefer-newer t)
+
 (setq system-time-locale "C")
 ;; set frame title
 (setq frame-title-format "%b")
@@ -55,6 +60,7 @@
 ;; 	     '(font .  "IBM Plex Mono"))
 
 (setopt use-short-answers t)
+
 (setq native-comp-deferred-compilation t ;; obsolete since 29.1
       native-comp-jit-compilation t
       package-enable-at-startup nil
