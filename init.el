@@ -21,17 +21,20 @@
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
 ;; ----------------------------------------
 
-(use-package nano
- :vc (:url "https://github.com/rougier/nano-emacs")
- :config (setq nano-font-size 14))
+(use-package doom-themes
+ :ensure t
+ :init (setq-default mode-line-format t))
 
-;; (require-theme 'nano-dark)
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
 
 (use-package page-break-lines
   :ensure t
   :hook (after-init-hook . page-break-lines-mode)
   :diminish (page-break-lines-mode visual-line-mode)
-  :init (page-break-lines-mode t))
+  ;; :init (page-break-lines-mode t)
+  )
 
 ;; -------------------------------------
 
@@ -43,7 +46,9 @@
   (desktop-save-mode 1))
 
 (use-package good-scroll
-  :diminish (good-scroll-mode 1)
+  :ensure t
+  :diminish
+  :init (good-scroll-mode 1)
   :bind (([remap next] . good-scroll-up-full-screen)
          ([remap prior] . good-scroll-down-full-screen)))
 
@@ -205,6 +210,13 @@
          ("\\.jsx?$"  . web-mode)
          ("\\.php$"   . web-mode)
          ("\\.s?css$"  . web-mode)))
+
+;; julia-snail
+(use-package julia-snail
+  :ensure t
+  :config (setq julia-snail-executable "~/.juliaup/bin/"))
+
+;; ---------------------------------------
 
 ;; epub reader
 (use-package nov
@@ -416,7 +428,7 @@
   )
 
 (use-package undo-tree
-  :diminish (undo-tree-mode 1)
+  :init (undo-tree-mode 1)
   :ensure t
   )
 ;; -------------------------------------
@@ -431,8 +443,7 @@
 
 ;; optionally
 (use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode)
+  :ensure t  :commands lsp-ui-mode)
 
 (use-package lsp-ivy
   :ensure t)
@@ -511,13 +522,13 @@
 (global-prettify-symbols-mode +1)
 
 ;; fonts
-(setq-local fonts '("IBM Plex Mono" "Noto Sans Mono CJK JP"))
-(set-fontset-font t 'unicode "Noto Sans" nil 'prepend)
+
+(set-face-attribute 'default nil :font "Fira Code")
+
 (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal))
 (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
 
-(set-face-attribute 'default nil :font
-                    (format "%s:pixelsize=%d" (car fonts) 14))
+ (set-face-attribute 'default (selected-frame) :height 120)
 
 ;; -------------------------------------
 
@@ -560,32 +571,7 @@
 
 ;; -------------------------------------
 
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(nano-dark-theme))
- '(custom-safe-themes nil)
- '(package-selected-packages
-   '(aggressive-indent async auto-save bicycle block-nav cape consult
-                       corfu counsel dimmer dogears doom-modeline
-                       doom-themes eat embark exec-path-from-shell
-                       format-all good-scroll htmlize indent-bars
-                       lsp-ivy lsp-ui marginalia nano nano-theme nov
-                       nyan-mode orderless org-modern outline-indent
-                       page-break-lines rainbow-delimiters
-                       smart-mode-line smooth-scroll switch-window
-                       treesit-auto typo undo-tree vertico
-                       vterm-toggle web-mode writeroom-mode))
- '(package-vc-selected-packages '((nano :url "https://github.com/rougier/nano-emacs")))
- '(warning-suppress-log-types '((package reinitialization))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file)
 
 ;;; init.el ends here
