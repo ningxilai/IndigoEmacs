@@ -44,6 +44,7 @@
 
 (pixel-scroll-precision-mode 1)
 (setq pixel-scroll-precision-interpolate-page t)
+
 ;; word wrap for CJK
 (setq word-wrap-by-category t)
 ;; enable syntax highlight
@@ -53,7 +54,9 @@
 ;; auto revert external changes
 (global-auto-revert-mode t)
 
-(global-prettify-symbols-mode t)
+(savehist-mode 1)  
+
+(global-prettify-symbols-mode +1)
 
 ;; highlight current line
 (global-hl-line-mode t)
@@ -78,11 +81,13 @@
 
 (setopt use-short-answers t)
 
-(setq native-comp-deferred-compilation t ;; obsolete since 29.1
+(setq native-comp-deferred-compilation t
       native-comp-jit-compilation t
       package-enable-at-startup nil
       use-package-always-ensure t
-      package-native-compile t)
+      package-native-compile t
+      version-control t
+      delete-old-versions t)
 
 (setq package-user-dir
       (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)

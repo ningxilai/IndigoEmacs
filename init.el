@@ -7,13 +7,6 @@
 (package-initialize) ;; You might already have this line
 
 ;; -------------------------------------
-
-;; backup and autosave
-(savehist-mode 1)
-
-(setq version-control t)
-(setq delete-old-versions t)
-
 ;; move to trash
 (setq delete-by-moving-to-trash t)
 (setq trash-directory "~/Trash/")
@@ -32,10 +25,13 @@
 
 (use-package page-break-lines
   :ensure t
-  :hook (after-init-hook . page-break-lines-mode)
+  ;; :hook (after-init-hook . page-break-lines-mode)
   :diminish (page-break-lines-mode visual-line-mode)
-  ;; :init (page-break-lines-mode t)
+  :init (page-break-lines-mode t)
   )
+
+(use-package async
+  :ensure t)
 
 ;; -------------------------------------
 
@@ -53,9 +49,9 @@
   :bind (([remap next] . good-scroll-up-full-screen)
          ([remap prior] . good-scroll-down-full-screen)))
 
-(use-package real-auto-save
+(use-package auto-save
   :ensure t
-  :hook  (add-hook 'prog-mode-hook 'real-auto-save-mode)
+  :hook  (add-hook 'prog-mode-hook 'auto-save-mode)
   :config  (setq real-auto-save-interval 5)
   )
 
@@ -97,7 +93,8 @@
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
   :ensure t
-  :hook (prog-mode . rainbow-delimiters-mode))
+  :hook (pr
+  og-mode . rainbow-delimiters-mode))
 
 ;; indent
 
@@ -114,6 +111,7 @@
 (setq-default indent-line-ignored-functions '())
 
 (use-package indent-bars
+  :ensure t
   :commands indent-bars-mode
   :hook ((yaml-mode . indent-bars-mode)
          (yaml-ts-mode . indent-bars-mode)
@@ -139,23 +137,6 @@
 
 ;; -------------------------------------
 
-(use-package treesit-auto
-  :ensure t
-  :custom
-  (treesit-auto-install 'prompt)
-  :config
-  (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
-
-(use-package format-all
-  :ensure t
-  :commands format-all-mode
-  :hook (prog-mode . format-all-mode)
-  :config
-  (setq-default format-all-formatters
-                '(("C"     (astyle "--mode=c"))
-                  ("Shell" (shfmt "-i" "4" "-ci")))))
-
 (use-package dimmer
   :ensure t
   :init (dimmer-mode t)
@@ -166,26 +147,14 @@
 
 (use-package dogears
   :ensure t
-  :hook (after-init . dogears-mode)
+  ;; These bindings are optional, of course:
+  :init (dogears-mode t)
   :bind (:map global-map
               ("M-g d" . dogears-go)
               ("M-g M-b" . dogears-back)
               ("M-g M-f" . dogears-forward)
               ("M-g M-d" . dogears-list)
-              ("M-g M-D" . dogears-sidebar))
-  :config
-  (setq dogears-idle 1
-        dogears-limit 200
-        dogears-position-delta 20)
-  (setq dogears-functions '(find-file recenter-top-bottom
-                                      other-window switch-to-buffer
-                                      aw-select toggle-window-split
-                                      windmove-do-window-select
-                                      pager-page-down pager-page-up
-                                      tab-bar-select-tab
-                                      pop-to-mark-command
-                                      pop-global-mark
-                                      goto-last-change)))
+              ("M-g M-D" . dogears-sidebar)))
 
 ;; -------------------------------------
 
@@ -207,8 +176,7 @@
 ;; fortran-mode
 
 (setq lsp-clients-fortls-args t)
-
-(setq  lsp-clients-fortls-executable fortls)
+(setq  lsp-clients-fortls-executable "fortls")
 ;; ---------------------------------------
 
 ;; epub reader
@@ -415,16 +383,24 @@
 
 (use-package cape
   :ensure t)
-
-(use-package async
-  :ensure t
-  )
-
-(use-package undo-tree
-  :init (undo-tree-mode 1)
-  :ensure t
-  )
 ;; -------------------------------------
+
+(use-package treesit-auto
+  :ensure t
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
+
+(use-package format-all-buffer
+  :ensure t
+  :commands format-all-mode
+  :hook (add-hook 'before-save-hook 'format-all-buffer)
+  :config
+  (setq-default format-all-formatters
+                '(("C"     (astyle "--mode=c"))
+                  ("Shell" (shfmt "-i" "4" "-ci")))))
 
 (use-package lsp-mode
   :ensure t
@@ -434,7 +410,6 @@
          (lsp-mode . lsp-enable-which-key-integration))
   :custom (lsp-completion-provide :none))
 
-;; optionally
 (use-package lsp-ui
   :ensure t  :commands lsp-ui-mode)
 
@@ -447,6 +422,10 @@
 (use-package writeroom-mode
   :ensure t
   :hook (markdown-mode . writeroom-mode))
+
+(use-package undo-tree
+  :init (undo-tree-mode 1)
+  :ensure t)
 
 ;; -------------------------------------
 ;; shell-var
@@ -511,9 +490,6 @@
 
 (global-set-key (kbd "<s-C-return>") 'eshell-other-window)
 
-;; symbols
-(global-prettify-symbols-mode +1)
-
 ;; fonts
 
 (set-face-attribute 'default nil :font "Fira Code")
@@ -521,48 +497,9 @@
 (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal))
 (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
 
- (set-face-attribute 'default (selected-frame) :height 120)
+(set-face-attribute 'default (selected-frame) :height 120)
 
-;; -------------------------------------
-
-;; abbrev [built-in]
-(setq save-abbrevs nil)
-
-;; calendar [built-in]
-(global-set-key (kbd "C-c k") 'calendar)
-
-;; dired [built-in]
-(put 'dired-find-alternate-file 'disabled nil)
-(setq dired-recursive-deletes 'always)
-(setq dired-recursive-copies 'always)
-(setq dired-listing-switches "-alh")
-
-;; display-line-numbers [built-in]
-(setq display-line-numbers-type 'relative)
-
-;; flyspell [built-in]
-(add-hook 'text-mode-hook 'flyspell-mode)
-(add-hook 'markdown-mode-hook 'flyspell-mode)
-
-;; hideshow [built-in]
-(add-hook 'prog-mode-hook 'hs-minor-mode)
-
-;; org-mode [built-in]
-(global-set-key (kbd "C-c a") 'org-agenda)
-(global-set-key (kbd "C-c c") 'org-capture)
-
-;; recentf [built-in]
-(setq recentf-max-saved-items 500)
-(recentf-mode t)
-
-;; saveplace [built-in]
-(save-place-mode t)
-
-;; flymake [built]
-(use-package flymake
-  :hook (prog-mode . flymake-mode))
-
-;; -------------------------------------
+;;----------------------------------------
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file)
