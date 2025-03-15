@@ -13,6 +13,9 @@
 (setq gc-cons-threshold (* 100 1024 1024))
 (setq inhibit-startup-message t)
 (setq initial-major-mode 'fundamental-mode)
+
+(setq frame-inhibit-implied-resize t)
+
 ;; (setq default-frame-alist '((fullscreen . maximized)))
 (setq default-frame-alist '((height . 49)
                             (width . 144)

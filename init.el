@@ -23,7 +23,8 @@
 
 (use-package doom-themes
  :ensure t
- :init (setq-default mode-line-format t))
+ :init (load-theme 'doom-one t)
+ :config (setq-default mode-line-format t))
 
 (use-package doom-modeline
   :ensure t
@@ -52,19 +53,11 @@
   :bind (([remap next] . good-scroll-up-full-screen)
          ([remap prior] . good-scroll-down-full-screen)))
 
-(use-package auto-save
-  :vc (:url "https://github.com/manateelazycat/auto-save")
-  :hook
-  (text-mode . auto-save-enable)
-  (prog-mode . auto-save-enable)
-  :config
-  (setq auto-save-silent t)   ; quietly save
-  (setq auto-save-delete-trailing-whitespace t)  ; automatically delete spaces at the end of the line when saving
-  (setq auto-save-disable-predicates
-        '((lambda ()
-            (string-suffix-p
-             "gpg"
-             (file-name-extension (buffer-name)) t)))))
+(use-package real-auto-save
+  :ensure t
+  :hook  (add-hook 'prog-mode-hook 'real-auto-save-mode)
+  :config  (setq real-auto-save-interval 5)
+  )
 
 (use-package editorconfig
   :ensure t
@@ -211,11 +204,11 @@
          ("\\.php$"   . web-mode)
          ("\\.s?css$"  . web-mode)))
 
-;; julia-snail
-(use-package julia-snail
-  :ensure t
-  :config (setq julia-snail-executable "~/.juliaup/bin/"))
+;; fortran-mode
 
+(setq lsp-clients-fortls-args t)
+
+(setq  lsp-clients-fortls-executable fortls)
 ;; ---------------------------------------
 
 ;; epub reader
