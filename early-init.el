@@ -93,6 +93,6 @@
       (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
 			user-emacs-directory))
 
-(setq warning-minimum-level :emergency)
+;; (setq warning-minimum-level :emergency)
 
 ;;; early-init.el ends here

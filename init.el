@@ -49,11 +49,14 @@
   :bind (([remap next] . good-scroll-up-full-screen)
          ([remap prior] . good-scroll-down-full-screen)))
 
-(use-package auto-save
-  :ensure t
-  :hook  (add-hook 'prog-mode-hook 'auto-save-mode)
-  :config  (setq real-auto-save-interval 5)
-  )
+ ;; Save all tempfiles in $TMPDIR/emacs$UID/                                                        
+    (defconst emacs-tmp-dir (expand-file-name (format "emacs%d" (user-uid)) temporary-file-directory))
+    (setq backup-directory-alist
+        `((".*" . ,emacs-tmp-dir)))
+    (setq auto-save-file-name-transforms
+        `((".*" ,emacs-tmp-dir t)))
+    (setq auto-save-list-file-prefix
+        emacs-tmp-dir)
 
 (use-package editorconfig
   :ensure t
@@ -78,23 +81,12 @@
   (setq org-return-follows-link t)
   )
 
-(use-package org-modern
-  :ensure t
-  :config
-  (with-eval-after-load 'org (global-org-modern-mode))
-  )
-
-(use-package htmlize
-  :ensure t
-  )
-
 ;; ----------------------------------------
 
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
   :ensure t
-  :hook (pr
-  og-mode . rainbow-delimiters-mode))
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 ;; indent
 
@@ -132,23 +124,11 @@
   (outline-indent-ellipsis "->")
   :config (outline-indent-insert-heading))
 
-(use-package block-nav
-  :ensure t)
-
 ;; -------------------------------------
-
-(use-package dimmer
-  :ensure t
-  :init (dimmer-mode t)
-  :config
-  (dimmer-configure-which-key)
-  (dimmer-configure-helm)
-  )
 
 (use-package dogears
   :ensure t
   ;; These bindings are optional, of course:
-  :init (dogears-mode t)
   :bind (:map global-map
               ("M-g d" . dogears-go)
               ("M-g M-b" . dogears-back)
@@ -173,10 +153,6 @@
          ("\\.php$"   . web-mode)
          ("\\.s?css$"  . web-mode)))
 
-;; fortran-mode
-
-(setq lsp-clients-fortls-args t)
-(setq  lsp-clients-fortls-executable "fortls")
 ;; ---------------------------------------
 
 ;; epub reader
@@ -220,187 +196,19 @@
   (("C-." . embark-act))
   )
 
-(use-package marginalia
-  :ensure t
-  :init (marginalia-mode)
-  :bind (:map minibuffer-local-map
-	      ("M-A" . marginalia-cycle)))
-
-(use-package vertico
-  :ensure t
-  :bind
-  (:map vertico-map
-        ("<tab>" . vertico-insert)    ; Choose selected candidate
-        ("<escape>" . minibuffer-keyboard-quit) ; Close minibuffer
-        ;; NOTE 2022-02-05: Cycle through candidate groups
-        ("C-M-n" . vertico-next-group)
-        ("C-M-p" . vertico-previous-group))
-  :custom
-  (vertico-count 20)                    ; Number of candidates to display
-  (vertico-resize t)
-  (vertico-cycle nil) ; Go from last to first candidate and first to last (cycle)?
-  :init
-  (vertico-mode))
-
-(use-package orderless
-  :ensure t
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
-
-(use-package consult
-  ;; Replace bindings. Lazily loaded due by `use-package'.
-  :bind (;; C-c bindings in `mode-specific-map'
-         ("C-c M-x" . consult-mode-command)
-         ("C-c h" . consult-history)
-         ("C-c k" . consult-kmacro)
-         ("C-c m" . consult-man)
-         ("C-c i" . consult-info)
-         ([remap Info-search] . consult-info)
-         ;; C-x bindings in `ctl-x-map'
-         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-         ;; Custom M-# bindings for fast register access
-         ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-         ("C-M-#" . consult-register)
-         ;; Other custom bindings
-         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-         ;; M-g bindings in `goto-map'
-         ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
-         ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-         ("M-g m" . consult-mark)
-         ("M-g k" . consult-global-mark)
-         ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings in `search-map'
-         ("M-s d" . consult-find)
-         ("M-s D" . consult-locate)
-         ("M-s g" . consult-grep)
-         ("M-s G" . consult-git-grep)
-         ("M-s r" . consult-ripgrep)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         ("M-s k" . consult-keep-lines)
-         ("M-s u" . consult-focus-lines)
-         ;; Isearch integration
-         ("M-s e" . consult-isearch-history)
-         :map isearch-mode-map
-         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
-         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
-         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
-         ;; Minibuffer history
-         :map minibuffer-local-map
-         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
-  ;; relevant when you use the default completion UI.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
-
-  ;; The :init configuration is always executed (Not lazy)
-  :init
-
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
-  (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
-
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
-  (advice-add #'register-preview :override #'consult-register-window)
-
-  ;; Use Consult to select xref locations with preview
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
-
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
-  :config
-
-  ;; Optionally configure preview. The default value
-  ;; is 'any, such that any key triggers the preview.
-  ;; (setq consult-preview-key 'any)
-  ;; (setq consult-preview-key "M-.")
-  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
-  ;; For some commands and buffer sources it is useful to configure the
-  ;; :preview-key on a per-command basis using the `consult-customize' macro.
-  (consult-customize
-   consult-theme :preview-key '(:debounce 0.2 any)
-   consult-ripgrep consult-git-grep consult-grep
-   consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
-   ;; :preview-key "M-."
-   :preview-key '(:debounce 0.4 any))
-
-  ;; Optionally configure the narrowing key.
-  ;; Both < and C-+ work reasonably well.
-  (setq consult-narrow-key "<") ;; "C-+"
-
-  ;; Optionally make narrowing help available in the minibuffer.
-  ;; You may want to use `embark-prefix-help-command' or which-key instead.
-  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-
-  ;; By default `consult-project-function' uses `project-root' from project.el.
-  ;; Optionally configure a different project root function.
-  ;;;; 1. project.el (the default)
-  ;; (setq consult-project-function #'consult--default-project--function)
-  ;;;; 2. vc.el (vc-root-dir)
-  ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
-  ;;;; 3. locate-dominating-file
-  ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-  ;;;; 4. projectile.el (projectile-project-root)
-  ;; (autoload 'projectile-project-root "projectile")
-  ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
-  ;;;; 5. No project support
-  ;; (setq consult-project-function nil)
-  )
-
-(use-package corfu
-  :ensure t
-  :init
-  (setq corfu-auto t)
-  (setq corfu-quit-at-boundary t)
-  (global-corfu-mode))
-
-(use-package orderless
-  :ensure t
-  :demand t
-  :config
-  (setq completion-styles '(orderless partial-completion)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles . (partial-completion))))))
-
-(use-package cape
-  :ensure t)
-;; -------------------------------------
-
-(use-package treesit-auto
-  :ensure t
-  :custom
-  (treesit-auto-install 'prompt)
-  :config
-  (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
-
-(use-package format-all-buffer
-  :ensure t
+(use-package format-all
+  :ensure nil
   :commands format-all-mode
   :hook (add-hook 'before-save-hook 'format-all-buffer)
   :config
   (setq-default format-all-formatters
                 '(("C"     (astyle "--mode=c"))
                   ("Shell" (shfmt "-i" "4" "-ci")))))
+                  
+
+(use-package writeroom-mode
+  :ensure t
+  :hook (markdown-mode . writeroom-mode))
 
 (use-package lsp-mode
   :ensure t
@@ -413,26 +221,12 @@
 (use-package lsp-ui
   :ensure t  :commands lsp-ui-mode)
 
-(use-package lsp-ivy
-  :ensure t)
-
-(use-package typo
-  :ensure t)
-
-(use-package writeroom-mode
-  :ensure t
-  :hook (markdown-mode . writeroom-mode))
-
-(use-package undo-tree
-  :init (undo-tree-mode 1)
-  :ensure t)
-
 ;; -------------------------------------
 ;; shell-var
-(use-package exec-path-from-shell
-  :ensure t
-  :init (when (daemonp)
-          (exec-path-from-shell-initialize)))
+;(use-package exec-path-from-shell
+;  :ensure t
+;  :init (when (daemonp)
+;          (exec-path-from-shell-initialize)))
 
 ;; environment path
 ;; envpath '("/usr/local/bin/" "~/.cargo/bin/" "~/.dotnet/tools/" "~/.local/bin/" "~/.cabal/bin")
