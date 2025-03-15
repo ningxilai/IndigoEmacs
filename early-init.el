@@ -93,6 +93,10 @@
       (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
 			user-emacs-directory))
 
+(add-hook 'prog-mode-hook 'electric-pair-mode)
+(add-hook 'prog-mode-hook 'hs-minor-mode)
+
+
 ;; (setq warning-minimum-level :emergency)
 
 ;;; early-init.el ends here

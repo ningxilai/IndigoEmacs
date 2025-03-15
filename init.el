@@ -6,13 +6,21 @@
 
 (package-initialize) ;; You might already have this line
 
-;; -------------------------------------
+;; ----------------------------------------
 ;; move to trash
 (setq delete-by-moving-to-trash t)
 (setq trash-directory "~/Trash/")
 
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
 ;; ----------------------------------------
+
+ (use-package async
+   :ensure t
+   :init (dired-async-mode 1))
+
+(use-package undo-tree
+  :ensure t
+  :diminish undo-tree-mode)
 
 (use-package doom-themes
  :ensure t
@@ -23,233 +31,170 @@
   :ensure t
   :init (doom-modeline-mode 1))
 
-(use-package page-break-lines
+(use-package prism
+  :vc (:url "https://github.com/alphapapa/prism.el"))
+
+;;
+(prism-set-colors :num 16
+  :desaturations (cl-loop for i from 0 below 16
+                          collect (* i 2.5))
+  :lightens (cl-loop for i from 0 below 16
+                     collect (* i 2.5))
+  :colors (list "dodgerblue" "medium sea green" "sandy brown")
+
+  :comments-fn
+  (lambda (color)
+    (prism-blend color
+                 (face-attribute 'font-lock-comment-face :foreground) 0.25))
+
+  :strings-fn
+  (lambda (color)
+    (prism-blend color "white" 0.5)))
+;;
+
+(use-package highlight-parentheses
   :ensure t
-  ;; :hook (after-init-hook . page-break-lines-mode)
-  :diminish (page-break-lines-mode visual-line-mode)
-  :init (page-break-lines-mode t)
+  :hook ((minibuffer-setup . highlight-parentheses-minibuffer-setup)
+         (prog-mode . highlight-parentheses-mode))
+  :config
+  (setq highlight-parentheses-colors '("firebrick1" "firebrick3" "orange1" "orange3")
+        highlight-parentheses-attributes '((:underline t) (:underline t) (:underline t))
+        highlight-parentheses-delay 0.2)
   )
 
-(use-package async
+(use-package hl-line
+  :config
+  (setq hl-line-sticky-flag nil)
+  ;; Highlight starts from EOL, to avoid conflicts with other overlays
+  (setq hl-line-range-function (lambda () (cons (line-end-position)
+                                           (line-beginning-position 2)))))
+
+(use-package page-break-lines
+  :ensure t
+  :init (page-break-lines-mode)
+  :diminish (page-break-lines-mode visual-line-mode)
+  :config (set-fontset-font "fontset-default"
+                  (cons page-break-lines-char page-break-lines-char)
+                  (face-attribute 'default :family)))
+
+(use-package company
+  :ensure t
+  :defer t
+  :hook (after-init . global-company-mode)
+  :config
+  (setq company-backends '((:separate company-capf company-dabbrev-code))
+	company-global-modes '(not shell-mode)
+	company-minimum-prefix-length 1
+	company-dabbrev-code-ignore-case t
+	company-dabbrev-code-modes t
+	company-dabbrev-code-everywhere t
+	company-dabbrev-code-completion-styles '(substring flex))
+  (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix))
+
+(use-package orderless
+  :ensure t
+  :defer 0.1
+  :config
+  (setq completion-styles '(substring orderless flex)))
+
+(use-package consult
+  :ensure t
+  :defer t)
+
+(use-package vertico
+  :ensure t
+  :defer t
+  :custom
+  (vertico-cycle t)
+  :hook (after-init . vertico-mode))
+
+(use-package marginalia
+  :ensure t
+  :defer t
+  :hook (after-init . marginalia-mode))
+
+(use-package embark
+  :ensure t
+  :defer t
+  :bind
+  (:map minibuffer-mode-map
+	("C-c C-e" . embark-export)
+	("C-c C-a" . embark-act)))
+
+(use-package embark-consult
+  :ensure t
+  :after (embark consult))
+
+(use-package eglot
+  :defer t
+  :custom
+  (eglot-autoshutdown t)  ;; shutdown language server after closing last file
+  (eldoc-echo-area-use-multiline-p nil) ;; eldoc-documentation-function should only return a single line
+  :custom-face
+  (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
+  :hook
+  ((python-ts-mode) . eglot-ensure))
+
+(use-package treesit-auto
+  :ensure t
+  :config
+  (global-treesit-auto-mode))
+
+(use-package magit
+  :ensure t
+  :defer t
+  :config
+  (setq magit-ediff-dwim-show-on-hunks t))
+
+;; Markdown
+
+(use-package markdown-mode
+  :ensure t
+  :defer t
+  :hook (markdown-mode . writeroom-mode)
+  )
+
+(use-package focus
   :ensure t)
 
-;; -------------------------------------
-
-(use-package desktop
-  :config
-  (setq desktop-load-locked-desktop nil) ; popup dialog ask user, don't load anyway
-  (setq desktop-restore-frames nil) ; don't restore any frame
-  :init
-  (desktop-save-mode 1))
-
-(use-package good-scroll
+(use-package writeroom-mode
   :ensure t
-  :diminish
-  :init (good-scroll-mode 1)
-  :bind (([remap next] . good-scroll-up-full-screen)
-         ([remap prior] . good-scroll-down-full-screen)))
+  :hook (focus-mode . global-writeroom-mode))
 
- ;; Save all tempfiles in $TMPDIR/emacs$UID/                                                        
-    (defconst emacs-tmp-dir (expand-file-name (format "emacs%d" (user-uid)) temporary-file-directory))
-    (setq backup-directory-alist
-        `((".*" . ,emacs-tmp-dir)))
-    (setq auto-save-file-name-transforms
-        `((".*" ,emacs-tmp-dir t)))
-    (setq auto-save-list-file-prefix
-        emacs-tmp-dir)
-
-(use-package editorconfig
-  :ensure t
-  :init (editorconfig-mode +1))
-
-;; ----------------------------------------
+;; Org
 
 (use-package org
-  :ensure t
+  :diminish org-indent-mode
   :config
   (add-hook 'org-mode-hook 'org-indent-mode)
   (add-hook 'org-mode-hook
             '(lambda ()
-               (visual-line-mode 1)))
-  (setq org-startup-with-inline-images t)
-  :init
-  ;; Use the current window for C-c ' source editing
-  (setq org-src-window-setup 'current-window
-	org-support-shift-select t)
+               (visual-line-mode 1))))
 
-  ;; I like to press enter to follow a link. mouse clicks also work.
-  (setq org-return-follows-link t)
-  )
-
-;; ----------------------------------------
-
-;; rainbow-delimiters
-(use-package rainbow-delimiters
-  :ensure t
-  :hook (prog-mode . rainbow-delimiters-mode))
-
-;; indent
-
-;; This ensures that pressing Enter will insert a new line and indent it.
-(global-set-key (kbd "RET") #'newline-and-indent)
-
-;; Indentation based on the indentation of the previous non-blank line.
-(setq-default indent-line-function #'indent-relative-first-indent-point)
-
-;; In modes such as `text-mode', calling `newline-and-indent' multiple times
-;; removes the indentation. The following fixes the issue and ensures that text
-;; is properly indented using `indent-relative' or
-;; `indent-relative-first-indent-point'.
-(setq-default indent-line-ignored-functions '())
-
-(use-package indent-bars
-  :ensure t
-  :commands indent-bars-mode
-  :hook ((yaml-mode . indent-bars-mode)
-         (yaml-ts-mode . indent-bars-mode)
-         (python-mode . indent-bars-mode)
-         (python-ts-mode . indent-bars-mode))
-  :custom
-  (indent-bars-prefer-character nil))
-
-(use-package outline-indent
-  :ensure t
-  :commands (outline-indent-minor-mode
-             outline-indent-insert-heading)
-  :hook ((yaml-mode . outline-indent-minor-mode)
-         (yaml-ts-mode . outline-indent-minor-mode)
-         (python-mode . outline-indent-minor-mode)
-         (python-ts-mode . outline-indent-minor-mode))
-  :custom
-  (outline-indent-ellipsis "->")
-  :config (outline-indent-insert-heading))
-
-;; -------------------------------------
-
-(use-package dogears
-  :ensure t
-  ;; These bindings are optional, of course:
-  :bind (:map global-map
-              ("M-g d" . dogears-go)
-              ("M-g M-b" . dogears-back)
-              ("M-g M-f" . dogears-forward)
-              ("M-g M-d" . dogears-list)
-              ("M-g M-D" . dogears-sidebar)))
-
-;; -------------------------------------
-
-;; markdown-mode
-(use-package markdown-mode
-  :ensure t
-  :mode ("README\\.md\\'" . gfm-mode)
-  :config (setq markdown-command "multimarkdown")
-  :bind (:map markdown-mode-map
-              ("C-c C-e" . markdown-do)))
-;; web-mode
-(use-package web-mode
-  :ensure t
-  :mode (("\\.html?$" . web-mode)
-         ("\\.jsx?$"  . web-mode)
-         ("\\.php$"   . web-mode)
-         ("\\.s?css$"  . web-mode)))
-
-;; ---------------------------------------
-
-;; epub reader
-(use-package nov
-  :ensure t
-  :mode ("\\.epub\\'" . nov-mode)
-  :hook (nov-mode . my-nov-setup)
-  :init
-  (defun my-nov-setup ()
-    "Setup `nov-mode' for better reading experience."
-    (visual-line-mode 1)
-    (centaur-read-mode)
-    (face-remap-add-relative 'variable-pitch :family "Times New Roman" :height 1.5))
-  :config
-  (with-no-warnings
-    ;; WORKAROUND: errors while opening `nov' files with Unicode characters
-    ;; @see https://github.com/wasamasa/nov.el/issues/63
-    (defun my-nov-content-unique-identifier (content)
-      "Return the the unique identifier for CONTENT."
-      (let* ((name (nov-content-unique-identifier-name content))
-             (selector (format "package>metadata>identifier[id='%s']"
-                               (regexp-quote name)))
-             (id (car (esxml-node-children (esxml-query selector content)))))
-        (and id (intern id))))
-    (advice-add #'nov-content-unique-identifier :override #'my-nov-content-unique-identifier)))
-
-;; -------------------------------------
-
-(use-package embark
-  :ensure t
-  :init
-  ;; Optionally replace the key help with a completing-read interface
-  (setq prefix-help-command #'embark-prefix-help-command)
-  :config
-  ;; Hide the mode line of the Embark live/completions buffers
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none))))
-  :bind
-  (("C-." . embark-act))
-  )
-
-(use-package format-all
-  :ensure nil
-  :commands format-all-mode
-  :hook (add-hook 'before-save-hook 'format-all-buffer)
-  :config
-  (setq-default format-all-formatters
-                '(("C"     (astyle "--mode=c"))
-                  ("Shell" (shfmt "-i" "4" "-ci")))))
-                  
-
-(use-package writeroom-mode
-  :ensure t
-  :hook (markdown-mode . writeroom-mode))
-
-(use-package lsp-mode
-  :ensure t
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         (markdown-mode . lsp)
-         ;; if you want which-key integration
-         (lsp-mode . lsp-enable-which-key-integration))
-  :custom (lsp-completion-provide :none))
-
-(use-package lsp-ui
-  :ensure t  :commands lsp-ui-mode)
-
-;; -------------------------------------
-;; shell-var
-;(use-package exec-path-from-shell
-;  :ensure t
-;  :init (when (daemonp)
-;          (exec-path-from-shell-initialize)))
-
-;; environment path
-;; envpath '("/usr/local/bin/" "~/.cargo/bin/" "~/.dotnet/tools/" "~/.local/bin/" "~/.cabal/bin")
-
-;; pair
-(use-package electric
-  :config
-  (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
-  (setq electric-pair-pairs '(
-                              (?\{ . ?\})
-                              (?\( . ?\))
-                              (?\[ . ?\])
-                              (?\" . ?\")
-                              ))
-  :init
-  (electric-pair-mode t)
-  (electric-indent-mode t)
-  (electric-layout-mode t)
-  )
-
-(global-hl-line-mode t)
+(use-package htmlize
+  :ensure t)
 
 ;; Eshell
+
+(setq eshell-prompt-function
+      (lambda nil
+        (concat
+         (if (string= (eshell/pwd) (getenv "HOME"))
+             (propertize "~" 'face `(:foreground "#99CCFF"))
+           (replace-regexp-in-string
+            (getenv "HOME")
+            (propertize "~" 'face `(:foreground "#99CCFF"))
+            (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
+         (if (= (user-uid) 0)
+             (propertize " Î± " 'face `(:foreground "#FF6666"))
+         (propertize " Î» " 'face `(:foreground "#A6E22E"))))))
+
+(setq eshell-highlight-prompt nil)
+
+(defalias 'open 'find-file-other-window)
+(defalias 'clean 'eshell/clear-scrollback)
+
+;; Eat
 
 (use-package eat
   :ensure t
@@ -257,32 +202,7 @@
   ;; For `eat-eshell-mode'.
   (eshell-load-hook . eat-eshell-mode-hook)
   ;; For `eat-eshell-visual-command-mode'.
-  (eshell-load-hook . eat-eshell-visual-command-mode-hook)
-  )
-
-(defalias 'open 'find-file-other-window)
-(defalias 'clean 'eshell/clear-scrollback)
-
-(defun eshell/sudo-open (filename)
-  "Open a file as root in Eshell."
-  (let ((qual-filename (if (string-match "^/" filename)
-                           filename
-                         (concat (expand-file-name (eshell/pwd)) "/" filename))))
-    (switch-to-buffer
-     (find-file-noselect
-      (concat "/sudo::" qual-filename)))))
-
-(defun eshell-other-window ()
-  "Create or visit an eshell buffer."
-  (interactive)
-  (if (not (get-buffer "*eshell*"))
-      (progn
-        (split-window-sensibly (selected-window))
-        (other-window 1)
-        (eshell))
-    (switch-to-buffer-other-window "*eshell*")))
-
-(global-set-key (kbd "<s-C-return>") 'eshell-other-window)
+  (eshell-load-hook . eat-eshell-visual-command-mode-hook))
 
 ;; fonts
 
@@ -293,9 +213,9 @@
 
 (set-face-attribute 'default (selected-frame) :height 120)
 
-;;----------------------------------------
+;; custom
 
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(setq custom-file "./custom.el")
 (load custom-file)
 
 ;;; init.el ends here
