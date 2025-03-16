@@ -32,25 +32,22 @@
   :init (doom-modeline-mode 1))
 
 (use-package prism
-  :vc (:url "https://github.com/alphapapa/prism.el"))
-
-;;
-(prism-set-colors :num 16
-  :desaturations (cl-loop for i from 0 below 16
-                          collect (* i 2.5))
-  :lightens (cl-loop for i from 0 below 16
-                     collect (* i 2.5))
-  :colors (list "dodgerblue" "medium sea green" "sandy brown")
-
-  :comments-fn
-  (lambda (color)
-    (prism-blend color
-                 (face-attribute 'font-lock-comment-face :foreground) 0.25))
-
-  :strings-fn
-  (lambda (color)
-    (prism-blend color "white" 0.5)))
-;;
+  :vc (:url "https://github.com/alphapapa/prism.el")
+  :config  (prism-set-colors :num 16
+             :desaturations (cl-loop for i from 0 below 16
+                                     collect (* i 2.5))
+             :lightens (cl-loop for i from 0 below 16
+                                collect (* i 2.5))
+             :colors (list "dodgerblue" "medium sea green" "sandy brown")
+             
+             :comments-fn
+             (lambda (color)
+               (prism-blend color
+                            (face-attribute 'font-lock-comment-face :foreground) 0.25))
+             
+             :strings-fn
+             (lambda (color)
+               (prism-blend color "white" 0.5))))
 
 (use-package highlight-parentheses
   :ensure t
@@ -76,6 +73,32 @@
   :config (set-fontset-font "fontset-default"
                   (cons page-break-lines-char page-break-lines-char)
                   (face-attribute 'default :family)))
+
+(use-package dogears
+  :ensure t
+  :hook (after-init . dogears-mode)
+  :bind (:map global-map
+              ("M-g d" . dogears-go)
+              ("M-g M-b" . dogears-back)
+              ("M-g M-f" . dogears-forward)
+              ("M-g M-d" . dogears-list)
+              ("M-g M-D" . dogears-sidebar))
+  :config
+  (setq dogears-idle 1
+        dogears-limit 200
+        dogears-position-delta 20)
+  (setq dogears-functions '(find-file recenter-top-bottom
+                                      other-window
+                                      switch-to-buffer
+                                      aw-select
+                                      toggle-window-split
+                                      windmove-do-window-select
+                                      pager-page-down
+                                      pager-page-up
+                                      tab-bar-select-tab
+                                      goto-last-change)))
+
+;; Programming
 
 (use-package company
   :ensure t
@@ -206,9 +229,10 @@
 
 ;; fonts
 
-(set-face-attribute 'default nil :font "Fira Code")
+(set-face-attribute 'default nil :font "Cascadia Code")
 
-(set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal))
+(set-fontset-font t 'unicode (font-spec :family "Noto Sans Mono":weight 'normal :slant 'normal ))
+(set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
 (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
 
 (set-face-attribute 'default (selected-frame) :height 120)
@@ -216,6 +240,6 @@
 ;; custom
 
 (setq custom-file "./custom.el")
-(load custom-file)
+(load-file custom-file)
 
 ;;; init.el ends here
