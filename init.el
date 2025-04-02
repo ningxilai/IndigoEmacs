@@ -14,9 +14,9 @@
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
 ;; ----------------------------------------
 
- (use-package async
-   :ensure t
-   :init (dired-async-mode 1))
+(use-package async
+  :ensure t
+  :init (dired-async-mode 1))
 
 (use-package undo-tree
   :ensure t
@@ -31,23 +31,16 @@
   :ensure t
   :init (doom-modeline-mode 1))
 
-(use-package prism
-  :vc (:url "https://github.com/alphapapa/prism.el")
-  :config  (prism-set-colors :num 16
-             :desaturations (cl-loop for i from 0 below 16
-                                     collect (* i 2.5))
-             :lightens (cl-loop for i from 0 below 16
-                                collect (* i 2.5))
-             :colors (list "dodgerblue" "medium sea green" "sandy brown")
-             
-             :comments-fn
-             (lambda (color)
-               (prism-blend color
-                            (face-attribute 'font-lock-comment-face :foreground) 0.25))
-             
-             :strings-fn
-             (lambda (color)
-               (prism-blend color "white" 0.5))))
+(use-package colorful-mode
+  :diminish
+  :ensure t ; Optional
+  :custom
+  (colorful-use-prefix t)
+  (colorful-only-strings 'only-prog)
+  (css-fontify-colors nil)
+  :config
+  (global-colorful-mode t)
+  (add-to-list 'global-colorful-modes 'helpful-mode))
 
 (use-package highlight-parentheses
   :ensure t
@@ -120,9 +113,7 @@
   :config
   (setq completion-styles '(substring orderless flex)))
 
-(use-package consult
-  :ensure t
-  :defer t)
+(use-package consult :ensure t :defer t)
 
 (use-package vertico
   :ensure t
@@ -136,6 +127,10 @@
   :defer t
   :hook (after-init . marginalia-mode))
 
+(use-package embark-consult
+  :ensure t
+  :after (embark consult))
+
 (use-package embark
   :ensure t
   :defer t
@@ -143,10 +138,6 @@
   (:map minibuffer-mode-map
 	("C-c C-e" . embark-export)
 	("C-c C-a" . embark-act)))
-
-(use-package embark-consult
-  :ensure t
-  :after (embark consult))
 
 (use-package eglot
   :defer t
@@ -169,20 +160,22 @@
   :config
   (setq magit-ediff-dwim-show-on-hunks t))
 
+(use-package diff-hl
+  :ensure t
+  :hook (magit-post-refresh-hook . diff-hl-magit-post-refresh))
+
 ;; Markdown
 
 (use-package markdown-mode
   :ensure t
   :defer t
-  :hook (markdown-mode . writeroom-mode)
-  )
+  :hook (writeroom-mode . markdown-mode))
 
-(use-package focus
-  :ensure t)
+(use-package focus :ensure t)
 
 (use-package writeroom-mode
   :ensure t
-  :hook (focus-mode . global-writeroom-mode))
+  :hook (focus-mode-hook . writeroom-mode))
 
 ;; Org
 
@@ -194,8 +187,7 @@
             '(lambda ()
                (visual-line-mode 1))))
 
-(use-package htmlize
-  :ensure t)
+(use-package htmlize :ensure t)
 
 ;; Eshell
 
@@ -239,7 +231,8 @@
 
 ;; custom
 
-(setq custom-file "./custom.el")
+(setq custom-file "~/.config/emacs/custom.el")
+
 (load-file custom-file)
 
 ;;; init.el ends here
