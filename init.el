@@ -7,11 +7,13 @@
 (package-initialize) ;; You might already have this line
 
 ;; ----------------------------------------
+
 ;; move to trash
 (setq delete-by-moving-to-trash t)
 (setq trash-directory "~/Trash/")
 
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
+
 ;; ----------------------------------------
 
 (use-package async
@@ -221,7 +223,7 @@
 
 ;; fonts
 
-(set-face-attribute 'default nil :font "Cascadia Code")
+(set-face-attribute 'default nil :font "Fira Code")
 
 (set-fontset-font t 'unicode (font-spec :family "Noto Sans Mono":weight 'normal :slant 'normal ))
 (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
@@ -229,6 +231,28 @@
 
 (set-face-attribute 'default (selected-frame) :height 120)
 
+;;; ligature
+
+(use-package ligature :ensure t
+  :config
+
+  ;; Enable the www ligature in every possible major mode
+  (ligature-set-ligatures 't '("www"))
+  
+  ;; Enable ligatures in programming modes                                                           
+  (ligature-set-ligatures 'prog-mode '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
+                                       ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
+                                       "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
+                                       "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
+                                       "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
+                                       "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
+                                       "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
+                                       "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
+                                       "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
+                                       "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
+  
+  :init (global-ligature-mode 't)
+  )
 ;; custom
 
 (setq custom-file "~/.config/emacs/custom.el")
