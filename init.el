@@ -1,12 +1,8 @@
 ;;; init.el --- my emacs init file -*- lexical-binding:t; -*-
 
-(setq package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
-                         ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
-                         ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
-
 (package-initialize) ;; You might already have this line
 
-;; ----------------------------------------
+;; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ;; move to trash
 (setq delete-by-moving-to-trash t)
@@ -14,7 +10,7 @@
 
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
 
-;; ----------------------------------------
+;; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 (use-package async
   :ensure t
@@ -32,6 +28,50 @@
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode 1))
+
+(use-package hl-line
+  :ensure nil
+  :config
+  (setq hl-line-sticky-flag nil)
+  ;; Highlight starts from EOL, to avoid conflicts with other overlays
+  (setq hl-line-range-function (lambda () (cons (line-end-position)
+                                           (line-beginning-position 2)))))
+
+(use-package page-break-lines
+  :ensure t
+  :init (global-page-break-lines-mode)
+  :diminish (page-break-lines-mode visual-line-mode)
+  :config (set-fontset-font "fontset-default"
+                  (cons page-break-lines-char page-break-lines-char)
+                  (face-attribute 'default :family)))
+
+(use-package dashboard
+  :vc (:url "https://github.com/emacs-dashboard/emacs-dashboard")
+  :custom
+  (dashboard-center-content t)
+  (dashboard-set-heading-icons t)
+  (dashboard-set-file-icons t)
+  (dashboard-items '((projects . 5)
+                     (recents . 5)
+                     (agenda . 5)
+                     (registers . 5)))
+  
+  :config
+  (dashboard-setup-startup-hook)
+  (setq dashboard-navigation-cycle t)
+  (setq dashboard-display-icons-p t)     ; display icons on both GUI and terminal
+  (setq dashboard-icon-type 'nerd-icons) ; use `nerd-icons' package
+  (setq dashboard-startup-banner "~/.config/emacs/marivector.xpm")
+  :init (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))))
+
+(use-package projectile
+  :ensure t)
+
+;; Programming
+
+(use-package saveplace
+  :ensure nil
+  :init (save-place-mode 1))
 
 (use-package colorful-mode
   :diminish
@@ -51,49 +91,7 @@
   :config
   (setq highlight-parentheses-colors '("firebrick1" "firebrick3" "orange1" "orange3")
         highlight-parentheses-attributes '((:underline t) (:underline t) (:underline t))
-        highlight-parentheses-delay 0.2)
-  )
-
-(use-package hl-line
-  :config
-  (setq hl-line-sticky-flag nil)
-  ;; Highlight starts from EOL, to avoid conflicts with other overlays
-  (setq hl-line-range-function (lambda () (cons (line-end-position)
-                                           (line-beginning-position 2)))))
-
-(use-package page-break-lines
-  :ensure t
-  :init (page-break-lines-mode)
-  :diminish (page-break-lines-mode visual-line-mode)
-  :config (set-fontset-font "fontset-default"
-                  (cons page-break-lines-char page-break-lines-char)
-                  (face-attribute 'default :family)))
-
-(use-package dogears
-  :ensure t
-  :hook (after-init . dogears-mode)
-  :bind (:map global-map
-              ("M-g d" . dogears-go)
-              ("M-g M-b" . dogears-back)
-              ("M-g M-f" . dogears-forward)
-              ("M-g M-d" . dogears-list)
-              ("M-g M-D" . dogears-sidebar))
-  :config
-  (setq dogears-idle 1
-        dogears-limit 200
-        dogears-position-delta 20)
-  (setq dogears-functions '(find-file recenter-top-bottom
-                                      other-window
-                                      switch-to-buffer
-                                      aw-select
-                                      toggle-window-split
-                                      windmove-do-window-select
-                                      pager-page-down
-                                      pager-page-up
-                                      tab-bar-select-tab
-                                      goto-last-change)))
-
-;; Programming
+        highlight-parentheses-delay 0.2))
 
 (use-package company
   :ensure t
@@ -115,7 +113,10 @@
   :config
   (setq completion-styles '(substring orderless flex)))
 
-(use-package consult :ensure t :defer t)
+(use-package consult
+  :ensure t
+  :defer t
+  :bind ("C-s" . consult-line))
 
 (use-package vertico
   :ensure t
@@ -163,7 +164,7 @@
   (setq magit-ediff-dwim-show-on-hunks t))
 
 (use-package diff-hl
-  :ensure t
+  :vc (:url "https://github.com/dgutov/diff-hl")
   :hook (magit-post-refresh-hook . diff-hl-magit-post-refresh))
 
 ;; Markdown
@@ -173,7 +174,8 @@
   :defer t
   :hook (writeroom-mode . markdown-mode))
 
-(use-package focus :ensure t)
+(use-package focus
+  :ensure t)
 
 (use-package writeroom-mode
   :ensure t
@@ -189,7 +191,8 @@
             '(lambda ()
                (visual-line-mode 1))))
 
-(use-package htmlize :ensure t)
+(use-package htmlize
+  :ensure t)
 
 ;; Eshell
 
@@ -233,12 +236,11 @@
 
 ;;; ligature
 
-(use-package ligature :ensure t
+(use-package ligature
+  :ensure t
   :config
-
   ;; Enable the www ligature in every possible major mode
   (ligature-set-ligatures 't '("www"))
-  
   ;; Enable ligatures in programming modes                                                           
   (ligature-set-ligatures 'prog-mode '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
                                        ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
@@ -251,12 +253,25 @@
                                        "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
                                        "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
   
-  :init (global-ligature-mode 't)
-  )
+  :init (global-ligature-mode 't))
+
 ;; custom
 
 (setq custom-file "~/.config/emacs/custom.el")
 
 (load-file custom-file)
 
-;;; init.el ends here
+;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-vc-selected-packages
+   '((emojify :url "https://github.com/iqbalansari/emacs-emojify"))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
