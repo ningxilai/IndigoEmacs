@@ -63,7 +63,15 @@
 
 (setq system-time-locale "C")
 ;; set frame title
-(setq frame-title-format "%b")
+; (setq frame-title-format "%b")
+(setq frame-title-format
+      '(:eval (concat
+	       (if (and buffer-file-name (buffer-modified-p)) "•")
+	       (buffer-name)
+	       (if buffer-file-name
+		   (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs"))
+      )
+
 ;; set a larger kill ring
 (setq kill-ring-max 200)
 ;; use system clipboard

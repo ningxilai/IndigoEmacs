@@ -1,5 +1,9 @@
 ;;; init.el --- my emacs init file -*- lexical-binding:t; -*-
 
+(setq package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
+                         ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
+                         ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
+
 (package-initialize) ;; You might already have this line
 
 ;; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -9,6 +13,23 @@
 (setq trash-directory "~/Trash/")
 
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
+
+(defun split-and-follow-horizontally ()
+    (interactive)
+    (split-window-below)
+    (balance-windows)
+    (other-window 1))
+(global-set-key (kbd "C-x 2") 'split-and-follow-horizontally)
+
+(defun split-and-follow-vertically ()
+    (interactive)
+    (split-window-right)
+    (balance-windows)
+    (other-window 1))
+(global-set-key (kbd "C-x 3") 'split-and-follow-vertically)
+
+(setq initial-buffer-choice t)
+(setq initial-scratch-echo-area-message "iris")
 
 ;; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -39,7 +60,7 @@
 
 (use-package page-break-lines
   :ensure t
-  :init (global-page-break-lines-mode)
+  :hook (after-init . global-page-break-lines-mode)
   :diminish (page-break-lines-mode visual-line-mode)
   :config (set-fontset-font "fontset-default"
                   (cons page-break-lines-char page-break-lines-char)
@@ -57,17 +78,67 @@
                      (registers . 5)))
   
   :config
-  (dashboard-setup-startup-hook)
   (setq dashboard-navigation-cycle t)
   (setq dashboard-display-icons-p t)     ; display icons on both GUI and terminal
   (setq dashboard-icon-type 'nerd-icons) ; use `nerd-icons' package
   (setq dashboard-startup-banner "~/.config/emacs/marivector.xpm")
-  :init (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))))
+  :init
+  (dashboard-setup-startup-hook))
 
 (use-package projectile
   :ensure t)
 
+;; Highlight indentions
+(use-package indent-bars
+  :ensure t
+  :custom
+  (indent-bars-color '(highlight :face-bg t :blend 0.225))
+  (indent-bars-no-descend-string t)
+  (indent-bars-treesit-ignore-blank-lines-types '("module"))
+  (indent-bars-prefer-character t)
+  (indent-bars-treesit-scope '((python function_definition class_definition for_statement
+				                       if_statement with_statement while_statement)))
+  :hook ((prog-mode yaml-mode) . indent-bars-mode)
+  :config (require 'indent-bars-ts))
+
+;; Colorize color names in buffers
+(use-package rainbow-mode
+  :diminish
+  :ensure t
+  :defines helpful-mode-map
+  :bind (:map help-mode-map
+              ("w" . rainbow-mode))
+  :hook ((mhtml-mode html-mode html-ts-mode php-mode latex-mode help-mode helpful-mode) . rainbow-mode)
+  :init (with-eval-after-load 'helpful
+          (bind-key "w" #'rainbow-mode helpful-mode-map))
+  :config
+  (with-no-warnings
+    ;; HACK: Use overlay instead of text properties to override `hl-line' faces.
+    ;; @see https://emacs.stackexchange.com/questions/36420
+    (defun my-rainbow-colorize-match (color &optional match)
+      (let* ((match (or match 0))
+             (ov (make-overlay (match-beginning match) (match-end match))))
+          (overlay-put ov 'ovrainbow t)
+          (overlay-put ov 'face `((:foreground ,(if (> 0.5 (rainbow-x-color-luminance color))
+                                                    "white" "black"))
+                                  (:background ,color)))))
+    (advice-add #'rainbow-colorize-match :override #'my-rainbow-colorize-match)
+    
+    (defun my-rainbow-clear-overlays ()
+        "Clear all rainbow overlays."
+        (remove-overlays (point-min) (point-max) 'ovrainbow t))
+    (advice-add #'rainbow-turn-off :after #'my-rainbow-clear-overlays)))
+
+(use-package no-littering
+  :ensure t
+  :config (setq auto-save-file-name-transforms
+                `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
+
 ;; Programming
+
+(use-package exec-path-from-shell
+  :init (exec-path-from-shell-initialize)
+  :ensure t)
 
 (use-package saveplace
   :ensure nil
@@ -80,9 +151,11 @@
   (colorful-use-prefix t)
   (colorful-only-strings 'only-prog)
   (css-fontify-colors nil)
+  :hook (after-init . global-colorful-mode)
   :config
   (global-colorful-mode t)
-  (add-to-list 'global-colorful-modes 'helpful-mode))
+  (dolist (mode '(html-mode php-mode help-mode helpful-mode))
+            (add-to-list 'global-colorful-modes mode)))
 
 (use-package highlight-parentheses
   :ensure t
@@ -96,22 +169,63 @@
 (use-package company
   :ensure t
   :defer t
-  :hook (after-init . global-company-mode)
   :config
   (setq company-backends '((:separate company-capf company-dabbrev-code))
 	company-global-modes '(not shell-mode)
-	company-minimum-prefix-length 1
-	company-dabbrev-code-ignore-case t
-	company-dabbrev-code-modes t
-	company-dabbrev-code-everywhere t
-	company-dabbrev-code-completion-styles '(substring flex))
-  (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix))
+	; company-minimum-prefix-length 1
+        (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)))
+
+(use-package cape
+  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
+  ;; Press C-c p ? to for help.
+  :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+  ;; Alternatively bind Cape commands individually.
+  ;; :bind (("C-c p d" . cape-dabbrev)
+  ;;        ("C-c p h" . cape-history)
+  ;;        ("C-c p f" . cape-file)
+  ;;        ...)
+  :init
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
+  ;; Use Company backends as Capfs.
+  (setq-local completion-at-point-functions
+              (mapcar #'cape-company-to-capf
+                      (list #'company-files #'company-keywords #'company-dabbrev))))
+
+(use-package corfu
+  ;; Optional customizations
+  :custom
+  (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+  (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+  (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+  (corfu-preview-current nil)    ;; Disable current candidate preview
+  (corfu-preselect 'prompt)      ;; Preselect the prompt
+  (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+
+  ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
+  :hook ((prog-mode . corfu-mode)
+         (shell-mode . corfu-mode)
+         (eshell-mode . corfu-mode))
+  :init
+  ;; Recommended: Enable Corfu globally.  Recommended since many modes provide
+  ;; Capfs and Dabbrev can be used globally (M-/).  See also the customization
+  ;; variable `global-corfu-modes' to exclude certain modes.
+  (global-corfu-mode)
+  ;; Enable optional extension modes:
+  (corfu-history-mode)
+  (corfu-popupinfo-mode)
+  (setq corfu-auto t
+      corfu-quit-no-match 'separator))
 
 (use-package orderless
-  :ensure t
-  :defer 0.1
-  :config
-  (setq completion-styles '(substring orderless flex)))
+  :custom
+  ;; (orderless-style-dispatchers '(orderless-affix-dispatch))
+  ;; (orderless-component-separator #'orderless-escapable-split-on-space)
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package consult
   :ensure t
@@ -172,30 +286,48 @@
 (use-package markdown-mode
   :ensure t
   :defer t
-  :hook (writeroom-mode . markdown-mode))
+  :mode (("README\\.md\\'" . gfm-mode))
+  :hook (writeroom-mode-hook . markdown-mode-hook)
+  :config (setq markdown-enable-wiki-links t
+                markdown-italic-underscore t
+                markdown-asymmetric-header t
+                markdown-make-gfm-checkboxes-buttons t
+                markdown-gfm-uppercase-checkbox t
+                markdown-fontify-code-blocks-natively t))
+
+(use-package markdown-toc
+  :diminish
+  :bind (:map markdown-mode-command-map
+         ("r" . markdown-toc-generate-or-refresh-toc))
+  :hook (markdown-mode . markdown-toc-mode)
+  :init (setq markdown-toc-indentation-space 2
+              markdown-toc-header-toc-title "\n## Table of Contents"
+              markdown-toc-user-toc-structure-manipulation-fn 'cdr))
 
 (use-package focus
   :ensure t)
 
 (use-package writeroom-mode
   :ensure t
-  :hook (focus-mode-hook . writeroom-mode))
+  :hook (focus-mode-hook . writeroom-mode-hook))
 
 ;; Org
 
 (use-package org
-  :diminish org-indent-mode
+  :vc (:url "https://git.sr.ht/~bzg/org")
   :config
   (add-hook 'org-mode-hook 'org-indent-mode)
   (add-hook 'org-mode-hook
             '(lambda ()
                (visual-line-mode 1))))
 
-(use-package htmlize
-  :ensure t)
+(use-package org-contrib :ensure t)
+
+(use-package htmlize :ensure t)
 
 ;; Eshell
 
+(setq eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
 (setq eshell-prompt-function
       (lambda nil
         (concat
@@ -206,54 +338,47 @@
             (propertize "~" 'face `(:foreground "#99CCFF"))
             (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
          (if (= (user-uid) 0)
-             (propertize " Î± " 'face `(:foreground "#FF6666"))
-         (propertize " Î» " 'face `(:foreground "#A6E22E"))))))
+             (propertize " α " 'face `(:foreground "#FF6666"))
+         (propertize " λ " 'face `(:foreground "#A6E22E"))))))
 
 (setq eshell-highlight-prompt nil)
 
-(defalias 'open 'find-file-other-window)
-(defalias 'clean 'eshell/clear-scrollback)
+;; Vterm
 
-;; Eat
+(use-package vterm
+  :bind (:map vterm-mode-map
+              ([f9] . (lambda ()
+                        (interactive)
+                        (and (fboundp 'shell-pop-toggle)
+                             (shell-pop-toggle)))))
+  :init (setq vterm-always-compile-module t))
 
-(use-package eat
-  :ensure t
-  :hook
-  ;; For `eat-eshell-mode'.
-  (eshell-load-hook . eat-eshell-mode-hook)
-  ;; For `eat-eshell-visual-command-mode'.
-  (eshell-load-hook . eat-eshell-visual-command-mode-hook))
+(use-package multi-vterm
+  :bind ("C-<f9>" . multi-vterm)
+  :custom (multi-vterm-buffer-name "vterm")
+  :config
+  (with-no-warnings
+    ;; Use `pop-to-buffer' instead of `switch-to-buffer'
+    (defun my-multi-vterm ()
+      "Create new vterm buffer."
+      (interactive)
+      (let ((vterm-buffer (multi-vterm-get-buffer)))
+        (setq multi-vterm-buffer-list
+              (nconc multi-vterm-buffer-list (list vterm-buffer)))
+        (set-buffer vterm-buffer)
+        (multi-vterm-internal)
+        (pop-to-buffer vterm-buffer)))
+    (advice-add #'multi-vterm :override #'my-multi-vterm)))
 
 ;; fonts
 
-(set-face-attribute 'default nil :font "Fira Code")
+(set-face-attribute 'default nil :font "IBM Plex Mono")
 
-(set-fontset-font t 'unicode (font-spec :family "Noto Sans Mono":weight 'normal :slant 'normal ))
+(set-fontset-font t 'unicode (font-spec :family "Noto Sans Mono" :weight 'normal :slant 'normal ))
 (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
 (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
 
 (set-face-attribute 'default (selected-frame) :height 120)
-
-;;; ligature
-
-(use-package ligature
-  :ensure t
-  :config
-  ;; Enable the www ligature in every possible major mode
-  (ligature-set-ligatures 't '("www"))
-  ;; Enable ligatures in programming modes                                                           
-  (ligature-set-ligatures 'prog-mode '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
-                                       ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
-                                       "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
-                                       "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
-                                       "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
-                                       "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
-                                       "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
-                                       "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
-                                       "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
-                                       "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
-  
-  :init (global-ligature-mode 't))
 
 ;; custom
 
@@ -262,16 +387,3 @@
 (load-file custom-file)
 
 ;; init.el ends here
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-vc-selected-packages
-   '((emojify :url "https://github.com/iqbalansari/emacs-emojify"))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
