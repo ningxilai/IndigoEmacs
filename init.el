@@ -14,6 +14,8 @@
 
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
 
+(setq flyspell-mode +1)
+
 (defun split-and-follow-horizontally ()
     (interactive)
     (split-window-below)
@@ -39,7 +41,7 @@
 
 (use-package undo-tree
   :ensure t
-  :diminish undo-tree-mode)
+  :init (undo-tree-mode +1))
 
 (use-package doom-themes
  :ensure t
@@ -48,10 +50,9 @@
 
 (use-package doom-modeline
   :ensure t
-  :init (doom-modeline-mode 1))
+  :init (doom-modeline-mode +1))
 
 (use-package hl-line
-  :ensure nil
   :config
   (setq hl-line-sticky-flag nil)
   ;; Highlight starts from EOL, to avoid conflicts with other overlays
@@ -85,8 +86,7 @@
   :init
   (dashboard-setup-startup-hook))
 
-(use-package projectile
-  :ensure t)
+(use-package projectile :ensure t)
 
 ;; Highlight indentions
 (use-package indent-bars
@@ -129,20 +129,11 @@
         (remove-overlays (point-min) (point-max) 'ovrainbow t))
     (advice-add #'rainbow-turn-off :after #'my-rainbow-clear-overlays)))
 
-(use-package no-littering
-  :ensure t
-  :config (setq auto-save-file-name-transforms
-                `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
-
 ;; Programming
 
 (use-package exec-path-from-shell
   :init (exec-path-from-shell-initialize)
   :ensure t)
-
-(use-package saveplace
-  :ensure nil
-  :init (save-place-mode 1))
 
 (use-package colorful-mode
   :diminish
@@ -172,10 +163,12 @@
   :config
   (setq company-backends '((:separate company-capf company-dabbrev-code))
 	company-global-modes '(not shell-mode)
-	; company-minimum-prefix-length 1
-        (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)))
+                                        ; company-minimum-prefix-length 1
+        )
+  )
 
 (use-package cape
+  :ensure t
   ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
   ;; Press C-c p ? to for help.
   :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
@@ -195,6 +188,7 @@
                       (list #'company-files #'company-keywords #'company-dabbrev))))
 
 (use-package corfu
+  :ensure t
   ;; Optional customizations
   :custom
   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
@@ -219,7 +213,10 @@
   (setq corfu-auto t
       corfu-quit-no-match 'separator))
 
+;; (setq text-mode-ispell-word-completion nil) or (customize-set-variable 'text-mode-ispell-word-completion nil) => https://github.com/minad/corfu/discussions/457
+
 (use-package orderless
+  :ensure t
   :custom
   ;; (orderless-style-dispatchers '(orderless-affix-dispatch))
   ;; (orderless-component-separator #'orderless-escapable-split-on-space)
@@ -260,16 +257,20 @@
   :defer t
   :custom
   (eglot-autoshutdown t)  ;; shutdown language server after closing last file
-  (eldoc-echo-area-use-multiline-p nil) ;; eldoc-documentation-function should only return a single line
+  (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
   :custom-face
   (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
   :hook
-  ((python-ts-mode) . eglot-ensure))
+  ((typst-ts-mode) . eglot-ensure)
+  ((markdown-mode) . eglot-ensure)
+  :config
+  (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
+  (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
+  )
 
 (use-package treesit-auto
   :ensure t
-  :config
-  (global-treesit-auto-mode))
+  :config (global-treesit-auto-mode))
 
 (use-package magit
   :ensure t
@@ -281,7 +282,7 @@
   :vc (:url "https://github.com/dgutov/diff-hl")
   :hook (magit-post-refresh-hook . diff-hl-magit-post-refresh))
 
-;; Markdown
+;; Markdown && Typst
 
 (use-package markdown-mode
   :ensure t
@@ -304,12 +305,33 @@
               markdown-toc-header-toc-title "\n## Table of Contents"
               markdown-toc-user-toc-structure-manipulation-fn 'cdr))
 
-(use-package focus
-  :ensure t)
+(use-package typst-ts-mode
+  :vc (:url "https://codeberg.org/meow_king/typst-ts-mode")
+  :custom
+  ;; don't add "--open" if you'd like `watch` to be an error detector
+  (typst-ts-mode-watch-options "--open")
+  
+  ;; experimental settings (I'm the main dev, so I enable these)
+  (typst-ts-mode-enable-raw-blocks-highlight t)
+  (typst-ts-mode-highlight-raw-blocks-at-startup t))
 
-(use-package writeroom-mode
+(use-package websocket :ensure t)
+
+(use-package typst-preview
+  :vc (typst-preview :url "https://github.com/havarddj/typst-preview.el"
+                     :rev :last-release)
+  :config
+  (setq typst-preview-executable "tinymist preview")
+  (setq typst-preview-browser "default")
+  )
+
+(setq-default eglot-workspace-configuration
+              '(:tinymist (:exportPdf "onSave")))
+;; PDF
+
+(use-package pdf-tools
   :ensure t
-  :hook (focus-mode-hook . writeroom-mode-hook))
+  :config (pdf-tools-install))
 
 ;; Org
 
@@ -322,7 +344,15 @@
                (visual-line-mode 1))))
 
 (use-package org-contrib :ensure t)
-
+(use-package org-modern
+  :ensure t
+  :hook (org-mode-hook . org-modern-mode)(org-agenda-finalize-hook . org-modern-agenda)
+  ;; test
+  :config (add-hook 'org-modern-mode-hook
+                    (lambda ()
+	              (setq buffer-face-mode-face '(:family "Iosevka"))
+	              (buffer-face-mode)))
+  )
 (use-package htmlize :ensure t)
 
 ;; Eshell
@@ -374,7 +404,7 @@
 
 (set-face-attribute 'default nil :font "IBM Plex Mono")
 
-(set-fontset-font t 'unicode (font-spec :family "Noto Sans Mono" :weight 'normal :slant 'normal ))
+(set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal ))
 (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
 (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
 

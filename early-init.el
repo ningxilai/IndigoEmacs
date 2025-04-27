@@ -50,9 +50,9 @@
 (global-auto-revert-mode t)
 
 (savehist-mode 1)  
-
+(setopt project-mode-line t)
 (global-prettify-symbols-mode +1)
-
+(global-completion-preview-mode +1)
 ;; highlight current line
 (global-hl-line-mode t)
 ;; display time in mode line
@@ -119,6 +119,26 @@
 (setenv "LC_CTYPE" "UTF-8")
 (setenv "LC_ALL" "en_US.UTF-8")
 (setenv "LANG" "en_US.UTF-8")   
+
+
+(defun childframe-workable-p ()
+  "Whether childframe is workable."
+ (and (>= emacs-major-version 26)
+       (not noninteractive)
+       (not emacs-basic-display)
+       (or (display-graphic-p)
+           (featurep 'tty-child-frames))
+       (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
+
+(setopt blink-matching-paren-highlight-offscreen t
+      show-paren-context-when-offscreen
+      (if (childframe-workable-p) 'child-frame 'overlay))
+
+(auto-save-visited-mode +1)
+(setq auto-save-timeout 5
+      delete-auto-save-files t
+      backup-directory '(("." . "~/.backup")))
+
 
 ;; (setq warning-minimum-level :emergency)
 
