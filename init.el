@@ -4,13 +4,16 @@
                          ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
                          ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
 
-(package-initialize) ;; You might already have this line
-
 ;; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-;; move to trash
-(setq delete-by-moving-to-trash t)
-(setq trash-directory "~/Trash/")
+;; load custom setting
+
+(dolist (dir '("lisp"))
+    (push (expand-file-name dir user-emacs-directory) load-path))
+
+; (load-file "$HOME/.config/emacs/nano.el") 
+
+(require 'nano)
 
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
 
@@ -35,22 +38,19 @@
 
 ;; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+(use-package nano-modeline
+  :ensure t
+  :hook (add-hook 'org-mode-hook  #'nano-modeline-org-mode))
+
 (use-package async
   :ensure t
   :init (dired-async-mode 1))
 
+(use-package amx :ensure t :bind ("M-x" . amx))
+
 (use-package undo-tree
   :ensure t
   :init (undo-tree-mode +1))
-
-(use-package doom-themes
- :ensure t
- :init (load-theme 'doom-one t)
- :config (setq-default mode-line-format t))
-
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode +1))
 
 (use-package hl-line
   :config
@@ -88,6 +88,12 @@
 
 (use-package projectile :ensure t)
 
+;; Programming
+
+(use-package exec-path-from-shell
+  :init (exec-path-from-shell-initialize)
+  :ensure t)
+
 ;; Highlight indentions
 (use-package indent-bars
   :ensure t
@@ -100,40 +106,6 @@
 				                       if_statement with_statement while_statement)))
   :hook ((prog-mode yaml-mode) . indent-bars-mode)
   :config (require 'indent-bars-ts))
-
-;; Colorize color names in buffers
-(use-package rainbow-mode
-  :diminish
-  :ensure t
-  :defines helpful-mode-map
-  :bind (:map help-mode-map
-              ("w" . rainbow-mode))
-  :hook ((mhtml-mode html-mode html-ts-mode php-mode latex-mode help-mode helpful-mode) . rainbow-mode)
-  :init (with-eval-after-load 'helpful
-          (bind-key "w" #'rainbow-mode helpful-mode-map))
-  :config
-  (with-no-warnings
-    ;; HACK: Use overlay instead of text properties to override `hl-line' faces.
-    ;; @see https://emacs.stackexchange.com/questions/36420
-    (defun my-rainbow-colorize-match (color &optional match)
-      (let* ((match (or match 0))
-             (ov (make-overlay (match-beginning match) (match-end match))))
-          (overlay-put ov 'ovrainbow t)
-          (overlay-put ov 'face `((:foreground ,(if (> 0.5 (rainbow-x-color-luminance color))
-                                                    "white" "black"))
-                                  (:background ,color)))))
-    (advice-add #'rainbow-colorize-match :override #'my-rainbow-colorize-match)
-    
-    (defun my-rainbow-clear-overlays ()
-        "Clear all rainbow overlays."
-        (remove-overlays (point-min) (point-max) 'ovrainbow t))
-    (advice-add #'rainbow-turn-off :after #'my-rainbow-clear-overlays)))
-
-;; Programming
-
-(use-package exec-path-from-shell
-  :init (exec-path-from-shell-initialize)
-  :ensure t)
 
 (use-package colorful-mode
   :diminish
@@ -157,101 +129,9 @@
         highlight-parentheses-attributes '((:underline t) (:underline t) (:underline t))
         highlight-parentheses-delay 0.2))
 
-(use-package company
+(use-package symbol-overlay
   :ensure t
-  :defer t
-  :config
-  (setq company-backends '((:separate company-capf company-dabbrev-code))
-	company-global-modes '(not shell-mode)
-                                        ; company-minimum-prefix-length 1
-        )
-  )
-
-(use-package cape
-  :ensure t
-  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
-  ;; Press C-c p ? to for help.
-  :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
-  ;; Alternatively bind Cape commands individually.
-  ;; :bind (("C-c p d" . cape-dabbrev)
-  ;;        ("C-c p h" . cape-history)
-  ;;        ("C-c p f" . cape-file)
-  ;;        ...)
-  :init
-  ;; Add to the global default value of `completion-at-point-functions' which is
-  ;; used by `completion-at-point'.  The order of the functions matters, the
-  ;; first function returning a result wins.  Note that the list of buffer-local
-  ;; completion functions takes precedence over the global list.
-  ;; Use Company backends as Capfs.
-  (setq-local completion-at-point-functions
-              (mapcar #'cape-company-to-capf
-                      (list #'company-files #'company-keywords #'company-dabbrev))))
-
-(use-package corfu
-  :ensure t
-  ;; Optional customizations
-  :custom
-  (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-  (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-  (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-  (corfu-preview-current nil)    ;; Disable current candidate preview
-  (corfu-preselect 'prompt)      ;; Preselect the prompt
-  (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-
-  ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
-  :hook ((prog-mode . corfu-mode)
-         (shell-mode . corfu-mode)
-         (eshell-mode . corfu-mode))
-  :init
-  ;; Recommended: Enable Corfu globally.  Recommended since many modes provide
-  ;; Capfs and Dabbrev can be used globally (M-/).  See also the customization
-  ;; variable `global-corfu-modes' to exclude certain modes.
-  (global-corfu-mode)
-  ;; Enable optional extension modes:
-  (corfu-history-mode)
-  (corfu-popupinfo-mode)
-  (setq corfu-auto t
-      corfu-quit-no-match 'separator))
-
-;; (setq text-mode-ispell-word-completion nil) or (customize-set-variable 'text-mode-ispell-word-completion nil) => https://github.com/minad/corfu/discussions/457
-
-(use-package orderless
-  :ensure t
-  :custom
-  ;; (orderless-style-dispatchers '(orderless-affix-dispatch))
-  ;; (orderless-component-separator #'orderless-escapable-split-on-space)
-  (completion-styles '(orderless basic))
-  (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles partial-completion)))))
-
-(use-package consult
-  :ensure t
-  :defer t
-  :bind ("C-s" . consult-line))
-
-(use-package vertico
-  :ensure t
-  :defer t
-  :custom
-  (vertico-cycle t)
-  :hook (after-init . vertico-mode))
-
-(use-package marginalia
-  :ensure t
-  :defer t
-  :hook (after-init . marginalia-mode))
-
-(use-package embark-consult
-  :ensure t
-  :after (embark consult))
-
-(use-package embark
-  :ensure t
-  :defer t
-  :bind
-  (:map minibuffer-mode-map
-	("C-c C-e" . embark-export)
-	("C-c C-a" . embark-act)))
+  :init (setq symbol-overlay-mode t))
 
 (use-package eglot
   :defer t
@@ -271,16 +151,6 @@
 (use-package treesit-auto
   :ensure t
   :config (global-treesit-auto-mode))
-
-(use-package magit
-  :ensure t
-  :defer t
-  :config
-  (setq magit-ediff-dwim-show-on-hunks t))
-
-(use-package diff-hl
-  :vc (:url "https://github.com/dgutov/diff-hl")
-  :hook (magit-post-refresh-hook . diff-hl-magit-post-refresh))
 
 ;; Markdown && Typst
 
@@ -336,7 +206,7 @@
 ;; Org
 
 (use-package org
-  :vc (:url "https://git.sr.ht/~bzg/org")
+  :ensure t
   :config
   (add-hook 'org-mode-hook 'org-indent-mode)
   (add-hook 'org-mode-hook
@@ -373,42 +243,9 @@
 
 (setq eshell-highlight-prompt nil)
 
-;; Vterm
-
-(use-package vterm
-  :bind (:map vterm-mode-map
-              ([f9] . (lambda ()
-                        (interactive)
-                        (and (fboundp 'shell-pop-toggle)
-                             (shell-pop-toggle)))))
-  :init (setq vterm-always-compile-module t))
-
-(use-package multi-vterm
-  :bind ("C-<f9>" . multi-vterm)
-  :custom (multi-vterm-buffer-name "vterm")
-  :config
-  (with-no-warnings
-    ;; Use `pop-to-buffer' instead of `switch-to-buffer'
-    (defun my-multi-vterm ()
-      "Create new vterm buffer."
-      (interactive)
-      (let ((vterm-buffer (multi-vterm-get-buffer)))
-        (setq multi-vterm-buffer-list
-              (nconc multi-vterm-buffer-list (list vterm-buffer)))
-        (set-buffer vterm-buffer)
-        (multi-vterm-internal)
-        (pop-to-buffer vterm-buffer)))
-    (advice-add #'multi-vterm :override #'my-multi-vterm)))
-
-;; fonts
-
-(set-face-attribute 'default nil :font "IBM Plex Mono")
-
-(set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal ))
-(set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
-(set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
-
-(set-face-attribute 'default (selected-frame) :height 120)
+(use-package eat
+  :hook ((eshell-load . eat-eshell-mode)
+         (eshell-load . eat-eshell-visual-command-mode)))
 
 ;; custom
 

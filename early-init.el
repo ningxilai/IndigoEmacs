@@ -3,31 +3,23 @@
 ;;;copy by seagle0128/CentaurEmacs && ltylty/.emacs.d && https://coldnight.github.io/dump-brain-with-emacs/
 
 ;;; Code:
-
-(tab-bar-mode -1)
-(tool-bar-mode -1)
-(menu-bar-mode -1)
-(scroll-bar-mode -1)
-(horizontal-scroll-bar-mode -1)
-
 (setq gc-cons-threshold (* 100 1024 1024))
-(setq inhibit-startup-message t)
-(setq initial-major-mode 'fundamental-mode)
-
+(setq inhibit-startup-message t
+      initial-major-mode 'fundamental-mode)
 (setq frame-inhibit-implied-resize t)
+(defvar k-gc-timer
+  (run-with-idle-timer 15 t
+                       'garbage-collect))
+;; --- Activate / Deactivate modes --------------------------------------------
+(tool-bar-mode -1)
+(tab-bar-mode -1)
+(menu-bar-mode -1)
+(blink-cursor-mode -1)
+(global-hl-line-mode 1)
+(icomplete-vertical-mode 1)
+(pixel-scroll-precision-mode 1)
+(setq pixel-scroll-precision-interpolate-page t)
 
-;; (setq default-frame-alist '((fullscreen . maximized)))
-(setq default-frame-alist '((height . 49)
-                            (width . 144)
-                            (alpha-background . 100)))
-
-(setq flymake-show-diagnostics-at-end-of-line 'short)
-
-(setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
-(setq-default indent-tabs-mode nil)
-
-(setq create-lockfiles t)
-(setq ring-bell-function 'ignore)
 ;; nice scrolling
 (setq scroll-step 1
       scroll-preserve-screen-position t
@@ -37,8 +29,32 @@
       scroll-up-aggressively 0.0
       scroll-down-aggressively 0.0)
 
-(pixel-scroll-precision-mode 1)
-(setq pixel-scroll-precision-interpolate-page t)
+(scroll-bar-mode -1)
+(horizontal-scroll-bar-mode -1)
+
+;; --- Frame / windows layout & behavior --------------------------------------
+(setq default-frame-alist
+      '((height . 44)
+        (width  . 81)
+        (left-fringe . 0)
+        (right-fringe . 0)
+        (internal-border-width . 32)
+        (vertical-scroll-bars . nil)
+        (bottom-divider-width . 0)
+        (right-divider-width . 0)
+        (undecorated-round . t)))
+(modify-frame-parameters nil default-frame-alist)
+
+(setq-default pop-up-windows nil)
+
+(setq flymake-show-diagnostics-at-end-of-line 'short)
+
+; (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
+
+(setq-default indent-tabs-mode nil)
+
+(setq create-lockfiles t)
+(setq ring-bell-function 'ignore)
 
 ;; word wrap for CJK
 (setq word-wrap-by-category t)
@@ -49,7 +65,12 @@
 ;; auto revert external changes
 (global-auto-revert-mode t)
 
-(savehist-mode 1)  
+(savehist-mode +1)
+(save-place-mode +1)
+(auto-revert-mode +1)
+(recentf-mode +1)
+(which-key-mode +1)
+
 (setopt project-mode-line t)
 (global-prettify-symbols-mode +1)
 (global-completion-preview-mode +1)
@@ -99,6 +120,11 @@
 (add-hook 'prog-mode-hook 'electric-pair-mode)
 (add-hook 'prog-mode-hook 'hs-minor-mode)
 
+;; --- Sane settings ----------------------------------------------------------
+(setq-default indent-tabs-mode nil
+              ring-bell-function 'ignore
+              select-enable-clipboard t)
+
 ;; ChineseLanguage
 (set-language-environment "utf-8")
 (set-buffer-file-coding-system 'utf-8)
@@ -135,10 +161,12 @@
       (if (childframe-workable-p) 'child-frame 'overlay))
 
 (auto-save-visited-mode +1)
-(setq auto-save-timeout 5
+(setq delete-by-moving-to-trash t
+      auto-save-timeout 5
       delete-auto-save-files t
-      backup-directory '(("." . "~/.backup")))
+      backup-directory '(("." . "~/.backup"))) ;trash-directory "~/Trash/
 
+(package-initialize)
 
 ;; (setq warning-minimum-level :emergency)
 
