@@ -4,20 +4,19 @@
                          ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
                          ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
 
-;; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-;; load custom setting
+;; load custom && package manager setting
 
 (dolist (dir '("lisp"))
     (push (expand-file-name dir user-emacs-directory) load-path))
 
 (require 'nano)
+(require 'straight-init)
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
 ;;  (defalias 'yes-or-no-p 'y-or-n-p)
 
-(setq flyspell-mode +1)
+(setq flyspell-mode 1)
 
 (defun split-and-follow-horizontally ()
     (interactive)
@@ -36,7 +35,7 @@
 (setq initial-buffer-choice t)
 (setq initial-scratch-echo-area-message "iris")
 
-;; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+;; Base
 
 (use-package nano-modeline
   :ensure t
@@ -51,21 +50,6 @@
 (use-package undo-tree
   :ensure t
   :init (undo-tree-mode +1))
-
-(use-package hl-line
-  :config
-  (setq hl-line-sticky-flag nil)
-  ;; Highlight starts from EOL, to avoid conflicts with other overlays
-  (setq hl-line-range-function (lambda () (cons (line-end-position)
-                                           (line-beginning-position 2)))))
-
-(use-package page-break-lines
-  :ensure t
-  :hook (after-init . global-page-break-lines-mode)
-  :diminish (page-break-lines-mode visual-line-mode)
-  :config (set-fontset-font "fontset-default"
-                  (cons page-break-lines-char page-break-lines-char)
-                  (face-attribute 'default :family)))
 
 (use-package dashboard
   :ensure t
@@ -87,13 +71,27 @@
 
 (use-package projectile :ensure t)
 
-;; Programming
+(use-package treesit-auto
+  :ensure t
+  :config (global-treesit-auto-mode))
 
-(use-package exec-path-from-shell
-  :init (exec-path-from-shell-initialize)
-  :ensure t)
+;; Color
 
-;; Highlight indentions
+(use-package hl-line
+  :config
+  (setq hl-line-sticky-flag nil)
+  ;; Highlight starts from EOL, to avoid conflicts with other overlays
+  (setq hl-line-range-function (lambda () (cons (line-end-position)
+                                           (line-beginning-position 2)))))
+
+(use-package page-break-lines
+  :ensure t
+  :hook (after-init . global-page-break-lines-mode)
+  :diminish (page-break-lines-mode visual-line-mode)
+  :config (set-fontset-font "fontset-default"
+                  (cons page-break-lines-char page-break-lines-char)
+                  (face-attribute 'default :family)))
+
 (use-package indent-bars
   :ensure t
   :custom
@@ -132,28 +130,37 @@
   :ensure t
   :init (setq symbol-overlay-mode t))
 
-(use-package eglot
-  :defer t
-  :custom
-  (eglot-autoshutdown t)  ;; shutdown language server after closing last file
-  (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
-  :custom-face
-  (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
-  :hook
-  ((typst-ts-mode) . eglot-ensure)
-  ((markdown-mode) . eglot-ensure)
-  ((LaTeX-mode) . eglot-ensure)
-  :config
-  (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
-  (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
-  (add-to-list 'eglot-server-programs '(latex-mode . ("texlab")))
-  )
+;; Progmming
 
-(use-package treesit-auto
-  :ensure t
-  :config (global-treesit-auto-mode))
+(use-package exec-path-from-shell :ensure t :init (exec-path-from-shell-initialize)) ;; $env
 
-;; Markdown && Typst
+(use-package yasnippet :ensure t :init (yas-global-mode +1))
+
+(use-package lsp-bridge
+  :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+            :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+            :build (:not compile))
+  :init
+  (global-lsp-bridge-mode))
+
+;; (use-package eglot
+;;   :defer t
+;;   :custom
+;;   (eglot-autoshutdown t)  ;; shutdown language server after closing last file
+;;   (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
+;;   :custom-face
+;;   (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
+;;   :hook
+;;   ((typst-ts-mode) . eglot-ensure)
+;;   ((markdown-mode) . eglot-ensure)
+;;   ((LaTeX-mode) . eglot-ensure)
+;;   :config
+;;   (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
+;;   (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
+;;   (add-to-list 'eglot-server-programs '(latex-mode . ("texlab")))
+;; )
+
+;; Markdown
 
 (use-package markdown-mode
   :ensure t
@@ -165,7 +172,9 @@
                 markdown-asymmetric-header t
                 markdown-make-gfm-checkboxes-buttons t
                 markdown-gfm-uppercase-checkbox t
-                markdown-fontify-code-blocks-natively t))
+                markdown-fontify-code-blocks-natively t
+                markdown-open-command "firefox") ;; deps by "https://github.com/simov/markdown-viewer"
+  )
 
 (use-package markdown-toc
   :diminish
@@ -175,6 +184,8 @@
   :init (setq markdown-toc-indentation-space 2
               markdown-toc-header-toc-title "\n## Table of Contents"
               markdown-toc-user-toc-structure-manipulation-fn 'cdr))
+
+;; Typst
 
 (use-package typst-ts-mode
   :vc (:url "https://codeberg.org/meow_king/typst-ts-mode")
@@ -196,14 +207,8 @@
   (setq typst-preview-browser "default")
   )
 
-(setq-default eglot-workspace-configuration
-              '(:tinymist (:exportPdf "onSave")))
-;; PDF
-
-(use-package pdf-tools
-  :ensure t
-  :config
-  (pdf-tools-install))
+;(setq-default eglot-workspace-configuration
+;              '(:tinymist (:exportPdf "onSave")))
 
 ;; Org
 
@@ -247,7 +252,7 @@
     (add-to-list 'tex-compile-commands '("xelatex %f" t "%r.pdf"))
     (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex --synctex=1%(mode)%' %t" TeX-run-TeX nil t))) ;; https://emacs-china.org/t/auctex-setup-synctex-with-pdf-tools-not-working/11257/2
   
-  (setq TeX-output-view-style (quote (("^pdf$" "." "okular %o %(outpage)"))))
+  (setq TeX-output-view-style (quote (("^pdf$" "." "xpdf %o %(outpage)"))))
   (setq TeX-command-default "XeLaTeX")
   
   :config
@@ -301,6 +306,13 @@
   :hook
   (LaTeX-mode-hook . turn-on-cdlatex)
   (LaTeX-mode-hook . turn-on-reftex))
+
+;; PDF
+
+(use-package pdf-tools
+  :ensure t
+  :config
+  (pdf-tools-install))
 
 ;; Eshell
 
