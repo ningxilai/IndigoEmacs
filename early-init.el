@@ -3,14 +3,20 @@
 ;;;copy by seagle0128/CentaurEmacs && ltylty/.emacs.d && https://coldnight.github.io/dump-brain-with-emacs/
 
 ;;; Code:
-(setq gc-cons-threshold (* 100 1024 1024))
+
+;; GC
+
+(setq gc-cons-threshold (* 64 1024 1024))
 (setq inhibit-startup-message t
       initial-major-mode 'fundamental-mode)
 (setq frame-inhibit-implied-resize t)
+
 (defvar k-gc-timer
   (run-with-idle-timer 15 t
                        'garbage-collect))
-;; --- Activate / Deactivate modes --------------------------------------------
+
+;; Activate / Deactivate modes
+
 (tool-bar-mode -1)
 (tab-bar-mode -1)
 (menu-bar-mode -1)
@@ -18,7 +24,6 @@
 (global-hl-line-mode 1)
 (icomplete-vertical-mode 1)
 (pixel-scroll-precision-mode 1)
-(setq pixel-scroll-precision-interpolate-page t)
 
 ;; nice scrolling
 (setq scroll-step 1
@@ -27,12 +32,32 @@
       scroll-conservatively 10
       maximum-scroll-margin 0.3
       scroll-up-aggressively 0.0
-      scroll-down-aggressively 0.0)
+      scroll-down-aggressively 0.0
+      pixel-scroll-precision-interpolate-page t)
 
 (scroll-bar-mode -1)
 (horizontal-scroll-bar-mode -1)
 
-;; --- Frame / windows layout & behavior --------------------------------------
+;;  (defalias 'yes-or-no-p 'y-or-n-p)
+
+(setq flyspell-mode 1)
+
+(setq-default indent-tabs-mode nil
+              ring-bell-function 'ignore
+              select-enable-clipboard t)
+
+;; Frame / windows layout & behavior
+
+;; set frame title
+; (setq frame-title-format "%b")
+(setq frame-title-format
+      '(:eval (concat
+	       (if (and buffer-file-name (buffer-modified-p)) "•")
+	       (buffer-name)
+	       (if buffer-file-name
+		   (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs"))
+      )
+
 (setq default-frame-alist
       '((height . 44)
         (width  . 81)
@@ -51,19 +76,7 @@
 
 ; (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
 
-(setq-default indent-tabs-mode nil)
-
-(setq create-lockfiles t)
-(setq ring-bell-function 'ignore)
-
-;; word wrap for CJK
-(setq word-wrap-by-category t)
-;; enable syntax highlight
-(global-font-lock-mode t)
-;; delete selection
-(delete-selection-mode t)
-;; auto revert external changes
-(global-auto-revert-mode t)
+(setq create-lockfiles nil)
 
 (savehist-mode +1)
 (save-place-mode +1)
@@ -83,15 +96,6 @@
 (setq load-prefer-newer t)
 
 (setq system-time-locale "C")
-;; set frame title
-; (setq frame-title-format "%b")
-(setq frame-title-format
-      '(:eval (concat
-	       (if (and buffer-file-name (buffer-modified-p)) "•")
-	       (buffer-name)
-	       (if buffer-file-name
-		   (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs"))
-      )
 
 ;; set a larger kill ring
 (setq kill-ring-max 200)
@@ -102,28 +106,6 @@
 
 ;; (add-to-list 'default-frame-alist
 ;; 	     '(font .  "IBM Plex Mono"))
-
-(setopt use-short-answers t)
-
-(setq native-comp-deferred-compilation t
-      native-comp-jit-compilation t
-      package-enable-at-startup nil
-      use-package-always-ensure t
-      package-native-compile t
-      version-control t
-      delete-old-versions t)
-
-(setq package-user-dir
-      (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
-			user-emacs-directory))
-
-(add-hook 'prog-mode-hook 'electric-pair-mode)
-(add-hook 'prog-mode-hook 'hs-minor-mode)
-
-;; --- Sane settings ----------------------------------------------------------
-(setq-default indent-tabs-mode nil
-              ring-bell-function 'ignore
-              select-enable-clipboard t)
 
 ;; ChineseLanguage
 (set-language-environment "utf-8")
@@ -146,28 +128,17 @@
 (setenv "LC_ALL" "en_US.UTF-8")
 (setenv "LANG" "en_US.UTF-8")   
 
-
-(defun childframe-workable-p ()
-  "Whether childframe is workable."
- (and (>= emacs-major-version 26)
-       (not noninteractive)
-       (not emacs-basic-display)
-       (or (display-graphic-p)
-           (featurep 'tty-child-frames))
-       (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
-
-(setopt blink-matching-paren-highlight-offscreen t
-      show-paren-context-when-offscreen
-      (if (childframe-workable-p) 'child-frame 'overlay))
-
-(auto-save-visited-mode +1)
-(setq delete-by-moving-to-trash t
-      auto-save-timeout 5
-      delete-auto-save-files t
-      backup-directory '(("." . "~/.backup"))) ;trash-directory "~/Trash/
-
-(package-initialize)
+;; word wrap for CJK
+(setq word-wrap-by-category t)
+;; enable syntax highlight
+(global-font-lock-mode t)
+;; delete selection
+(delete-selection-mode t)
+;; auto revert external changes
+(global-auto-revert-mode t)
 
 ;; (setq warning-minimum-level :emergency)
+
+(setq package-enable-at-startup nil)
 
 ;;; early-init.el ends here

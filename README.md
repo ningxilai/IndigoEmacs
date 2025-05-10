@@ -32,3 +32,30 @@ uv pip install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog pa
             :build (:not compile))
   :init (global-lsp-bridge-mode))
 ```
+
+--------------------
+Package.el
+
+``` emacs-lisp
+;; Package Manager
+
+(setq package-user-dir (expand-file-name "elpa" user-emacs-directory))
+
+(require 'use-package-ensure)
+(require 'package)
+(setq package-quickstart t
+      use-package-always-ensure nil
+      use-package-always-defer t
+      use-package-expand-minimally t
+      use-package-vc-prefer-newest t
+      native-comp-deferred-compilation t
+      native-comp-jit-compilation t
+      package-native-compile t
+      version-control t
+      delete-old-versions t
+      package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
+                         ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
+                         ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
+(package-activate-all)
+;;ends
+```

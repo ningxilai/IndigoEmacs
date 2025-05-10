@@ -1,3 +1,8 @@
+;; -*- lexical-binding: t; -*-
+
+(setq straight-enable-at-startup nil)
+(setq straight-vc-git-default-clone-depth 1)
+
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name
