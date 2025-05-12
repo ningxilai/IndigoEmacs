@@ -17,7 +17,7 @@
   )
 
 (use-package markdown-toc
-  :diminish
+  :ensure t
   :bind (:map markdown-mode-command-map
          ("r" . markdown-toc-generate-or-refresh-toc))
   :hook (markdown-mode . markdown-toc-mode)
@@ -28,7 +28,11 @@
 ;; Typst
 
 (use-package typst-ts-mode
-  :ensure t ; :straight '(typst-ts-mode :type git :host codeberg :repo  "meow_king/typst-ts-mode")
+  :defer t
+  :vc (typst-ts-mode :url "https://codeberg.org/meow_king/typst-ts-mode.git"
+                     :rev :newest
+                     :lisp-dir "./"
+                     :shell-command "cargo build")
   :custom
   ;; don't add "--open" if you'd like `watch` to be an error detector
   (typst-ts-mode-watch-options "--open")
@@ -39,29 +43,29 @@
 
 (use-package websocket :ensure t)
 
-(elpaca (typst-preview :host github :repo "havarddj/typst-preview.el" :inherit nil :files ("*")))
 (use-package typst-preview
-  :mode "\\.typ\\'"
-  :config
+  :defer t
+  :vc (typst-preview :url "https://github.com/havarddj/typst-preview.el"
+                     :rev :newest)
+  :init
   (require 'typst-preview)
+  :config
   (setq typst-preview-executable "tinymist preview")
   (setq typst-preview-browser "default")
   )
 
-;(setq-default eglot-workspace-configuration
-;              '(:tinymist (:exportPdf "onSave")))
+(setq-default eglot-workspace-configuration '(:tinymist (:exportPdf "onSave")))
 
 ;; Org
 
-(elpaca (org :host github :repo "bzg/org-mode" :inherit nil :files ("*")))
 (use-package org
-  :ensure org-mode
   :hook
   (org-mode . org-indent-mode)
   (org-mode . (lambda ()(visual-line-mode 1)))
   (org-mode . org-modern-mode))
 
 (use-package org-contrib :ensure t)
+
 (use-package org-modern
   :ensure t
   :hook

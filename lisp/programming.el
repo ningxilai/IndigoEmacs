@@ -48,7 +48,26 @@
 (setq eshell-highlight-prompt nil)
 
 (use-package eat
+  :ensure t
   :hook ((eshell-load . eat-eshell-mode)
          (eshell-load . eat-eshell-visual-command-mode)))
+
+;; Vertico
+
+(use-package consult
+  :ensure t
+  :bind
+  (("C-s" . consult-line)))
+
+(use-package vertico
+  :ensure t
+  :init (vertico-mode))
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))) )
 
 (provide 'programming)

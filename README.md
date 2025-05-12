@@ -4,7 +4,7 @@ Install:
 
 ```bash
 git clone --depth 1 https://github.com/ningxilai/IndigoEmacs $XDG_CONFIG_HOME/emacs
-git clone --depth 1 https://github.com/radian-software/straight.el $XDG_CONFIG_HOME/emacs/straight/repos/straight.el
+git clone --depth 1 https://github.com/radian-software/straight.el $XDG_CONFIG_HOME/emacs/straight/repos/straight.el ## If you use it.
 ```
 --------------------
 Acknowledge:
@@ -15,11 +15,13 @@ Acknowledge:
 - ltylty .emacs.d
 - rougier nano-emacs
 - EmacsChina forum Emacs-general
-- ![Cold's World](https://coldnight.github.io/dump-brain-with-emacs/)
+- [Cold's World](https://coldnight.github.io/dump-brain-with-emacs/)
 - etc..
 
 --------------------
 LSP Bridge(Emacs 30.1):
+
+*The current plan has been deprecated.*
 
 ``` bash
 uv pip install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog packaging
@@ -35,6 +37,8 @@ uv pip install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog pa
 
 --------------------
 Package.el
+
+*The current plan has been deprecated.*
 
 ``` emacs-lisp
 ;; Package Manager
@@ -58,4 +62,12 @@ Package.el
                          ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
 (package-activate-all)
 ;;ends
+```
+
+----------------
+[EAT](https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/nongnu-devel/doc/eat.html)
+
+``` bash
+[ -n "$EAT_SHELL_INTEGRATION_DIR" ] && \
+  source "$EAT_SHELL_INTEGRATION_DIR/zsh"
 ```

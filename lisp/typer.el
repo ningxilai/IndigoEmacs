@@ -3,10 +3,12 @@
 ;; LaTeX
 
 (use-package latex-change-env
+  :ensure t
   :after latex
   :bind (:map LaTeX-mode-map ("C-c r" . latex-change-env)))
 
 (use-package latex
+  :defer t
   :ensure auctex
   :commands (TeX-latex-mode)
   :init
@@ -53,6 +55,7 @@
   )
 
 (use-package preview-auto
+  :ensure t
   :after latex
   :hook (LaTeX-mode . preview-auto-setup)
   :config
@@ -83,4 +86,4 @@
   :config
   (pdf-tools-install))
 
-(provide 'tex)
+(provide 'typer)

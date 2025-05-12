@@ -137,8 +137,6 @@
 ;; auto revert external changes
 (global-auto-revert-mode t)
 
-;; (setq warning-minimum-level :emergency)
-
-(setq package-enable-at-startup nil)
+(setq warning-minimum-level :warning)
 
 ;;; early-init.el ends here
