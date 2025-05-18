@@ -1,6 +1,4 @@
-;; TeX  -*- lexical-binding: t; -*-
-
-;; LaTeX
+;; -*- lexical-binding: t; -*-
 
 (use-package latex-change-env
   :ensure t
@@ -78,12 +76,4 @@
   (LaTeX-mode-hook . turn-on-cdlatex)
   (LaTeX-mode-hook . turn-on-reftex))
 
-;; PDF
-
-(use-package pdf-tools
-  :defer t
-  :ensure t
-  :config
-  (pdf-tools-install))
-
-(provide 'typer)
+(provide 'lang-latex)
