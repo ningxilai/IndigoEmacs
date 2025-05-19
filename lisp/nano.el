@@ -13,7 +13,7 @@
 
 ;; --- Typography stack -------------------------------------------------------
 (set-face-attribute 'default (selected-frame)
-                    :height 120 :weight 'light :family "IBM Plex Mono")
+                    :height 120 :weight 'light :family "Ligalex Mono") ;; IBM Plex Mono
 (set-face-attribute 'bold nil :weight 'regular)
 (set-face-attribute 'bold-italic nil :weight 'regular)
 (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal ))
@@ -44,18 +44,43 @@
 (scroll-bar-mode -1)
 (horizontal-scroll-bar-mode -1)
 
+;; (use-package ligature
+;;   :ensure t
+;;   :config
+;;   ;; Enable the "www" ligature in every possible major mode
+;;   (ligature-set-ligatures 't '("www"))
+;;   ;; Enable traditional ligature support in eww-mode, if the
+;;   ;; `variable-pitch' face supports it
+;;   (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+;;   ;; Enable all Cascadia Code ligatures in programming modes
+;;   (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+;;                                        ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+;;                                        "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+;;                                        "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+;;                                        "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+;;                                        "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+;;                                        "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
+;;                                        "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+;;                                        ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+;;                                        "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+;;                                        "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
+;;                                        "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+;;                                          "\\\\" "://"))
+;;   ;; Enables ligature checks globally in all buffers. You can also do it
+;;   ;; per mode with `ligature-mode'.
+;;   :hook ((prog-mode vterm-mode) . ligature-mode)
+;;   :init (global-ligature-mode nil))
+
 (global-font-lock-mode t)
 (delete-selection-mode t)
 (global-auto-revert-mode t)
-(electric-pair-mode +1)
-(global-so-long-mode +1)
-(global-subword-mode +1)
-(global-prettify-symbols-mode +1)
-(auto-revert-mode +1)
-(recentf-mode +1)
-(which-key-mode +1)
-
-
+(electric-pair-mode t)
+(global-so-long-mode t)
+(global-subword-mode t)
+(global-prettify-symbols-mode t)
+(auto-revert-mode t)
+(recentf-mode t)
+(which-key-mode t)
 
 ;; --- Minimal NANO (not a real) theme ----------------------------------------
 (defface nano-default '((t)) "")   (defface nano-default-i '((t)) "")
@@ -137,8 +162,7 @@
 (bind-key "C-<wheel-up>" nil) ;; No text resize via mouse scroll
 (bind-key "C-<wheel-down>" nil) ;; No text resize via mouse scroll
 
-;; --- Sane settings ------ CJK && UTF-8 --------------------------------------
-
+;; --- Sane settings ------ CJK && UTF-8 ---------------------------------------
 (set-language-environment "utf-8")
 (set-buffer-file-coding-system 'utf-8)
 (set-terminal-coding-system 'utf-8)

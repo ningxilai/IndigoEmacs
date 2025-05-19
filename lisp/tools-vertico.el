@@ -1,5 +1,21 @@
 ;; -*- lexical-binding: t; -*-
 
+(use-package marginalia
+  :ensure t
+  :bind (:map minibuffer-local-map
+              ("M-A" . marginalia-cycle))
+  :custom
+  (marginalia-max-relative-age 0)
+  (marginalia-align 'right)
+  :init
+  (marginalia-mode))
+
+(use-package nerd-icons-completion
+  :ensure t
+  :after (marginalia nerd-icons)
+  :config (nerd-icons-completion-mode)
+  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup))
+
 (use-package consult
   :ensure t
   :bind (;; C-c bindings in `mode-specific-map'

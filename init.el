@@ -61,11 +61,8 @@
 
 (use-package highlight-indent-guides
   :ensure t
-  :config (setq highlight-indent-guides-method 'character)
+  :config (setq highlight-indent-guides-method 'bitmap)
   :hook (prog-mode . highlight-indent-guides-mode))
-
-(use-package aweshell
-  :ensure (aweshell :type git :host github :repo "manateelazycat/aweshell"))
 
 (use-package vundo
   :ensure t
@@ -113,18 +110,57 @@
   :init (show-smartparens-global-mode t)
   :hook
   ((prog-mode text-mode markdown-mode) . smartparens-mode)
-  ((prog-mode text-mode markdown-mode) . turn-on-smartparens-strict-mode)
   :config
-  (sp-use-smartparens-bindings)
   (require 'smartparens-config)
+  )
+
+(use-package composite
+  :init
+  (global-auto-composition-mode nil)
+  :hook
+  (prog-mode . auto-composition-mode)
+  :config
+  (dolist (char/ligature-re
+           `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
+             (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
+             (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
+             (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<"
+                                 "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>"
+                                 "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+"
+                                 "</" "<*")
+                           (+ "<"))))
+             (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
+             (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
+             (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
+             (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
+             (?&  . ,(rx (+ "&")))
+             (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>"
+                                 "|]" "|}" "|=")
+                             (+ "|"))))
+             (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
+             (?+  . ,(rx (or "+>" (+ "+"))))
+           (?\[ . ,(rx (or "[<" "[|")))
+           (?\{ . ,(rx "{|"))
+           (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
+           (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
+                           (+ "#"))))
+           (?\; . ,(rx (+ ";")))
+           (?_  . ,(rx (or "_|_" "__")))
+           (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
+           (?$  . ,(rx "$>"))
+           (?^  . ,(rx "^="))
+           (?\] . ,(rx "]#"))))
+    (let ((char (car char/ligature-re))
+          (ligature-re (cdr char/ligature-re)))
+      (set-char-table-range composition-function-table char
+                            `([,ligature-re 0 font-shape-gstring]))))  
   )
 
 (use-package rainbow-delimiters
   :ensure t
-  :hook (smartparens-mode . rainbow-delimiters-mode)
-  )
+  :hook (smartparens-mode . rainbow-delimiters-mode))
 
-(use-package region-occurrences-highlighter 
+(use-package region-occurrences-highlighter
   :ensure t
   :hook ((prog-mode org-mode text-mode) . region-occurrences-highlighter-mode))
 
@@ -134,6 +170,7 @@
 
 (use-package dired
   :config
+  (setq dired-movement-style 'cycle)
   (setq browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
   (setq dired-listing-switches
         "-l --almost-all --human-readable --group-directories-first --no-group")
@@ -243,6 +280,44 @@
 
 ;; ends
 
+;; Term
+
+(use-package aweshell
+  :ensure (aweshell :type git :host github :repo "manateelazycat/aweshell"))
+
+(use-package vterm
+  :ensure  (vterm :type git :host github :repo "akermu/emacs-libvterm"
+            :files "*" :post-build t)
+  :config
+  (setq vterm-shell "zsh")
+  (defun vterm--rename-buffer-as-title (title)
+    (rename-buffer (format "vterm @ %s" title) t))
+  :hook
+  (vterm-mode . (lambda()
+                  (set (make-local-variable 'buffer-face-mode-face) '(:family "FiraCode Nerd Font Mono"))
+                  (buffer-face-mode t)))
+  (vterm-set-title-functions . vterm--rename-buffer-as-title))
+(use-package multi-vterm :ensure t)
+(use-package vterm-toggle
+  :ensure t
+  :config
+  (setq vterm-toggle-fullscreen-p nil)
+  (add-to-list 'display-buffer-alist
+               '((lambda (buffer-or-name _)
+                   (let ((buffer (get-buffer buffer-or-name)))
+                     (with-current-buffer buffer
+                       (or (equal major-mode 'vterm-mode)
+                           (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+                 (display-buffer-reuse-window display-buffer-at-bottom)
+                 ;;(display-buffer-reuse-window display-buffer-in-direction)
+                 ;;display-buffer-in-direction/direction/dedicated is added in emacs27
+                 ;;(direction . bottom)
+                 ;;(dedicated . t) ;dedicated is supported in emacs27
+                 (reusable-frames . visible)
+                 (window-height . 0.3))))
+
+;; ends
+
 ;; LSP-BRIDGE
 
 (use-package markdown-mode
@@ -259,6 +334,7 @@
         markdown-gfm-additional-languages "Mermaid"
         )
   )
+(use-package markdown-toc :ensure t)
 
 (use-package yasnippet :ensure t :init (yas-global-mode 1))
 (use-package lsp-bridge
