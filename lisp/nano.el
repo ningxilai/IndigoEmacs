@@ -13,18 +13,20 @@
 
 ;; --- Typography stack -------------------------------------------------------
 (set-face-attribute 'default (selected-frame)
-                    :height 120 :weight 'light :family "Ligalex Mono") ;; IBM Plex Mono
+                    :height 120 :weight 'light :family "Lilex Nerd Font") ;; IBM Plex Mono
 (set-face-attribute 'bold nil :weight 'regular)
 (set-face-attribute 'bold-italic nil :weight 'regular)
+
 (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal ))
 (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
 (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
+
 (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
 (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
 
 ;; --- Frame / windows layout & behavior --------------------------------------
 (setq default-frame-alist
-      '((height . 44)
+      '((height . 49)
         (width  . 81)
         (left-fringe . 0)
         (right-fringe . 0)
@@ -44,33 +46,6 @@
 (scroll-bar-mode -1)
 (horizontal-scroll-bar-mode -1)
 
-;; (use-package ligature
-;;   :ensure t
-;;   :config
-;;   ;; Enable the "www" ligature in every possible major mode
-;;   (ligature-set-ligatures 't '("www"))
-;;   ;; Enable traditional ligature support in eww-mode, if the
-;;   ;; `variable-pitch' face supports it
-;;   (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
-;;   ;; Enable all Cascadia Code ligatures in programming modes
-;;   (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
-;;                                        ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-;;                                        "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
-;;                                        "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-;;                                        "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
-;;                                        "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
-;;                                        "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-;;                                        "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-;;                                        ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
-;;                                        "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-;;                                        "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-;;                                        "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
-;;                                          "\\\\" "://"))
-;;   ;; Enables ligature checks globally in all buffers. You can also do it
-;;   ;; per mode with `ligature-mode'.
-;;   :hook ((prog-mode vterm-mode) . ligature-mode)
-;;   :init (global-ligature-mode nil))
-
 (global-font-lock-mode t)
 (delete-selection-mode t)
 (global-auto-revert-mode t)
@@ -80,6 +55,7 @@
 (global-prettify-symbols-mode t)
 (auto-revert-mode t)
 (recentf-mode t)
+(display-time-mode t)
 (which-key-mode t)
 
 ;; --- Minimal NANO (not a real) theme ----------------------------------------
@@ -162,6 +138,21 @@
 (bind-key "C-<wheel-up>" nil) ;; No text resize via mouse scroll
 (bind-key "C-<wheel-down>" nil) ;; No text resize via mouse scroll
 
+;; Copy by Seagle0128
+
+(defun childframe-workable-p ()
+  "Whether childframe is workable."
+ (and (>= emacs-major-version 26)
+       (not noninteractive)
+       (not emacs-basic-display)
+       (or (display-graphic-p)
+           (featurep 'tty-child-frames))
+       (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
+
+(setq blink-matching-paren-highlight-offscreen t
+      show-paren-context-when-offscreen
+      (if (childframe-workable-p) 'child-frame 'overlay))
+
 ;; --- Sane settings ------ CJK && UTF-8 ---------------------------------------
 (set-language-environment "utf-8")
 (set-buffer-file-coding-system 'utf-8)
@@ -199,8 +190,22 @@
               scroll-down-aggressively 0.0
               pixel-scroll-precision-interpolate-page t)
 
-;; --- Header & mode lines ----------------------------------------------------
+;; --- Header & Mode-Lines & Title---------------------------------------------
+
 ;; (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
+
+;; (setq frame-title-format "%b")
+
+(setq frame-title-format
+      '(:eval (concat
+	       (if (and buffer-file-name (buffer-modified-p)) "•")
+	       (buffer-name)
+	       (if buffer-file-name
+		   (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
+
+;; (setq-default header-line-format '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
+
+(setopt project-mode-line t)
 (setq-default header-line-format
   '(:eval
     (let ((prefix (cond (buffer-read-only     '("RO" . nano-default-i))

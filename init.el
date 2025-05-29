@@ -2,42 +2,39 @@
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
-(setq  auto-save-list-file-prefix t
-       make-backup-files nil
-       vc-follow-symlinks t
-       use-short-answers t
-       package-quickstart t)
+(setq flymake-mode nil
+      text-mode-ispell-word-completion nil
+      auto-save-list-file-prefix t
+      make-backup-files nil
+      create-lockfiles nil
+      vc-follow-symlinks t
+      use-short-answers t
+      package-quickstart nil
+      warning-minimum-level :warning
+      load-prefer-newer t
+      save-interprogram-paste-before-kill t
+      find-file-suppress-same-file-warnings t)
 
-;; (global-completion-preview-mode)
+(setq c-set-style 'linux)
+(setopt select-enable-clipboard 't
+        select-enable-primary nil
+        interprogram-cut-function #'gui-select-text)
+(setq kill-ring-max 200)
 
 ;; require
 
-(dolist (dir '("lisp" "elpaca/repos/elpaca"))
+(dolist (dir '("lisp" "elpaca/repos/elpaca" "reader"))
   (push (expand-file-name dir user-emacs-directory) load-path))
 
 (require 'nano)
 (require 'elpaca-init)
-(require 'elpaca-autoloads)
 (require 'tools-vertico)
 
 ;; ends
 
-(use-package no-littering
-  :init
-  (savehist-mode 1)
-  (save-place-mode 1)
-  (save-place-local-mode 1)
+(use-package gcmh
   :ensure t
-  :config
-  (setq no-littering-autoloads t)
-  (use-package recentf
-    :config
-    (add-to-list 'recentf-exclude
-                 (recentf-expand-file-name no-littering-var-directory))
-    (add-to-list 'recentf-exclude
-                 (recentf-expand-file-name no-littering-etc-directory))
-    )
-  )
+  :hook (elpaca-after-init . gcmh-mode))
 
 ;; Main
 
@@ -48,6 +45,69 @@
   :init
   (dired-async-mode 1)
   (async-bytecomp-package-mode 1))
+
+(use-package no-littering
+  :ensure t
+  :init
+  (setq no-littering-autoloads t)
+  :config
+  (use-package savehist
+    :init
+    (savehist-mode 1))
+  (use-package emacs
+    :init
+    (save-place-mode 1)
+    (save-place-local-mode 1))
+  (use-package eshell
+    :hook (eshell-mode . completion-preview-mode)
+    :config
+    (setq eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
+    (setq eshell-prompt-function
+          (lambda nil
+            (concat
+             (if (string= (eshell/pwd) (getenv "HOME"))
+                 (propertize "~" 'face `(:foreground "#99CCFF"))
+               (replace-regexp-in-string
+                (getenv "HOME")
+                (propertize "~" 'face `(:foreground "#99CCFF"))
+                (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
+             (if (= (user-uid) 0)
+                 (propertize " α " 'face `(:foreground "#FF6666"))
+               (propertize " λ " 'face `(:foreground "#A6E22E"))))))
+    
+    (setq eshell-highlight-prompt nil)
+
+    (defalias 'open 'find-file-other-window)
+    (defalias 'clean 'eshell/clear-scrollback)
+    
+    (defun eshell/sudo-open (filename)
+      "Open a file as root in Eshell."
+      (let ((qual-filename (if (string-match "^/" filename)
+                               filename
+                             (concat (expand-file-name (eshell/pwd)) "/" filename))))
+        (switch-to-buffer
+         (find-file-noselect
+      (concat "/sudo::" qual-filename)))))
+    
+    (defun eshell-other-window ()
+      "Create or visit an eshell buffer."
+      (interactive)
+      (if (not (get-buffer "*eshell*"))
+          (progn
+            (split-window-sensibly (selected-window))
+            (other-window 1)
+            (eshell))
+        (switch-to-buffer-other-window "*eshell*")))
+    
+    (global-set-key (kbd "<s-C-return>") 'eshell-other-window))
+    (use-package recentf
+    :config
+    (add-to-list 'recentf-exclude
+                 (recentf-expand-file-name no-littering-var-directory))
+    (add-to-list 'recentf-exclude
+                 (recentf-expand-file-name no-littering-etc-directory))
+    )
+  )
 
 (use-package hl-line
   ;; :init (global-hl-line-mode t)
@@ -61,7 +121,7 @@
 
 (use-package highlight-indent-guides
   :ensure t
-  :config (setq highlight-indent-guides-method 'bitmap)
+  :config (setq highlight-indent-guides-method 'character)
   :hook (prog-mode . highlight-indent-guides-mode))
 
 (use-package vundo
@@ -118,7 +178,7 @@
   :init
   (global-auto-composition-mode nil)
   :hook
-  (prog-mode . auto-composition-mode)
+  ((prog-mode vterm-mode) . auto-composition-mode)
   :config
   (dolist (char/ligature-re
            `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
@@ -162,6 +222,9 @@
 
 (use-package region-occurrences-highlighter
   :ensure t
+  :bind (:map region-occurrences-highlighter-nav-mode-map
+              ("M-n" . region-occurrences-highlighter-next)
+              ("M-p" . region-occurrences-highlighter-prev))
   :hook ((prog-mode org-mode text-mode) . region-occurrences-highlighter-mode))
 
 (use-package exec-path-from-shell
@@ -239,7 +302,7 @@
      '(("\nOrg Mode"
 	("Org-Agenda (current day)" (org-agenda nil "a") "a"))
        ("\nFolder"
-	("Desktop folder" (dired "~/Desktop") "p")
+	("Desktop folder" (dired "~/Desktop") "s")
 	("Downloads folder" (dired "~/Downloads") "d"))
        ("\nInit"
 	("init.el" (dired "~/.config/emacs/") "i"))
@@ -261,40 +324,66 @@
 
 ;; ViewTools
 
-(use-package pdf-tools :ensure t :config (pdf-tools-install))
+(require 'reader-autoloads)
+(require 'reader)
+(require 'reader-saveplace)
+(require 'reader-bookmark)
 
 ;; ends
 
 ;; Org
 
+(use-package org
+  :ensure (org :type git :host github :repo "bzg/org-mode")
+  :config (setq
+           ;; Edit settings
+           org-auto-align-tags nil
+           org-tags-column 0
+           org-catch-invisible-edits 'show-and-error
+           org-special-ctrl-a/e t
+           org-insert-heading-respect-content t
+           
+           ;; Org styling, hide markup etc.
+           org-hide-emphasis-markers t
+           org-pretty-entities t
+           org-agenda-tags-column 0
+           org-ellipsis "…"))
+(use-package org-contrib :ensure t)
 (use-package htmlize
   :ensure t)
 (use-package org-modern
+  :ensure t
   :hook ((org-mode . org-modern-mode)
          (org-agenda-finalize . org-modern-agenda)
          (org-modern-mode . (lambda ()
                               "Adapt `org-modern-mode'."
                               ;; Disable Prettify Symbols mode
-                              (setq prettify-symbols-alist t)
-                              (prettify-symbols-mode 1)))))
+                              (setq prettify-symbols-alist nil)
+                              (prettify-symbols-mode -1)))))
+
+;; ends
+
+;; CommonLisp
+
+(use-package sly
+  :ensure t
+  :config (setq inferior-lisp-program "~/.roswell/impls/x86-64/linux/sbcl-bin/2.5.4/bin/sbcl"))
+(use-package sly-asdf :ensure t)
+(use-package sly-quicklisp :ensure t)
+(use-package sly-repl-ansi-color :ensure t)
 
 ;; ends
 
 ;; Term
 
-(use-package aweshell
-  :ensure (aweshell :type git :host github :repo "manateelazycat/aweshell"))
-
 (use-package vterm
-  :ensure  (vterm :type git :host github :repo "akermu/emacs-libvterm"
-            :files "*" :post-build t)
+  :ensure  (vterm :type git :host github :repo "akermu/emacs-libvterm" :files "*" :post-build "make")
   :config
   (setq vterm-shell "zsh")
   (defun vterm--rename-buffer-as-title (title)
     (rename-buffer (format "vterm @ %s" title) t))
   :hook
-  (vterm-mode . (lambda()
-                  (set (make-local-variable 'buffer-face-mode-face) '(:family "FiraCode Nerd Font Mono"))
+  (vterm-mode . (lambda()(set (make-local-variable 'buffer-face-mode-face) '(:family "FiraCode Nerd Font"))
                   (buffer-face-mode t)))
   (vterm-set-title-functions . vterm--rename-buffer-as-title))
 (use-package multi-vterm :ensure t)
@@ -320,31 +409,43 @@
 
 ;; LSP-BRIDGE
 
+;; (use-package markdown-ts-mode :mode "\\.md\\'")
+
 (use-package markdown-mode
   :ensure t
-  :mode
-  (("README\\.md\\'" . gfm-mode))
   :init
-  (setq markdown-enable-wiki-links t
+  (setq markdown-open-command "firefox"
+        markdown-enable-wiki-links t
         markdown-italic-underscore t
         markdown-asymmetric-header t
         markdown-make-gfm-checkboxes-buttons t
         markdown-gfm-uppercase-checkbox t
         markdown-fontify-code-blocks-natively t
-        markdown-gfm-additional-languages "Mermaid"
-        )
+        markdown-gfm-additional-languages "Mermaid")
+  :mode
+  ("README\\.md\\'" . gfm-mode)
+  :config
+  (setq-default markdown-mode-font-lock-keywords
+                (cl-remove-if
+                 (lambda (item) (equal item '(markdown-fontify-tables)))
+                 markdown-mode-font-lock-keywords))
+  (use-package markdown-toc :ensure t)
   )
-(use-package markdown-toc :ensure t)
 
 (use-package yasnippet :ensure t :init (yas-global-mode 1))
 (use-package lsp-bridge
   :ensure (lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-            :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-            :build (:not compile))
+                      :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+                      :build (:not compile))
   :init
   (global-lsp-bridge-mode)
-  :config (setq lsp-bridge-markdown-lsp-server 'marksman)
-  )
+  :config
+  (setq lsp-bridge-markdown-lsp-server 'vscode-markdown-language-server)
+  (setq acm-enable-yas t)
+  ;; (setq acm-enable-citre t)
+  (setq acm-candidate-match-function 'orderless-flex)
+  :custom
+  (acm-enable-capf t))
 
 ;; ends
 

@@ -76,4 +76,6 @@
   (LaTeX-mode-hook . turn-on-cdlatex)
   (LaTeX-mode-hook . turn-on-reftex))
 
+(use-package pdf-tools :ensure t :config (pdf-tools-install :no-query))
+
 (provide 'lang-latex)

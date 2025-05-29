@@ -34,11 +34,11 @@ Indigo Emacs
 
 ## Fonts
 
-There are two packages for handling ligatures in Emacs, namely the built-in `composite.el` and the external `ligature.el`. When you need to use a ligature font, this is how it is. If you do not enable either of these, `Ligalex Mono` will behave the same as `IBM Plex Mono`. In this configuration, ligatures are enabled by default, so make sure you have a font that supports ligatures installed locally.
+There are two packages for handling ligatures in Emacs, namely the built-in `composite.el` and the external `ligature.el`. When you need to use a ligature font, this is how it is. If you do not enable either of these, `Ligalex Mono`/`Lilex` will behave the same as `IBM Plex Mono`. In this configuration, ligatures are enabled by default, so make sure you have a font that supports ligatures installed locally.
 
 ``` emacs-lisp
 (set-face-attribute 'default (selected-frame)
-                    :height 120 :weight 'light :family "Ligalex Mono") ;; IBM Plex Mono
+                    :height 120 :weight 'light :family "Ligalex Mono") ;; IBM Plex Mono / Lilex Nerd Font
 ```
 
 ``` emacs-lisp
@@ -118,6 +118,11 @@ There are two packages for handling ligatures in Emacs, namely the built-in `com
 ### eglot:
 
 ``` emacs-lisp
+(use-package eglot-booster
+    :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
+    :after eglot
+    :config (eglot-booster-mode))
+
 (use-package eglot
   :ensure t
   :defer t
