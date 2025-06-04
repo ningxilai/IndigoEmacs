@@ -179,7 +179,7 @@ uv pip install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog pa
 
 ### VTerm 
 
-_If youalways want to use the vendored version as opposed to the one on you system, set `USE_SYSTEM_LIBVTERM` to `no`._
+_If you always want to use the vendored version as opposed to the one on you system, set `USE_SYSTEM_LIBVTERM` to `no`._
 
 ### EAT
 
