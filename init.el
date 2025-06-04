@@ -23,11 +23,12 @@
 
 ;; require
 
-(dolist (dir '("lisp" "elpaca/repos/elpaca" "reader"))
+(dolist (dir '("lisp" "elpaca/repos/elpaca" "site-lisp/reader"))
   (push (expand-file-name dir user-emacs-directory) load-path))
 
 (require 'nano)
 (require 'elpaca-init)
+(require 'lang-org)
 (require 'tools-vertico)
 
 ;; ends
@@ -58,55 +59,12 @@
     :init
     (save-place-mode 1)
     (save-place-local-mode 1))
-  (use-package eshell
-    :hook (eshell-mode . completion-preview-mode)
-    :config
-    (setq eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
-    (setq eshell-prompt-function
-          (lambda nil
-            (concat
-             (if (string= (eshell/pwd) (getenv "HOME"))
-                 (propertize "~" 'face `(:foreground "#99CCFF"))
-               (replace-regexp-in-string
-                (getenv "HOME")
-                (propertize "~" 'face `(:foreground "#99CCFF"))
-                (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
-             (if (= (user-uid) 0)
-                 (propertize " α " 'face `(:foreground "#FF6666"))
-               (propertize " λ " 'face `(:foreground "#A6E22E"))))))
-    
-    (setq eshell-highlight-prompt nil)
-
-    (defalias 'open 'find-file-other-window)
-    (defalias 'clean 'eshell/clear-scrollback)
-    
-    (defun eshell/sudo-open (filename)
-      "Open a file as root in Eshell."
-      (let ((qual-filename (if (string-match "^/" filename)
-                               filename
-                             (concat (expand-file-name (eshell/pwd)) "/" filename))))
-        (switch-to-buffer
-         (find-file-noselect
-      (concat "/sudo::" qual-filename)))))
-    
-    (defun eshell-other-window ()
-      "Create or visit an eshell buffer."
-      (interactive)
-      (if (not (get-buffer "*eshell*"))
-          (progn
-            (split-window-sensibly (selected-window))
-            (other-window 1)
-            (eshell))
-        (switch-to-buffer-other-window "*eshell*")))
-    
-    (global-set-key (kbd "<s-C-return>") 'eshell-other-window))
-    (use-package recentf
+  (use-package recentf
     :config
     (add-to-list 'recentf-exclude
                  (recentf-expand-file-name no-littering-var-directory))
     (add-to-list 'recentf-exclude
-                 (recentf-expand-file-name no-littering-etc-directory))
-    )
+                 (recentf-expand-file-name no-littering-etc-directory)))
   )
 
 (use-package hl-line
@@ -116,49 +74,20 @@
   ;; Highlight starts from EOL, to avoid conflicts with other overlays
   (setq hl-line-range-function (lambda () (cons (line-end-position)
                                            (line-beginning-position 2))))
-  :hook ((prog-mode) . hl-line-mode)
-  )
-
-(use-package highlight-indent-guides
-  :ensure t
-  :config (setq highlight-indent-guides-method 'character)
-  :hook (prog-mode . highlight-indent-guides-mode))
+  :hook ((prog-mode) . hl-line-mode))
 
 (use-package vundo
   :ensure t
   :bind ("C-x C-u" . vundo)
   :config (setq vundo-glyph-alist vundo-unicode-symbols)
   :custom (set-face-attribute 'vundo-default nil :family "Unifont"))
+(use-package undohist
+  :ensure t
+  :init (undohist-initialize))
 
 (use-package treesit-auto
   :ensure t
   :config (global-treesit-auto-mode))
-
-(use-package dogears
-  :ensure t
-  :init (dogears-mode)
-  :bind (:map global-map
-              ("M-g d" . dogears-go)
-              ("M-g M-b" . dogears-back)
-              ("M-g M-f" . dogears-forward)
-              ("M-g M-d" . dogears-list)
-              ("M-g M-D" . dogears-sidebar))
-  :config
-  (setq dogears-idle 1
-        dogears-limit 200
-        dogears-position-delta 20)
-  (setq dogears-functions '(find-file recenter-top-bottom
-                                      other-window switch-to-buffer
-                                      aw-select toggle-window-split
-                                      windmove-do-window-select
-                                      pager-page-down pager-page-up
-                                      tab-bar-select-tab
-                                      pop-to-mark-command
-                                      pop-global-mark
-                                      goto-last-change
-                                      xref-go-back
-                                      xref-find-definitions
-                                      xref-find-references)))
 
 (use-package paren
   :config
@@ -172,48 +101,6 @@
   ((prog-mode text-mode markdown-mode) . smartparens-mode)
   :config
   (require 'smartparens-config)
-  )
-
-(use-package composite
-  :init
-  (global-auto-composition-mode nil)
-  :hook
-  ((prog-mode vterm-mode) . auto-composition-mode)
-  :config
-  (dolist (char/ligature-re
-           `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
-             (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
-             (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
-             (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<"
-                                 "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>"
-                                 "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+"
-                                 "</" "<*")
-                           (+ "<"))))
-             (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
-             (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
-             (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
-             (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
-             (?&  . ,(rx (+ "&")))
-             (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>"
-                                 "|]" "|}" "|=")
-                             (+ "|"))))
-             (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
-             (?+  . ,(rx (or "+>" (+ "+"))))
-           (?\[ . ,(rx (or "[<" "[|")))
-           (?\{ . ,(rx "{|"))
-           (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
-           (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
-                           (+ "#"))))
-           (?\; . ,(rx (+ ";")))
-           (?_  . ,(rx (or "_|_" "__")))
-           (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
-           (?$  . ,(rx "$>"))
-           (?^  . ,(rx "^="))
-           (?\] . ,(rx "]#"))))
-    (let ((char (car char/ligature-re))
-          (ligature-re (cdr char/ligature-re)))
-      (set-char-table-range composition-function-table char
-                            `([,ligature-re 0 font-shape-gstring]))))  
   )
 
 (use-package rainbow-delimiters
@@ -230,6 +117,10 @@
 (use-package exec-path-from-shell
   :ensure t
   :init (exec-path-from-shell-initialize))
+
+;; ends
+
+;; dired
 
 (use-package dired
   :config
@@ -320,61 +211,133 @@
 (use-package nerd-icons-dired :ensure t :init (nerd-icons-dired-mode 1))
 (use-package form-feed :ensure t :config (add-hook 'elpaca-after-init-hook #'global-form-feed-mode))
 
+(use-package indent-bars
+  :ensure t
+  :config
+  (require 'indent-bars-ts)
+  (setq indent-bars-display-on-blank-lines t
+        indent-bars-width-frac 0.2
+        indent-bars-zigzag nil
+        indent-bars-highlight-current-depth nil
+        indent-bars-pattern "|"
+        indent-bars-prefer-character t)
+  :custom
+  (indent-bars-color '(highlight :face-bg t :blend 0.225))
+  (indent-bars-no-descend-string t)
+  (indent-bars-treesit-ignore-blank-lines-types '("module"))
+  (indent-bars-prefer-character t)
+  (indent-bars-treesit-scope '((python function_definition class_definition for_statement
+				                       if_statement with_statement while_statement)))
+  :hook
+  ((prog-mode yaml-mode) . indent-bars-mode))
+
+(use-package composite
+  :init
+  (global-auto-composition-mode nil)
+  :hook
+  ((prog-mode vterm-mode) . auto-composition-mode)
+  :config
+  (dolist (char/ligature-re
+           `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
+             (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
+             (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
+             (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<" "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>" "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+" "</" "<*")
+                           (+ "<"))))
+             (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
+             (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
+             (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
+             (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
+             (?&  . ,(rx (+ "&")))
+             (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>" "|]" "|}" "|=")
+                             (+ "|"))))
+             (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
+             (?+  . ,(rx (or "+>" (+ "+"))))
+           (?\[ . ,(rx (or "[<" "[|")))
+           (?\{ . ,(rx "{|"))
+           (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
+           (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
+                           (+ "#"))))
+           (?\; . ,(rx (+ ";")))
+           (?_  . ,(rx (or "_|_" "__")))
+           (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
+           (?$  . ,(rx "$>"))
+           (?^  . ,(rx "^="))
+           (?\] . ,(rx "]#"))))
+    (let ((char (car char/ligature-re))
+          (ligature-re (cdr char/ligature-re)))
+      (set-char-table-range composition-function-table char
+                            `([,ligature-re 0 font-shape-gstring]))))
+  )
+
+(use-package colorful-mode
+  :ensure t
+  :init (setq colorful-use-prefix t)
+  :config (dolist (mode '(html-mode php-mode help-mode helpful-mode))
+            (add-to-list 'global-colorful-modes mode))
+  :hook (elpaca-after-init . global-colorful-mode))
+
 ;; ends
 
 ;; ViewTools
 
-(require 'reader-autoloads)
-(require 'reader)
-(require 'reader-saveplace)
-(require 'reader-bookmark)
+(use-package reader
+  :ensure nil
+  :config (require 'reader-autoloads)
+  :mode ("\\.pdf\\'" "\\.epub\\'"))
 
 ;; ends
 
-;; Org
+;; Quarto
 
-(use-package org
-  :ensure (org :type git :host github :repo "bzg/org-mode")
-  :config (setq
-           ;; Edit settings
-           org-auto-align-tags nil
-           org-tags-column 0
-           org-catch-invisible-edits 'show-and-error
-           org-special-ctrl-a/e t
-           org-insert-heading-respect-content t
-           
-           ;; Org styling, hide markup etc.
-           org-hide-emphasis-markers t
-           org-pretty-entities t
-           org-agenda-tags-column 0
-           org-ellipsis "…"))
-(use-package org-contrib :ensure t)
-(use-package htmlize
-  :ensure t)
-(use-package org-modern
-  :ensure t
-  :hook ((org-mode . org-modern-mode)
-         (org-agenda-finalize . org-modern-agenda)
-         (org-modern-mode . (lambda ()
-                              "Adapt `org-modern-mode'."
-                              ;; Disable Prettify Symbols mode
-                              (setq prettify-symbols-alist nil)
-                              (prettify-symbols-mode -1)))))
-
-;; ends
-
-;; CommonLisp
-
-(use-package sly
-  :ensure t
-  :config (setq inferior-lisp-program "~/.roswell/impls/x86-64/linux/sbcl-bin/2.5.4/bin/sbcl"))
-(use-package sly-asdf :ensure t)
-(use-package sly-quicklisp :ensure t)
-(use-package sly-repl-ansi-color :ensure t)
+(use-package ess :ensure t :after quarto-mode)
+(use-package quarto-mode :ensure t :mode (("\\.Rmd" . poly-quarto-mode)))
 
 ;; ends
 
 ;; Term
+
+(use-package eshell
+    :hook (eshell-mode . completion-preview-mode)
+    :config
+    (setq eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
+    (setq eshell-prompt-function
+          (lambda nil
+            (concat
+             (if (string= (eshell/pwd) (getenv "HOME"))
+                 (propertize "~" 'face `(:foreground "#99CCFF"))
+               (replace-regexp-in-string
+                (getenv "HOME")
+                (propertize "~" 'face `(:foreground "#99CCFF"))
+                (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
+             (if (= (user-uid) 0)
+                 (propertize " α " 'face `(:foreground "#FF6666"))
+               (propertize " λ " 'face `(:foreground "#A6E22E"))))))
+    
+    (setq eshell-highlight-prompt nil)
+
+    (defalias 'open 'find-file-other-window)
+    (defalias 'clean 'eshell/clear-scrollback)
+    
+    (defun eshell/sudo-open (filename)
+      "Open a file as root in Eshell."
+      (let ((qual-filename (if (string-match "^/" filename)
+                               filename
+                             (concat (expand-file-name (eshell/pwd)) "/" filename))))
+        (switch-to-buffer
+         (find-file-noselect
+      (concat "/sudo::" qual-filename)))))
+    
+    (defun eshell-other-window ()
+      "Create or visit an eshell buffer."
+      (interactive)
+      (if (not (get-buffer "*eshell*"))
+          (progn
+            (split-window-sensibly (selected-window))
+            (other-window 1)
+            (eshell))
+        (switch-to-buffer-other-window "*eshell*")))
+    
+    (global-set-key (kbd "<s-C-return>") 'eshell-other-window))
 
 (use-package vterm
   :ensure  (vterm :type git :host github :repo "akermu/emacs-libvterm" :files "*" :post-build "make")
@@ -432,7 +395,9 @@
   (use-package markdown-toc :ensure t)
   )
 
-(use-package yasnippet :ensure t :init (yas-global-mode 1))
+(use-package yasnippet
+  :ensure t
+  :init (yas-global-mode 1))
 (use-package lsp-bridge
   :ensure (lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
                       :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
@@ -440,7 +405,7 @@
   :init
   (global-lsp-bridge-mode)
   :config
-  (setq lsp-bridge-markdown-lsp-server 'vscode-markdown-language-server)
+  (setq lsp-bridge-markdown-lsp-server 'marksman)
   (setq acm-enable-yas t)
   ;; (setq acm-enable-citre t)
   (setq acm-candidate-match-function 'orderless-flex)
