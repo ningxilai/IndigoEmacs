@@ -405,6 +405,7 @@
   :init
   (global-lsp-bridge-mode)
   :config
+  (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
   (setq lsp-bridge-markdown-lsp-server 'marksman)
   (setq acm-enable-yas t)
   ;; (setq acm-enable-citre t)

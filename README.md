@@ -147,7 +147,11 @@ There are two packages for handling ligatures in Emacs, namely the built-in `com
 ### LSP-Bridge:
 
 ``` bash
-uv pip install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog packaging #Install the python dependencies for LSP Bridge. (if you're using uv or pip).
+uv venv -p 3.13.3 $HOME/.config/emacs/.venv && source $HOME/.config/emacs/.venv/bin/activate
+```
+
+``` bash
+uv pip3 install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog packaging
 ```
 
 ``` emacs-lisp
@@ -161,6 +165,7 @@ uv pip install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog pa
 (use-package lsp-bridge
   :vc t
   :load-path "lsp-bridge"
+  :config (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
   :init (global-lsp-bridge-mode))
 
 ;;ends
