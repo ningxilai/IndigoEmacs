@@ -1,1 +1,0 @@
-/home/iris/.config/emacs/elpaca/repos/no-littering/no-littering.el

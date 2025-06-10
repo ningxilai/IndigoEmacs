@@ -1,1 +1,0 @@
-/home/iris/.config/emacs/elpaca/repos/treesit-auto/treesit-auto.el

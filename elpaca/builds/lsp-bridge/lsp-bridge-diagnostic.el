@@ -1,1 +1,0 @@
-/home/iris/.config/emacs/elpaca/repos/lsp-bridge/lsp-bridge-diagnostic.el

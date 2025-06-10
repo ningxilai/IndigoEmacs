@@ -1,1 +1,0 @@
-/home/iris/.config/emacs/elpaca/repos/symbol-overlay/symbol-overlay.el

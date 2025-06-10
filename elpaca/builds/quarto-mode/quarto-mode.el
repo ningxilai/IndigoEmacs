@@ -1,1 +1,0 @@
-/home/iris/.config/emacs/elpaca/repos/quarto-emacs/quarto-mode.el

@@ -1,1 +1,0 @@
-/home/iris/.config/emacs/elpaca/repos/dirvish/dirvish-fd.el

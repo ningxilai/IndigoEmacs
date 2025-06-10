@@ -1,1 +1,0 @@
-/home/iris/.config/emacs/elpaca/repos/aweshell/eshell-prompt-extras.el
