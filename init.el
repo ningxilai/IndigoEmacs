@@ -23,7 +23,7 @@
 
 ;; require
 
-(dolist (dir '("lisp" "elpaca/repos/elpaca" "site-lisp/reader"))
+(dolist (dir '("lisp" "elpaca/repos/elpaca" "site-lisp/))
   (push (expand-file-name dir user-emacs-directory) load-path))
 
 (require 'nano)
