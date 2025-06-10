@@ -1,0 +1,7 @@
+./elpaca/*
+./var/*
+./etc/*
+./eln-cache/*
+./tree-sitter/*
+./custom.el
+

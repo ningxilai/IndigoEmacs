@@ -1,0 +1,1 @@
+/home/iris/.config/emacs/elpaca/repos/nerd-icons-completion/nerd-icons-completion.el

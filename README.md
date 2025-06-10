@@ -16,6 +16,9 @@ Indigo Emacs
 - [PackageManager](#packagemanager)
   - [package.el](#packageel)
   - [elpaca](#elpaca)
+- [Reader](#reader)
+  - [build](#build)
+  - [using](#using)
 
 <!-- markdown-toc end -->
 
@@ -280,4 +283,30 @@ _If you always want to use the vendored version as opposed to the one on you sys
 (elpaca elpaca-use-package (elpaca-use-package-mode))
 
 (provide 'elpaca-init)
+```
+
+## Reader
+
+by [reader](https://codeberg.org/divyaranjan/emacs-reader)
+
+### build
+
+``` bash
+cd emacs-reader/dep/ && git clone --recursive --depth=1 git://git.ghostscript.com/mupdf.git
+cd ../ && make
+```
+
+### using
+
+``` emacs-lisp
+(add-to-list 'load-path "site-lisp/reader")
+
+;; ViewTools
+
+(use-package reader
+  :ensure nil
+  :config (require 'reader-autoloads)
+  :mode ("\\.pdf\\'" "\\.epub\\'"))
+
+;; ends
 ```

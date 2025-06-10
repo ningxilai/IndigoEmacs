@@ -1,0 +1,5 @@
+/home/iris/.config/emacs/elpaca/builds/vterm/CMakeFiles/vterm-module.dir
+/home/iris/.config/emacs/elpaca/builds/vterm/CMakeFiles/libvterm.dir
+/home/iris/.config/emacs/elpaca/builds/vterm/CMakeFiles/run.dir
+/home/iris/.config/emacs/elpaca/builds/vterm/CMakeFiles/edit_cache.dir
+/home/iris/.config/emacs/elpaca/builds/vterm/CMakeFiles/rebuild_cache.dir

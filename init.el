@@ -278,15 +278,6 @@
 
 ;; ends
 
-;; ViewTools
-
-(use-package reader
-  :ensure nil
-  :config (require 'reader-autoloads)
-  :mode ("\\.pdf\\'" "\\.epub\\'"))
-
-;; ends
-
 ;; Quarto
 
 (use-package ess :ensure t :after quarto-mode)
@@ -392,8 +383,8 @@
                 (cl-remove-if
                  (lambda (item) (equal item '(markdown-fontify-tables)))
                  markdown-mode-font-lock-keywords))
-  (use-package markdown-toc :ensure t)
   )
+(use-package markdown-toc :ensure t :defer markdown-mode)
 
 (use-package yasnippet
   :ensure t

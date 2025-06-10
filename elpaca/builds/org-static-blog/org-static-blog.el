@@ -1,0 +1,1 @@
+/home/iris/.config/emacs/elpaca/repos/org-static-blog/org-static-blog.el

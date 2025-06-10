@@ -1,0 +1,1 @@
+/home/iris/.config/emacs/elpaca/repos/doom-dashboard/doom-dashboard.el

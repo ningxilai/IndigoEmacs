@@ -1,0 +1,13 @@
+# Target labels
+ libvterm
+# Source files and their labels
+/home/iris/.config/emacs/elpaca/builds/vterm/CMakeFiles/libvterm
+/home/iris/.config/emacs/elpaca/builds/vterm/CMakeFiles/libvterm.rule
+/home/iris/.config/emacs/elpaca/builds/vterm/CMakeFiles/libvterm-complete.rule
+/home/iris/.config/emacs/elpaca/builds/vterm/libvterm-prefix/src/libvterm-stamp/libvterm-build.rule
+/home/iris/.config/emacs/elpaca/builds/vterm/libvterm-prefix/src/libvterm-stamp/libvterm-configure.rule
+/home/iris/.config/emacs/elpaca/builds/vterm/libvterm-prefix/src/libvterm-stamp/libvterm-download.rule
+/home/iris/.config/emacs/elpaca/builds/vterm/libvterm-prefix/src/libvterm-stamp/libvterm-install.rule
+/home/iris/.config/emacs/elpaca/builds/vterm/libvterm-prefix/src/libvterm-stamp/libvterm-mkdir.rule
+/home/iris/.config/emacs/elpaca/builds/vterm/libvterm-prefix/src/libvterm-stamp/libvterm-patch.rule
+/home/iris/.config/emacs/elpaca/builds/vterm/libvterm-prefix/src/libvterm-stamp/libvterm-update.rule

@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/iris/.config/emacs/elpaca/builds/vterm/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

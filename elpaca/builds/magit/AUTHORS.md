@@ -1,0 +1,1 @@
+/home/iris/.config/emacs/elpaca/repos/magit/docs/AUTHORS.md

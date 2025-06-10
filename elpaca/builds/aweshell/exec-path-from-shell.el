@@ -1,0 +1,1 @@
+/home/iris/.config/emacs/elpaca/repos/aweshell/exec-path-from-shell.el
