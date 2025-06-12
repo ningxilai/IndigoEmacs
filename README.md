@@ -164,12 +164,15 @@ uv pip3 install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog p
   :ensure t)
 (use-package yasnippet
   :ensure t
-  :init (yas-global-mode 1))
+  :init (yas-global-mode t))
 (use-package lsp-bridge
-  :vc t
-  :load-path "lsp-bridge"
-  :config (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
-  :init (global-lsp-bridge-mode))
+  :ensure nil
+  :load-path "site-lisp/lsp-bridge"
+  :config 
+  (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
+  :init 
+  (require 'lsp-bridge)
+  (global-lsp-bridge-mode))
 
 ;;ends
 
@@ -204,8 +207,6 @@ _If you always want to use the vendored version as opposed to the one on you sys
 
 ``` emacs-lisp
 ;; -*- lexical-binding: t; -*-
-
-;; Package Manager
 
 (setq package-user-dir
       (expand-file-name
@@ -287,24 +288,23 @@ _If you always want to use the vendored version as opposed to the one on you sys
 
 ## Reader
 
-by [reader](https://codeberg.org/divyaranjan/emacs-reader)
+by [reader](https://codeberg.org/divyaranjan/emacs-reader).
 
 ### build
 
 ``` bash
-cd emacs-reader/dep/ && git clone --recursive --depth=1 git://git.ghostscript.com/mupdf.git
+cd reader/dep/ && git clone --recursive --depth=1 git://git.ghostscript.com/mupdf.git
 cd ../ && make
 ```
 
 ### using
 
 ``` emacs-lisp
-(add-to-list 'load-path "site-lisp/reader")
-
 ;; ViewTools
 
 (use-package reader
   :ensure nil
+  :load-path "site-lisp/reader"
   :config (require 'reader-autoloads)
   :mode ("\\.pdf\\'" "\\.epub\\'"))
 
