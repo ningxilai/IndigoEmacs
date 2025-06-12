@@ -24,13 +24,7 @@
                          ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
                          ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
 
-;; (use-package borg
-;;   :ensure t
-;;   :init
-;;   (if (require 'borg-elpa nil t)
-;;       (borg-elpa-initialize)
-;;     (package-activate-all)
-;;     ))
+(package-initialize)
 
 (provide 'package-init)
 

@@ -1,7 +1,5 @@
 ;;; init.el --- my emacs init file -*- lexical-binding:t; -*-
 
-(package-initialize)
-
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
 (setq flymake-mode nil
@@ -25,7 +23,7 @@
 
 ;; require
 
-(dolist (dir '("lisp" "site-lisp/lsp-bridge"))
+(dolist (dir '("lisp" "site-lisp"))
   (push (expand-file-name dir user-emacs-directory) load-path))
 
 (require 'nano)
@@ -57,6 +55,7 @@
 
 (use-package emacs
   :init
+  (package-activate-all)
   (defconst iris-emacs-cache-directory
     (concat user-emacs-directory ".cache/")
     "Spacemacs storage area for persistent files.")
@@ -446,9 +445,11 @@
 (use-package yasnippet
   :ensure t
   :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
-  :init (yas-global-mode 1))
+  :init (yas-global-mode t))
 
 (use-package lsp-bridge
+  :ensure nil
+  :load-path "site-lisp/lsp-bridge/"
   :init
   (require 'lsp-bridge)
   (global-lsp-bridge-mode)

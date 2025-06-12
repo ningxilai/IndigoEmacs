@@ -231,7 +231,7 @@ _If you always want to use the vendored version as opposed to the one on you sys
                          ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
                          ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
 
-(package-activate-all)
+(package-initialize)
 
 (provide 'package-manager)
 ```
