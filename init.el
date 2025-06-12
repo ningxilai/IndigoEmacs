@@ -1,5 +1,7 @@
 ;;; init.el --- my emacs init file -*- lexical-binding:t; -*-
 
+(package-initialize)
+
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
 (setq flymake-mode nil
@@ -9,25 +11,25 @@
       create-lockfiles nil
       vc-follow-symlinks t
       use-short-answers t
-      package-quickstart nil
+      package-quickstart t
       warning-minimum-level :warning
       load-prefer-newer t
       save-interprogram-paste-before-kill t
       find-file-suppress-same-file-warnings t)
 
 (setq c-set-style 'linux)
-(setopt select-enable-clipboard 't
+(setopt select-enable-clipboard t
         select-enable-primary nil
         interprogram-cut-function #'gui-select-text)
 (setq kill-ring-max 200)
 
 ;; require
 
-(dolist (dir '("lisp" "elpaca/repos/elpaca" "site-lisp/))
+(dolist (dir '("lisp" "site-lisp/lsp-bridge"))
   (push (expand-file-name dir user-emacs-directory) load-path))
 
 (require 'nano)
-(require 'elpaca-init)
+(require 'package-init)
 (require 'lang-org)
 (require 'tools-vertico)
 
@@ -35,7 +37,13 @@
 
 (use-package gcmh
   :ensure t
-  :hook (elpaca-after-init . gcmh-mode))
+  :diminish
+  :init (setq gc-cons-threshold most-positive-fixnum)
+  :hook (emacs-startup . gcmh-mode)
+  :custom
+  (gcmh-idle-delay 'auto)
+  (gcmh-auto-idle-delay-factor 10)
+  (gcmh-high-cons-threshold (* 16 1024 1024)))
 
 ;; Main
 
@@ -47,25 +55,60 @@
   (dired-async-mode 1)
   (async-bytecomp-package-mode 1))
 
-(use-package no-littering
-  :ensure t
+(use-package emacs
   :init
-  (setq no-littering-autoloads t)
+  (defconst iris-emacs-cache-directory
+    (concat user-emacs-directory ".cache/")
+    "Spacemacs storage area for persistent files.")
   :config
-  (use-package savehist
-    :init
-    (savehist-mode 1))
-  (use-package emacs
-    :init
-    (save-place-mode 1)
-    (save-place-local-mode 1))
   (use-package recentf
-    :config
-    (add-to-list 'recentf-exclude
-                 (recentf-expand-file-name no-littering-var-directory))
-    (add-to-list 'recentf-exclude
-                 (recentf-expand-file-name no-littering-etc-directory)))
-  )
+  :defer t
+  :commands (recentf-save-list)
+  :init
+  (add-hook 'find-file-hook (lambda () (unless recentf-mode
+                                    (recentf-mode)
+                                    (recentf-track-opened-file))))
+  ;; Do not leave dangling timers when reloading the configuration.
+  (when (and (boundp 'recentf-auto-save-timer)
+               (timerp recentf-auto-save-timer))
+    (cancel-timer recentf-auto-save-timer))
+  (setq recentf-save-file (concat iris-emacs-cache-directory "recentf")
+        recentf-max-saved-items 1000
+        recentf-auto-cleanup 'never
+        recentf-auto-save-timer (run-with-idle-timer 600 t
+                                                     'recentf-save-list))
+  :config
+  (add-to-list 'recentf-exclude
+               (recentf-expand-file-name iris-emacs-cache-directory))
+    (add-to-list 'recentf-exclude (recentf-expand-file-name package-user-dir))
+    (add-to-list 'recentf-exclude "COMMIT_EDITMSG\\'")
+    (when custom-file
+      (add-to-list 'recentf-exclude (recentf-expand-file-name custom-file))))
+
+(use-package savehist
+  :init
+  ;; Minibuffer history
+  (setq savehist-file (concat iris-emacs-cache-directory "savehist")
+        enable-recursive-minibuffers t ; Allow commands in minibuffers
+        history-length 1000
+        savehist-additional-variables '(search-ring
+                                          regexp-search-ring
+                                          extended-command-history
+                                          kill-ring
+                                          kmacro-ring
+                                          log-edit-comment-ring)
+        ;; We use an idle timer instead, as saving can cause
+        ;; noticable delays with large histories.
+          savehist-autosave-interval nil)
+  (savehist-mode t))
+
+(use-package saveplace
+  :init
+  ;; Save point position between sessions
+  (setq save-place-file (concat iris-emacs-cache-directory "places"))
+  (save-place-mode)
+  (save-place-local-mode))
+)
 
 (use-package hl-line
   ;; :init (global-hl-line-mode t)
@@ -90,6 +133,7 @@
   :config (global-treesit-auto-mode))
 
 (use-package paren
+  :ensure nil
   :config
   (setq show-paren-delay 0.1
         show-paren-when-point-in-periphery t))
@@ -116,7 +160,8 @@
 
 (use-package exec-path-from-shell
   :ensure t
-  :init (exec-path-from-shell-initialize))
+  :init
+  (exec-path-from-shell-initialize))
 
 ;; ends
 
@@ -174,7 +219,13 @@
 
 (use-package magit :ensure t)
 (use-package projectile :ensure t)
-(use-package transient :ensure t)
+(use-package transient
+  :ensure t
+  :config
+  (setq transient-history-file (concat iris-emacs-cache-directory "transient/history.el"))          
+  (setq transient-levels-file (concat iris-emacs-cache-directory "transient/levels.el"))
+  (setq transient-values-file (concat iris-emacs-cache-directory "transient/values.el"))
+  )
 
 ;; ends
 
@@ -205,11 +256,17 @@
 
 ;; UI
 
-(use-package nord-theme :ensure t :init (load-theme 'nord t))
+(use-package nord-theme :ensure t :init (load-theme 'nord t nil))
 (use-package doom-modeline :ensure t :init (doom-modeline-mode 1))
 (use-package nerd-icons :ensure t)
 (use-package nerd-icons-dired :ensure t :init (nerd-icons-dired-mode 1))
-(use-package form-feed :ensure t :config (add-hook 'elpaca-after-init-hook #'global-form-feed-mode))
+(use-package page-break-lines
+  :ensure t
+  :init (global-page-break-lines-mode t)
+  :config
+  (set-fontset-font "fontset-default"
+                    (cons page-break-lines-char page-break-lines-char)
+                    (face-attribute 'default :family)))
 
 (use-package indent-bars
   :ensure t
@@ -331,7 +388,7 @@
     (global-set-key (kbd "<s-C-return>") 'eshell-other-window))
 
 (use-package vterm
-  :ensure  (vterm :type git :host github :repo "akermu/emacs-libvterm" :files "*" :post-build "make")
+  :ensure t
   :config
   (setq vterm-shell "zsh")
   (defun vterm--rename-buffer-as-title (title)
@@ -388,12 +445,12 @@
 
 (use-package yasnippet
   :ensure t
+  :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
   :init (yas-global-mode 1))
+
 (use-package lsp-bridge
-  :ensure (lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-                      :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-                      :build (:not compile))
   :init
+  (require 'lsp-bridge)
   (global-lsp-bridge-mode)
   :config
   (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")

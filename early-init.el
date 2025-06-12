@@ -2,6 +2,11 @@
 
 ;;; Code:
 
-(setq package-enable-at-startup nil)
+(require 'xdg)
+
+(startup-redirect-eln-cache
+ (expand-file-name  "emacs/eln-cache/" (xdg-cache-home)))
+
+(setq package-enable-at-startup t)
 
 ;;; early-init.el ends here

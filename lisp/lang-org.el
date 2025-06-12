@@ -3,7 +3,7 @@
 ;; Org
 
 (use-package org
-  :ensure (org :type git :host github :repo "bzg/org-mode")
+  :ensure t
   :config (setq
            ;; Edit settings
            org-auto-align-tags nil
