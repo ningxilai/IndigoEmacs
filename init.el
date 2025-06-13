@@ -48,7 +48,8 @@
     (require 'use-package-ensure)
     (require 'package)
     :config
-    (setq package-quickstart t
+    (setq package-vc-allow-build-commands t
+          package-quickstart t
           use-package-always-ensure nil
           use-package-always-defer t
           use-package-expand-minimally t

@@ -206,7 +206,6 @@ _If you always want to use the vendored version as opposed to the one on you sys
 ### package.el
 
 ``` emacs-lisp
-;; -*- lexical-binding: t; -*-
 
 (setq package-user-dir
       (expand-file-name
@@ -234,7 +233,6 @@ _If you always want to use the vendored version as opposed to the one on you sys
 
 (package-initialize)
 
-(provide 'package-manager)
 ```
 
 ### elpaca
@@ -294,7 +292,7 @@ by [reader](https://codeberg.org/divyaranjan/emacs-reader).
 
 ``` bash
 cd reader/dep/ && git clone --recursive --depth=1 git://git.ghostscript.com/mupdf.git
-cd ../ && make
+cd ../ && make all
 ```
 
 ### using
@@ -303,8 +301,9 @@ cd ../ && make
 ;; ViewTools
 
 (use-package reader
-  :ensure nil
-  :load-path "site-lisp/reader"
+  :vc (reader :url "https://codeberg.org/divyaranjan/emacs-reader"
+              :rev :newest
+  	          :make "all")
   :config (require 'reader-autoloads)
   :mode ("\\.pdf\\'" "\\.epub\\'"))
 
