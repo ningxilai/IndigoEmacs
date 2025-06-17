@@ -2,10 +2,14 @@
 
 ;;; Code:
 
-(require 'xdg)
+;; (require 'xdg)
+
+;; (startup-redirect-eln-cache
+;;  (expand-file-name  "emacs/eln-cache/" (xdg-cache-home)))
 
 (startup-redirect-eln-cache
- (expand-file-name  "emacs/eln-cache/" (xdg-cache-home)))
+ (convert-standard-filename
+  (expand-file-name  "var/eln-cache/" user-emacs-directory)))
 
 (setq package-enable-at-startup t)
 

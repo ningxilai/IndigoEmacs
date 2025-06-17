@@ -35,10 +35,6 @@
                          emacs-major-version emacs-minor-version)
                  user-emacs-directory))
   (package-activate-all)
-
-  (defconst iris-emacs-cache-directory
-    (concat user-emacs-directory ".cache/")
-    "Copy by Spacemacs.")
   
   :config
   (require 'nano)
@@ -61,47 +57,31 @@
                 version-control t
                 package-enable-at-startup t
                 delete-old-versions t
-                package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
-                                   ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
-                                   ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/"))))
-  (use-package recentf
-  :defer t
-  :commands (recentf-save-list)
-  :init
-  (when (and (boundp 'recentf-auto-save-timer)
-               (timerp recentf-auto-save-timer))
-    (cancel-timer recentf-auto-save-timer))
-  (setq recentf-save-file (concat iris-emacs-cache-directory "recentf")
-        recentf-max-saved-items 1000
-        recentf-auto-cleanup 'never)
-  :config
-  (add-to-list 'recentf-exclude "COMMIT_EDITMSG\\'")
-  :custom
-  (add-to-list 'recentf-exclude (recentf-expand-file-name custom-file)))
-  
-  (use-package savehist
-    :init
-    ;; Minibuffer history
-    (setq savehist-file (concat iris-emacs-cache-directory "savehist")
-          enable-recursive-minibuffers t ; Allow commands in minibuffers
-          history-length 1000
-          savehist-additional-variables '(search-ring
-                                          regexp-search-ring
-                                          extended-command-history
-                                          kill-ring
-                                          kmacro-ring
-                                          log-edit-comment-ring)
-        ;; We use an idle timer instead, as saving can cause
-        ;; noticable delays with large histories.
-          savehist-autosave-interval nil)
-  (savehist-mode t))
+                package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+                                   ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
+                                   ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
 
+  (use-package savehist
+    :custom
+    ;; Minibuffer history
+    (setq-local enable-recursive-minibuffers t ; Allow commands in minibuffers
+                history-length 1000
+                savehist-additional-variables '(search-ring
+                                                regexp-search-ring
+                                                extended-command-history
+                                                kill-ring
+                                                kmacro-ring
+                                                log-edit-comment-ring)
+                ;; We use an idle timer instead, as saving can cause
+                ;; noticable delays with large histories.
+                savehist-autosave-interval nil)
+    :init (savehist-mode t)
+    )
 (use-package saveplace
   :init
-  ;; Save point position between sessions
-  (setq save-place-file (concat iris-emacs-cache-directory "places"))
   (save-place-mode)
-  (save-place-local-mode))
+  (save-place-local-mode)
+  )
 )
 
 ;; ends
@@ -115,6 +95,26 @@
   (gcmh-idle-delay 'auto)
   (gcmh-auto-idle-delay-factor 10)
   (gcmh-high-cons-threshold (* 16 1024 1024)))
+
+(use-package no-littering
+  :vc (no-littering :url "https://github.com/emacscollective/no-littering"
+                    :rev :newest)
+  :init (require 'no-littering)
+  :custom
+  (let ((dir (no-littering-expand-var-file-name "lock-files/")))
+    (make-directory dir t)
+    (setq lock-file-name-transforms `((".*" ,dir t))))
+  :config
+  (use-package recentf
+    :defer t
+    :commands (recentf-save-list)
+    :custom
+    (add-to-list 'recentf-exclude
+                 (recentf-expand-file-name no-littering-var-directory))
+    (add-to-list 'recentf-exclude
+                 (recentf-expand-file-name no-littering-etc-directory))
+    )
+  )
 
 ;; Main
 
@@ -324,13 +324,7 @@
 (use-package magit :ensure t)
 (use-package ghub :ensure t :demand t :after magit)
 (use-package projectile :ensure t)
-(use-package transient
-  :ensure t
-  :config
-  (setq transient-history-file (concat iris-emacs-cache-directory "transient/history.el"))
-  (setq transient-levels-file (concat iris-emacs-cache-directory "transient/levels.el"))
-  (setq transient-values-file (concat iris-emacs-cache-directory "transient/values.el"))
-  )
+(use-package transient :ensure t)
 
 ;; ends
 
