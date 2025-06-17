@@ -303,9 +303,7 @@ cd ../ && make all
 (use-package reader
   :vc (reader :url "https://codeberg.org/divyaranjan/emacs-reader"
               :rev :newest
-  	          :make "all")
-  :config (require 'reader-autoloads)
-  :mode ("\\.pdf\\'" "\\.epub\\'"))
+  	          :make "all"))
 
 ;; ends
 ```

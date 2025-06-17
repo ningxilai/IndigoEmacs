@@ -1,3 +1,6 @@
 [submodule "site-lisp/lsp-bridge"]
 	path = site-lisp/lsp-bridge
 	url = https://github.com/manateelazycat/lsp-bridge
+[submodule "site-lisp/reader"]
+	path = site-lisp/reader
+	url = https://codeberg.org/divyaranjan/emacs-reader

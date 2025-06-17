@@ -29,8 +29,7 @@
       "DONE(d)"
       "CANCELLED(c)" )))
   :hook ((org-mode . org-indent-mode)
-         (org-mode . prettify-symbols-mode)
-         (org-mode . org-toggle-pretty-entities)
+         ;; (org-mode . org-toggle-pretty-entities)
          (org-mode . (lambda () (visual-line-mode t))))
   :custom (custom-set-faces
            '(org-level-1 ((t (:inherit outline-1 :height 1.3))))
@@ -39,6 +38,7 @@
            '(org-level-4 ((t (:inherit outline-4 :height 1.0))))
            '(org-level-5 ((t (:inherit outline-5 :height 1.0)))))
   )
+
 (use-package org-contrib :ensure t)
 
 (use-package org-appear
@@ -52,22 +52,6 @@
 
 (use-package htmlize
   :ensure t)
-
-(use-package org-modern
-  :ensure t
-  :hook ((org-mode . org-modern-mode)
-         (org-agenda-finalize . org-modern-agenda)
-         (org-modern-mode . (lambda ()
-                              "Adapt `org-modern-mode'."
-                              ;; Disable Prettify Symbols mode
-                              (setq prettify-symbols-alist nil)
-                              (prettify-symbols-mode -1)))))
-
-(use-package org-modern-indent
-    :after org-modern
-    :vc (org-modern-indent :url "https://github.com/jdtsmith/org-modern-indent"
-                           :rev :newest)
-    :hook (org-indent-mode . org-modern-indent-mode))
 
 (provide 'lang-org)
 

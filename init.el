@@ -2,23 +2,25 @@
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
-(setq flymake-mode nil
-      text-mode-ispell-word-completion nil
+(setq text-mode-ispell-word-completion nil
       auto-save-list-file-prefix t
       make-backup-files nil
       create-lockfiles nil
       vc-follow-symlinks t
       use-short-answers t
       package-quickstart t
-      warning-minimum-level :warning
       load-prefer-newer t
       save-interprogram-paste-before-kill t
       find-file-suppress-same-file-warnings t)
 
-(setq c-set-style 'linux)
+(setq-default c-set-style 'linux
+              flymake-mode nil
+              warning-minimum-level :warning)
+
 (setopt x-select-enable-clipboard t
         x-select-enable-primary nil
         interprogram-cut-function #'gui-select-text)
+
 (setq kill-ring-max 200)
 
 ;; init
@@ -48,52 +50,42 @@
     (require 'use-package-ensure)
     (require 'package)
     :config
-    (setq package-vc-allow-build-commands t
-          package-quickstart t
-          use-package-always-ensure nil
-          use-package-always-defer t
-          use-package-expand-minimally t
-          use-package-vc-prefer-newest t
-          native-comp-deferred-compilation t
-          native-comp-jit-compilation t
-          package-native-compile t
-          version-control t
-          package-enable-at-startup t
-          delete-old-versions t
-          package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
-                             ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
-                             ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/"))))
+    (setq-local package-vc-allow-build-commands t
+                package-quickstart t
+                use-package-always-ensure nil
+                use-package-always-defer t
+                use-package-expand-minimally t
+                use-package-vc-prefer-newest t
+                native-comp-jit-compilation t
+                package-native-compile t
+                version-control t
+                package-enable-at-startup t
+                delete-old-versions t
+                package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
+                                   ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
+                                   ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/"))))
   (use-package recentf
   :defer t
   :commands (recentf-save-list)
   :init
-  (add-hook 'find-file-hook (lambda () (unless recentf-mode
-                                    (recentf-mode)
-                                    (recentf-track-opened-file))))
-  ;; Do not leave dangling timers when reloading the configuration.
   (when (and (boundp 'recentf-auto-save-timer)
                (timerp recentf-auto-save-timer))
     (cancel-timer recentf-auto-save-timer))
   (setq recentf-save-file (concat iris-emacs-cache-directory "recentf")
         recentf-max-saved-items 1000
-        recentf-auto-cleanup 'never
-        recentf-auto-save-timer (run-with-idle-timer 600 t
-                                                     'recentf-save-list))
+        recentf-auto-cleanup 'never)
   :config
-  (add-to-list 'recentf-exclude
-               (recentf-expand-file-name iris-emacs-cache-directory))
-    (add-to-list 'recentf-exclude (recentf-expand-file-name package-user-dir))
-    (add-to-list 'recentf-exclude "COMMIT_EDITMSG\\'")
-    (when custom-file
-      (add-to-list 'recentf-exclude (recentf-expand-file-name custom-file))))
-
-(use-package savehist
-  :init
-  ;; Minibuffer history
-  (setq savehist-file (concat iris-emacs-cache-directory "savehist")
-        enable-recursive-minibuffers t ; Allow commands in minibuffers
-        history-length 1000
-        savehist-additional-variables '(search-ring
+  (add-to-list 'recentf-exclude "COMMIT_EDITMSG\\'")
+  :custom
+  (add-to-list 'recentf-exclude (recentf-expand-file-name custom-file)))
+  
+  (use-package savehist
+    :init
+    ;; Minibuffer history
+    (setq savehist-file (concat iris-emacs-cache-directory "savehist")
+          enable-recursive-minibuffers t ; Allow commands in minibuffers
+          history-length 1000
+          savehist-additional-variables '(search-ring
                                           regexp-search-ring
                                           extended-command-history
                                           kill-ring
@@ -110,7 +102,6 @@
   (setq save-place-file (concat iris-emacs-cache-directory "places"))
   (save-place-mode)
   (save-place-local-mode))
-
 )
 
 ;; ends
@@ -155,7 +146,7 @@
 
 (use-package treesit-auto
   :ensure t
-  :config (global-treesit-auto-mode))
+  :config (setq treesit--install-language-grammar-out-dir-history "tree-sitter"))
 
 (use-package paren
   :ensure nil
@@ -165,7 +156,8 @@
 
 (use-package smartparens
   :ensure t
-  :init (show-smartparens-global-mode t)
+  :init
+  (show-smartparens-global-mode t)
   :hook
   ((prog-mode text-mode markdown-mode) . smartparens-mode)
   :config
@@ -182,6 +174,11 @@
               ("M-n" . region-occurrences-highlighter-next)
               ("M-p" . region-occurrences-highlighter-prev))
   :hook ((prog-mode org-mode text-mode) . region-occurrences-highlighter-mode))
+
+(use-package flycheck
+  :ensure t
+  :config (flycheck-mode t)
+  :hook (prog-mode . flycheck-mode))
 
 (use-package exec-path-from-shell
   :ensure t
@@ -277,9 +274,6 @@
   (advice-add #'register-preview :override #'consult-register-window)
   (setq register-preview-delay 0.5)
 
-  ;; Use Consult to select xref locations with preview
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
   :custom
   (consult-customize
    consult-theme :preview-key '(:debounce 0.2 any)
@@ -325,56 +319,6 @@
 
 ;; ends
 
-;; dired
-
-(use-package dired
-  :config
-  (setq dired-movement-style 'cycle)
-  (setq browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
-  (setq dired-listing-switches
-        "-l --almost-all --human-readable --group-directories-first --no-group")
-  ;; this command is useful when you want to close the window of `dirvish-side'
-  ;; automatically when opening a file
-  (put 'dired-find-alternate-file 'disabled nil))
-
-(use-package dirvish
-  :ensure t
-  :init
-  (dirvish-override-dired-mode)
-  :config
-  (dirvish-peek-mode)             ; Preview files in minibuffer
-  ;; (dirvish-side-follow-mode)      ; similar to `treemacs-follow-mode'
-  (setq dirvish-mode-line-format
-        '(:left (sort symlink) :right (omit yank index)))
-  (setq dirvish-attributes           ; The order *MATTERS* for some attributes
-        '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
-        dirvish-side-attributes
-        '(vc-state nerd-icons collapse file-size))
-  ;; open large directory (over 20000 files) asynchronously with `fd' command
-  (setq dirvish-large-directory-threshold 20000)
-  :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
-  (("C-c f" . dirvish)
-   :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
-   (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
-   ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
-   ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
-   ("f"   . dirvish-file-info-menu)    ; [f]ile info
-   ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
-   ("s"   . dirvish-quicksort)         ; [s]ort flie list
-   ("r"   . dirvish-history-jump)      ; [r]ecent visited
-   ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
-   ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
-   ("*"   . dirvish-mark-menu)
-   ("y"   . dirvish-yank-menu)
-   ("N"   . dirvish-narrow)
-   ("^"   . dirvish-history-last)
-   ("TAB" . dirvish-subtree-toggle)
-   ("M-f" . dirvish-history-go-forward)
-   ("M-b" . dirvish-history-go-backward)
-   ("M-e" . dirvish-emerge-menu)))
-
-;; ends
-
 ;; ProjectManager
 
 (use-package magit :ensure t)
@@ -383,7 +327,7 @@
 (use-package transient
   :ensure t
   :config
-  (setq transient-history-file (concat iris-emacs-cache-directory "transient/history.el"))          
+  (setq transient-history-file (concat iris-emacs-cache-directory "transient/history.el"))
   (setq transient-levels-file (concat iris-emacs-cache-directory "transient/levels.el"))
   (setq transient-values-file (concat iris-emacs-cache-directory "transient/values.el"))
   )
@@ -418,13 +362,16 @@
 ;; UI
 
 (use-package nord-theme :ensure t :init (load-theme 'nord t nil))
-(use-package doom-modeline :ensure t :init (doom-modeline-mode 1))
+(use-package doom-modeline :ensure t :init (doom-modeline-mode t))
 (use-package nerd-icons :ensure t)
-(use-package nerd-icons-dired :ensure t :init (nerd-icons-dired-mode 1))
+(use-package nerd-icons-dired
+  :ensure t
+  :defer dired
+  :hook (dired-mode . nerd-icons-dired-mode))
 (use-package page-break-lines
   :ensure t
   :init (global-page-break-lines-mode t)
-  :config
+  :custom
   (set-fontset-font "fontset-default"
                     (cons page-break-lines-char page-break-lines-char)
                     (face-attribute 'default :family)))
@@ -444,8 +391,13 @@
   (indent-bars-no-descend-string t)
   (indent-bars-treesit-ignore-blank-lines-types '("module"))
   (indent-bars-prefer-character t)
-  (indent-bars-treesit-scope '((python function_definition class_definition for_statement
-				                       if_statement with_statement while_statement)))
+  (indent-bars-treesit-scope '((python
+                                function_definition
+                                class_definition
+                                for_statement
+				if_statement
+                                with_statement
+                                while_statement)))
   :hook
   ((prog-mode yaml-mode) . indent-bars-mode))
 
@@ -496,6 +448,58 @@
 
 ;; ends
 
+;; dired
+
+(use-package dired
+  :ensure nil
+  :config
+  (setq dired-movement-style 'cycle)
+  (setq browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
+  (setq dired-listing-switches
+        "-l --almost-all --human-readable --group-directories-first --no-group")
+  ;; this command is useful when you want to close the window of `dirvish-side'
+  ;; automatically when opening a file
+  (put 'dired-find-alternate-file 'disabled nil))
+
+(use-package dirvish
+  :ensure t
+  :init
+  (dirvish-override-dired-mode)
+  :config
+  (dirvish-peek-mode)             ; Preview files in minibuffer
+  ;; (dirvish-side-follow-mode)      ; similar to `treemacs-follow-mode'
+  (setq dirvish-mode-line-format
+        '(:left (sort symlink) :right (omit yank index)))
+  ;; open large directory (over 20000 files) asynchronously with `fd' command
+  (setq dirvish-large-directory-threshold 20000)
+  :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
+  (("C-c f" . dirvish)
+   :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
+   (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
+   ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
+   ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
+   ("f"   . dirvish-file-info-menu)    ; [f]ile info
+   ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
+   ("s"   . dirvish-quicksort)         ; [s]ort flie list
+   ("r"   . dirvish-history-jump)      ; [r]ecent visited
+   ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
+   ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
+   ("*"   . dirvish-mark-menu)
+   ("y"   . dirvish-yank-menu)
+   ("N"   . dirvish-narrow)
+   ("^"   . dirvish-history-last)
+   ("TAB" . dirvish-subtree-toggle)
+   ("M-f" . dirvish-history-go-forward)
+   ("M-b" . dirvish-history-go-backward)
+   ("M-e" . dirvish-emerge-menu))
+  :custom
+  (setq-local dirvish-attributes           ; The order *MATTERS* for some attributes
+              '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
+              dirvish-side-attributes
+              '(vc-state nerd-icons collapse file-size)))
+
+;; ends
+
 ;; Quarto
 
 (use-package ess :ensure t :after quarto-mode)
@@ -506,46 +510,47 @@
 ;; Term
 
 (use-package eshell
-    :hook (eshell-mode . completion-preview-mode)
-    :config
-    (setq eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
-    (setq eshell-prompt-function
-          (lambda nil
-            (concat
-             (if (string= (eshell/pwd) (getenv "HOME"))
-                 (propertize "~" 'face `(:foreground "#99CCFF"))
-               (replace-regexp-in-string
-                (getenv "HOME")
-                (propertize "~" 'face `(:foreground "#99CCFF"))
-                (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
-             (if (= (user-uid) 0)
-                 (propertize " α " 'face `(:foreground "#FF6666"))
-               (propertize " λ " 'face `(:foreground "#A6E22E"))))))
-    
-    (setq eshell-highlight-prompt nil)
-
-    (defalias 'open 'find-file-other-window)
-    (defalias 'clean 'eshell/clear-scrollback)
-    
-    (defun eshell/sudo-open (filename)
-      "Open a file as root in Eshell."
-      (let ((qual-filename (if (string-match "^/" filename)
+  :ensure t
+  :hook (eshell-mode . completion-preview-mode)
+  :custom
+  (setq-local eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
+  (setq-default eshell-prompt-function
+              (lambda nil
+                (concat
+                 (if (string= (eshell/pwd) (getenv "HOME"))
+                     (propertize "~" 'face `(:foreground "#99CCFF"))
+                   (replace-regexp-in-string
+                    (getenv "HOME")
+                    (propertize "~" 'face `(:foreground "#99CCFF"))
+                    (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
+                 (if (= (user-uid) 0)
+                     (propertize " α " 'face `(:foreground "#FF6666"))
+                   (propertize " λ " 'face `(:foreground "#A6E22E"))))))
+  
+  (setq-local eshell-highlight-prompt nil)
+  
+  (defalias 'open 'find-file-other-window)
+  (defalias 'clean 'eshell/clear-scrollback)
+  
+  (defun eshell/sudo-open (filename)
+    "Open a file as root in Eshell."
+    (let ((qual-filename (if (string-match "^/" filename)
                                filename
-                             (concat (expand-file-name (eshell/pwd)) "/" filename))))
-        (switch-to-buffer
-         (find-file-noselect
-      (concat "/sudo::" qual-filename)))))
-    
-    (defun eshell-other-window ()
-      "Create or visit an eshell buffer."
-      (interactive)
+                           (concat (expand-file-name (eshell/pwd)) "/" filename))))
+      (switch-to-buffer
+       (find-file-noselect
+        (concat "/sudo::" qual-filename)))))
+  
+  (defun eshell-other-window ()
+    "Create or visit an eshell buffer."
+    (interactive)
       (if (not (get-buffer "*eshell*"))
           (progn
             (split-window-sensibly (selected-window))
             (other-window 1)
             (eshell))
         (switch-to-buffer-other-window "*eshell*")))
-    
+  
     (global-set-key (kbd "<s-C-return>") 'eshell-other-window))
 
 (use-package vterm
@@ -610,7 +615,7 @@
   :init (yas-global-mode t))
 
 (use-package lsp-bridge
-  :ensure nil
+  :vc nil
   :load-path "site-lisp/lsp-bridge/"
   :init
   (require 'lsp-bridge)
@@ -626,6 +631,11 @@
 
 ;; ends
 
-(setq initial-scratch-echo-area-message "iris")
+(use-package reader-mode
+  :vc t
+  :load-path "./site-lisp/reader/"
+  :config (require 'reader-autoloads))
+
+(setq-default initial-scratch-echo-area-message "iris")
 
 ;; init.el ends here
