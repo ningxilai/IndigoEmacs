@@ -39,7 +39,8 @@
            '(org-level-5 ((t (:inherit outline-5 :height 1.0)))))
   )
 
-(use-package org-contrib :ensure t)
+(use-package org-contrib
+  :ensure t)
 
 (use-package org-appear
   :ensure t

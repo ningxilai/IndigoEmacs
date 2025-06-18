@@ -8,7 +8,6 @@
 ;; This is NANO Emacs in 256 lines, without any dependency 
 ;; Usage (command line):  emacs -Q -l nano.el
 
-;; --- Typography stack -------------------------------------------------------
 (set-face-attribute 'default (selected-frame)
                     :height 120 :weight 'light :family "Lilex Nerd Font") ;; IBM Plex Mono
 (set-face-attribute 'bold nil :weight 'regular)
@@ -21,27 +20,7 @@
 (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
 (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
 
-;; --- Frame / windows layout & behavior --------------------------------------
-(setq default-frame-alist
-      '((height . 49)
-        (width  . 81)
-        (left-fringe . 0)
-        (right-fringe . 0)
-        (internal-border-width . 32)
-        (vertical-scroll-bars . nil)
-        (bottom-divider-width . 0)
-        (right-divider-width . 0)
-        (undecorated-round . t)))
-(modify-frame-parameters nil default-frame-alist)
-(setq-default pop-up-windows nil)
-
 ;; --- Activate / Deactivate modes --------------------------------------------
-(tool-bar-mode -1)
-(menu-bar-mode -1)
-(blink-cursor-mode -1)
-(pixel-scroll-precision-mode 1)
-(scroll-bar-mode -1)
-(horizontal-scroll-bar-mode -1)
 
 (global-font-lock-mode t)
 (delete-selection-mode t)
@@ -51,7 +30,6 @@
 (global-subword-mode t)
 (global-prettify-symbols-mode t)
 (auto-revert-mode t)
-(recentf-mode t)
 (display-time-mode t)
 (which-key-mode t)
 
@@ -120,27 +98,12 @@
 (bind-key "C-<wheel-up>" nil) ;; No text resize via mouse scroll
 (bind-key "C-<wheel-down>" nil) ;; No text resize via mouse scroll
 
-;; --- Sane settings ------ CJK && UTF-8 ---------------------------------------
-(set-language-environment "utf-8")
-(set-buffer-file-coding-system 'utf-8)
-(set-terminal-coding-system 'utf-8)
-(set-keyboard-coding-system 'utf-8)
-(set-selection-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
-(set-clipboard-coding-system 'utf-8)
-(modify-coding-system-alist 'process "*" 'utf-8)
-(prefer-coding-system 'utf-8)
-(setq-default pathname-coding-system 'utf-8
-              default-buffer-file-coding-system 'utf-8)
-(setq default-process-coding-system '(utf-8 . utf-8)
-      locale-coding-system 'utf-8
-      file-name-coding-system 'utf-8)
-
-(setq word-wrap-by-category t)
-
-(setenv "LC_CTYPE" "UTF-8")
-(setenv "LC_ALL" "en_US.UTF-8")
-(setenv "LANG" "en_US.UTF-8")
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(blink-cursor-mode -1)
+(pixel-scroll-precision-mode 1)
+(scroll-bar-mode -1)
+(horizontal-scroll-bar-mode -1)
 
 (setq-default indent-tabs-mode nil
               ring-bell-function 'ignore
@@ -195,12 +158,12 @@
 
 ;; (setq frame-title-format "%b")
 
-(setq frame-title-format
-      '(:eval (concat
-	       (if (and buffer-file-name (buffer-modified-p)) "•")
-	       (buffer-name)
-	       (if buffer-file-name
-		   (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
+(setq-default frame-title-format
+              '(:eval (concat
+	               (if (and buffer-file-name (buffer-modified-p)) "•")
+	               (buffer-name)
+	               (if buffer-file-name
+		           (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
 
 ;; (setq-default header-line-format '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
 

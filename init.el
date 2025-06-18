@@ -1,7 +1,5 @@
 ;;; init.el --- my emacs init file -*- lexical-binding:t; -*-
 
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-
 (setq text-mode-ispell-word-completion nil
       auto-save-list-file-prefix t
       make-backup-files nil
@@ -27,6 +25,7 @@
 
 (use-package emacs
   :init
+  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
   (dolist (dir '("lisp" "site-lisp"))
     (push (expand-file-name dir user-emacs-directory) load-path))
   (setq-default package-user-dir
@@ -107,6 +106,7 @@
   (use-package recentf
     :defer t
     :commands (recentf-save-list)
+    :config (recentf-mode t)
     :custom
     (add-to-list 'recentf-exclude
                  (recentf-expand-file-name no-littering-var-directory))
