@@ -35,7 +35,6 @@
                          emacs-major-version emacs-minor-version)
                  user-emacs-directory))
   (package-activate-all)
-  
   :config
   (require 'nano)
   (require 'lang-org)
@@ -447,10 +446,9 @@
 (use-package dired
   :ensure nil
   :config
-  (setq dired-movement-style 'cycle)
-  (setq browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
-  (setq dired-listing-switches
-        "-l --almost-all --human-readable --group-directories-first --no-group")
+  (setq-default dired-movement-style 'cycle
+                browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
+  (setopt dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
   ;; this command is useful when you want to close the window of `dirvish-side'
   ;; automatically when opening a file
   (put 'dired-find-alternate-file 'disabled nil))
