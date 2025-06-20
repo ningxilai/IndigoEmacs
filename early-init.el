@@ -18,16 +18,16 @@
   (setq package-enable-at-startup t)
 
   ;; --- Frame / windows layout & behavior --------------------------------------
-  (setq default-frame-alist
-        '((height . 49)
-          (width  . 81)
-          (left-fringe . 0)
-          (right-fringe . 0)
-          (internal-border-width . 32)
-          (vertical-scroll-bars . nil)
-          (bottom-divider-width . 0)
-          (right-divider-width . 0)
-          (undecorated-round . t)))
+  (setq-default default-frame-alist
+                '((height . 50)
+                  (width  . 80)
+                  (left-fringe . 0)
+                  (right-fringe . 0)
+                  (internal-border-width . 32)
+                  (vertical-scroll-bars . nil)
+                  (bottom-divider-width . 0)
+                  (right-divider-width . 0)
+                  (undecorated-round . t)))
   (modify-frame-parameters nil default-frame-alist)
   (setq-default pop-up-windows nil)
 

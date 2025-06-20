@@ -1,12 +1,41 @@
 ;; nano-emacs.el --- NANO Emacs (minimal version)     -*- lexical-binding: nil -*-
 
+;;; Commentary:
+
 ;; Copyright (c) 2025  Nicolas P. Rougier
 ;; Released under the GNU General Public License 3.0
 ;; Author: Nicolas P. Rougier <nicolas.rougier@inria.fr>
 ;; URL: https://github.com/rougier/nano-emacs
 
-;; This is NANO Emacs in 256 lines, without any dependency 
+;; This is NANO Emacs in 256 lines, without any dependency
 ;; Usage (command line):  emacs -Q -l nano.el
+
+;;; Code:
+
+(setq-default initial-scratch-echo-area-message "iris")
+
+(setq-default text-mode-ispell-word-completion nil
+              auto-save-list-file-prefix t
+              make-backup-files nil
+              create-lockfiles nil
+              vc-follow-symlinks t
+              use-short-answers t
+              package-quickstart t
+              load-prefer-newer t
+              save-interprogram-paste-before-kill t
+              find-file-suppress-same-file-warnings t)
+
+(setq-default c-set-style 'linux
+              flymake-mode nil
+              warning-minimum-level :warning)
+
+(setopt x-select-enable-clipboard t
+        x-select-enable-primary nil
+        interprogram-cut-function #'gui-select-text)
+
+(setq kill-ring-max 200)
+
+;; ---------------- Fonts -----------------------------------------------------
 
 (set-face-attribute 'default (selected-frame)
                     :height 120 :weight 'light :family "Lilex Nerd Font") ;; IBM Plex Mono
@@ -47,7 +76,7 @@
 (setq blink-matching-paren-highlight-offscreen t
       show-paren-context-when-offscreen
       (if (childframe-workable-p) 'child-frame 'overlay))
- 
+
 (defun nano-quit ()
   "Quit minibuffer from anywhere (code from Protesilaos Stavrou)"
   

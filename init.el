@@ -1,25 +1,8 @@
 ;;; init.el --- my emacs init file -*- lexical-binding:t; -*-
 
-(setq text-mode-ispell-word-completion nil
-      auto-save-list-file-prefix t
-      make-backup-files nil
-      create-lockfiles nil
-      vc-follow-symlinks t
-      use-short-answers t
-      package-quickstart t
-      load-prefer-newer t
-      save-interprogram-paste-before-kill t
-      find-file-suppress-same-file-warnings t)
+;;; Commentary:
 
-(setq-default c-set-style 'linux
-              flymake-mode nil
-              warning-minimum-level :warning)
-
-(setopt x-select-enable-clipboard t
-        x-select-enable-primary nil
-        interprogram-cut-function #'gui-select-text)
-
-(setq kill-ring-max 200)
+;;; Code:
 
 ;; init
 
@@ -34,9 +17,17 @@
                          emacs-major-version emacs-minor-version)
                  user-emacs-directory))
   (package-activate-all)
+
+  :custom
+  (context-menu-mode t)
+  (enable-recursive-minibuffers t)
+  (read-extended-command-predicate #'command-completion-default-include-p)
+  (minibuffer-prompt-properties
+   '(read-only t cursor-intangible t face minibuffer-prompt))
+  
   :config
   (require 'nano)
-  (require 'lang-org)
+  (require 'lang-latex)
   
   (use-package package
     :init
@@ -44,21 +35,20 @@
     (require 'use-package-ensure)
     (require 'package)
     :config
-    (setq-local package-vc-allow-build-commands t
-                package-quickstart t
-                use-package-always-ensure nil
-                use-package-always-defer t
-                use-package-expand-minimally t
-                use-package-vc-prefer-newest t
-                native-comp-jit-compilation t
-                package-native-compile t
-                version-control t
-                package-enable-at-startup t
-                delete-old-versions t
-                package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                                   ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
-                                   ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
-
+    (setq-default package-vc-allow-build-commands t
+                  package-quickstart t
+                  use-package-always-ensure nil
+                  use-package-always-defer t
+                  use-package-expand-minimally t
+                  use-package-vc-prefer-newest t
+                  native-comp-jit-compilation t
+                  package-native-compile t
+                  version-control t
+                  package-enable-at-startup t
+                  delete-old-versions t
+                  package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+                                     ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
+                                     ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
   (use-package savehist
     :custom
     ;; Minibuffer history
@@ -73,14 +63,12 @@
                 ;; We use an idle timer instead, as saving can cause
                 ;; noticable delays with large histories.
                 savehist-autosave-interval nil)
-    :init (savehist-mode t)
-    )
-(use-package saveplace
-  :init
-  (save-place-mode)
-  (save-place-local-mode)
+    :init (savehist-mode t))
+  (use-package saveplace
+    :init
+    (save-place-mode)
+    (save-place-local-mode))
   )
-)
 
 ;; ends
 
@@ -122,8 +110,8 @@
   :config
   (autoload 'dired-async-mode "dired-async.el" nil t)
   :init
-  (dired-async-mode 1)
-  (async-bytecomp-package-mode 1))
+  (dired-async-mode t)
+  (async-bytecomp-package-mode t))
 
 (use-package hl-line
   ;; :init (global-hl-line-mode t)
@@ -265,7 +253,6 @@
 
   ;; The :init configuration is always executed (Not lazy)
   :init
-
   ;; Tweak the register preview for `consult-register-load',
   ;; `consult-register-store' and the built-in commands.  This improves the
   ;; register formatting, adds thin separator lines, register sorting and hides
@@ -286,13 +273,14 @@
 
 (use-package vertico
   :ensure t
+  :init
+  (vertico-mode t)
   :custom
   (vertico-scroll-margin 0) ;; Different scroll margin
   (vertico-count 20) ;; Show more candidates
   (vertico-resize nil) ;; Grow and shrink the Vertico minibuffer
   (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
-  :init
-  (vertico-mode))
+  )
 
 (use-package posframe :ensure t)
 (use-package vertico-posframe
@@ -354,7 +342,11 @@
 
 ;; UI
 
-(use-package nord-theme :ensure t :init (load-theme 'nord t nil))
+(use-package nord-theme
+  :vc (nord-theme :url "https://github.com/nordtheme/emacs.git"
+                  :rev :newest)
+  :init (load-theme 'nord t nil))
+
 (use-package doom-modeline :ensure t :init (doom-modeline-mode t))
 (use-package nerd-icons :ensure t)
 (use-package nerd-icons-dired
@@ -396,9 +388,10 @@
 
 (use-package composite
   :init
-  (global-auto-composition-mode nil)
+  (global-auto-composition-mode t)
   :hook
-  ((prog-mode vterm-mode) . auto-composition-mode)
+  ((text-mode) . (lambda () (setq-local auto-composition-mode nil
+                                   buffer-face-mode-face '(:family "IBM Plex Mono"))))
   :config
   (dolist (char/ligature-re
            `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
@@ -558,6 +551,7 @@
 (use-package multi-vterm :ensure t)
 (use-package vterm-toggle
   :ensure t
+  :after vterm
   :config
   (setq vterm-toggle-fullscreen-p nil)
   (add-to-list 'display-buffer-alist
@@ -576,7 +570,7 @@
 
 ;; ends
 
-;; LSP-BRIDGE
+;; eglot
 
 ;; (use-package markdown-ts-mode :mode "\\.md\\'")
 
@@ -599,18 +593,17 @@
                  (lambda (item) (equal item '(markdown-fontify-tables)))
                  markdown-mode-font-lock-keywords))
   )
+
 (use-package markdown-toc :ensure t :defer markdown-mode)
 
 (use-package yasnippet
   :ensure t
   :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
   :init (yas-global-mode t))
-
 (use-package lsp-bridge
   :vc nil
   :load-path "site-lisp/lsp-bridge/"
   :init
-  (require 'lsp-bridge)
   (global-lsp-bridge-mode)
   :config
   (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
@@ -623,11 +616,8 @@
 
 ;; ends
 
-(use-package reader-mode
-  :vc t
-  :load-path "./site-lisp/reader/"
-  :config (require 'reader-autoloads))
+(use-package reader
+  :vc nil
+  :load-path "./site-lisp/reader/")
 
-(setq-default initial-scratch-echo-area-message "iris")
-
-;; init.el ends here
+;;; init.el ends here
