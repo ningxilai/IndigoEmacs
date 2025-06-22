@@ -6,124 +6,126 @@
 
 ;; init
 
-(use-package emacs
-  :init
-  (dolist (dir '("lisp" "site-lisp"))
-    (push (expand-file-name dir user-emacs-directory) load-path))
-  (setq-default package-user-dir
-                (expand-file-name
-                 (format "elpa/%s.%s"
-                         emacs-major-version emacs-minor-version)
-                 user-emacs-directory))
-  (package-activate-all)
-  :custom
-  (setq-default custom-file (expand-file-name "custom.el" user-emacs-directory)
-                initial-scratch-echo-area-message "iris")
-  (context-menu-mode t)
-  (enable-recursive-minibuffers t)
-  (read-extended-command-predicate
-   #'command-completion-default-include-p)
-  (minibuffer-prompt-properties
+(let ((gc-cons-threshold most-positive-fixnum)
+      (file-name-handler-alist nil))
+  
+  (use-package emacs
+    :init
+    (dolist (dir '("lisp" "site-lisp"))
+      (push (expand-file-name dir user-emacs-directory) load-path))
+    (setq-default package-user-dir
+                  (expand-file-name
+                   (format "elpa/%s.%s"
+                           emacs-major-version emacs-minor-version)
+                   user-emacs-directory))
+    (package-activate-all)
+    (setq-default custom-file (expand-file-name "custom.el" user-emacs-directory))
+    :custom
+    (setq-local initial-scratch-echo-area-message "iris")
+    (context-menu-mode t)
+    (enable-recursive-minibuffers t)
+    (read-extended-command-predicate
+     #'command-completion-default-include-p)
+    (minibuffer-prompt-properties
    '(read-only t cursor-intangible t face minibuffer-prompt))
-  :config
-  (use-package package
-    :init
-    (package-initialize)
-    (require 'package)
     :config
-    (setq-default package-vc-allow-build-commands t
+    (use-package use-package
+      :config
+      (setq-default use-package-always-ensure t
+                    use-package-always-defer t
+                    use-package-expand-minimally t
+                    use-package-vc-prefer-newest t))
+
+    (use-package package
+      :init
+      (package-initialize)
+      :config
+      (setq-default package-vc-allow-build-commands t
+                    package-quickstart t
+                    native-comp-jit-compilation t
+                    package-native-compile t
+                    version-control t
+                    package-enable-at-startup t
+                    delete-old-versions t
+                    package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+                                       ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
+                                       ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
+    
+    (tool-bar-mode -1)
+    (menu-bar-mode -1)
+    (blink-cursor-mode -1)
+    (pixel-scroll-precision-mode 1)
+    (scroll-bar-mode -1)
+    (horizontal-scroll-bar-mode -1)
+    
+    (global-font-lock-mode t)
+    (delete-selection-mode t)
+    (global-auto-revert-mode t)
+    (electric-pair-mode t)
+    (global-so-long-mode t)
+    (global-subword-mode t)
+    (global-prettify-symbols-mode t)
+    (auto-revert-mode t)
+    (display-time-mode t)
+    (which-key-mode t)
+
+    (set-face-attribute 'default (selected-frame)
+                        :height 120 :weight 'light :family "Lilex Nerd Font") ;; IBM Plex Mono
+    (set-face-attribute 'bold nil :weight 'regular)
+    (set-face-attribute 'bold-italic nil :weight 'regular)
+    
+    (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal))
+    (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
+    (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
+  
+    (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
+    (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
+    
+    (setq-default text-mode-ispell-word-completion nil
+                  auto-save-list-file-prefix t
+                  auto-save-default nil
+                  make-backup-files nil
+                  create-lockfiles nil
+                  vc-follow-symlinks t
+                  use-short-answers t
                   package-quickstart t
-                  native-comp-jit-compilation t
-                  package-native-compile t
-                  version-control t
-                  package-enable-at-startup t
-                  delete-old-versions t
-                  package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                                     ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
-                                     ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
-
-  (use-package use-package
-    :init
-    (require 'use-package-ensure)
-    :config
-    (setq-default use-package-always-ensure nil
-                  use-package-always-defer t
-                  use-package-expand-minimally t
-                  use-package-vc-prefer-newest t))
+                  load-prefer-newer t
+                  save-interprogram-paste-before-kill t
+                  find-file-suppress-same-file-warnings t)
   
-  (tool-bar-mode -1)
-  (menu-bar-mode -1)
-  (blink-cursor-mode -1)
-  (pixel-scroll-precision-mode 1)
-  (scroll-bar-mode -1)
-  (horizontal-scroll-bar-mode -1)
-  
-  (global-font-lock-mode t)
-  (delete-selection-mode t)
-  (global-auto-revert-mode t)
-  (electric-pair-mode t)
-  (global-so-long-mode t)
-  (global-subword-mode t)
-  (global-prettify-symbols-mode t)
-  (auto-revert-mode t)
-  (display-time-mode t)
-  (which-key-mode t)
-
-  (set-face-attribute 'default (selected-frame)
-                      :height 120 :weight 'light :family "Lilex Nerd Font") ;; IBM Plex Mono
-  (set-face-attribute 'bold nil :weight 'regular)
-  (set-face-attribute 'bold-italic nil :weight 'regular)
-  
-  (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal))
-  (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
-  (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
-  
-  (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
-  (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
-
-  (setq-default text-mode-ispell-word-completion nil
-                auto-save-list-file-prefix t
-                auto-save-default nil
-                make-backup-files nil
-                create-lockfiles nil
-                vc-follow-symlinks t
-                use-short-answers t
-                package-quickstart t
-                load-prefer-newer t
-                save-interprogram-paste-before-kill t
-                find-file-suppress-same-file-warnings t)
-  
-  (setq-default c-set-style 'linux
-                flymake-mode nil
-                warning-minimum-level :warning
-                kill-ring-max 200
-                tab-always-indent 'complete
-                resize-mini-windows 'grow-only)
-  
-  (setq-default indent-tabs-mode nil
-                ring-bell-function 'ignore
-                select-enable-clipboard t
-                system-time-locale "C"
-              ;; nice scroll
-                scroll-step 1
-                scroll-preserve-screen-position t
-                scroll-margin 3
-                scroll-conservatively 10
-                maximum-scroll-margin 0.3
-                scroll-up-aggressively 0.0
-                scroll-down-aggressively 0.0
-                pixel-scroll-precision-interpolate-page t)
-  
-  (setopt x-select-enable-clipboard t
-          x-select-enable-primary nil
-          interprogram-cut-function #'gui-select-text)
-  
-  (require 'nano)
-
-  :bind (("C-x k" . kill-current-buffer)
-         ("C-x C-r" .  recentf-open)
-         ("M-n" . make-frame))
-)
+    (setq-default c-set-style 'linux
+                  flymake-mode nil
+                  warning-minimum-level :warning
+                  kill-ring-max 200
+                  tab-always-indent 'complete
+                  resize-mini-windows 'grow-only
+                  indent-tabs-mode nil
+                  ring-bell-function 'ignore
+                  select-enable-clipboard t
+                  system-time-locale "C")
+    (setopt
+     ;; nice scroll
+     scroll-step 1
+     scroll-preserve-screen-position t
+     scroll-margin 3
+     scroll-conservatively 10
+     maximum-scroll-margin 0.3
+     scroll-up-aggressively 0.0
+     scroll-down-aggressively 0.0
+     pixel-scroll-precision-interpolate-page t)
+    
+    (setopt x-select-enable-clipboard t
+            x-select-enable-primary nil
+            interprogram-cut-function #'gui-select-text)
+    
+    (require 'nano)
+    (require 'lang-typst)
+    
+    :bind (("C-x k" . kill-current-buffer)
+           ("C-x C-r" .  recentf-open)
+           ("M-n" . make-frame))
+    )
+  )
 
 ;; ends
 
@@ -171,6 +173,7 @@
                     ;; noticable delays with large histories.
                     savehist-autosave-interval nil)
       :init (savehist-mode t))
+    
     (use-package saveplace
       :init
       (save-place-mode)
@@ -483,6 +486,7 @@
   ((prog-mode yaml-mode) . indent-bars-mode))
 
 (use-package composite
+  :ensure nil
   :init
   (global-auto-composition-mode t)
   :hook
@@ -698,76 +702,76 @@
 
 (use-package markdown-toc :ensure t :defer markdown-mode)
 
-(use-package eglot-booster
-    :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
-    :after eglot
-    :config
-    (eglot-booster-mode)
-    (setq-local eglot-booster-io-only t))
+;; (use-package eglot-booster
+;;     :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
+;;     :after eglot
+;;     :config
+;;     (eglot-booster-mode)
+;;     (setq-local eglot-booster-io-only t))
 
-(use-package eglot
-  :ensure t
-  :defer t
-  :custom
-  (eglot-autoshutdown t)  ;; shutdown language server after closing last file
-  (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
-  :custom-face
-  (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
-  :hook
-  ((typst-ts-mode) . eglot-ensure)
-  ((markdown-mode) . eglot-ensure)
-  ((LaTeX-mode) . eglot-ensure)
-  ((python-ts-mode) . eglot-ensure)
-  ((c-ts-mode) . eglot-ensure)
-  :config
-  (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
-  (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
-  (add-to-list 'eglot-server-programs '(LaTeX-mode . ("texlab")))
-  )
-
-(use-package citre
-  :vc (citre :url "https://github.com/universal-ctags/citre"
-             :rev :newest)
-  :config
-  (require 'citre)
-  (require 'citre-config)
-  (setq-local
-   ;; Set this if you want to always use one location to create a tags file.
-   citre-default-create-tags-file-location 'global-cache
-   ;; Set this if you'd like to use ctags options generated by Citre
-   ;; directly, rather than further editing them.
-   citre-edit-ctags-options-manually nil
-   ;; If you only want the auto enabling citre-mode behavior to work for
-   ;; certain modes (like `prog-mode'), set it like this.
-   citre-auto-enable-citre-mode-modes '(prog-mode))
-  :custom
-  (setq-default
-   ;; Set this if you use project management plugin like projectile.  It's
-   ;; used for things like displaying paths relatively, see its docstring.
-   citre-project-root-function #'projectile-project-root)
-  :bind (("C-x c j" . citre-jump)
-         ("C-x c J" . citre-jump-back)
-         ("C-x c p" . citre-ace-peek)
-         ("C-x c u". citre-update-this-tags-file)))
-
-;; (use-package yasnippet
+;; (use-package eglot
 ;;   :ensure t
-;;   :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
-;;   :init (yas-global-mode t))
-;; (use-package lsp-bridge
-;;   :vc nil
-;;   :autoload global-lsp-bridge-mode
-;;   :load-path "site-lisp/lsp-bridge/"
-;;   :init
-;;   (global-lsp-bridge-mode)
-;;   :config
-;;   (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
-;;   (setq lsp-bridge-markdown-lsp-server 'marksman)
-;;   (setq acm-enable-yas t)
-;;   ;; (setq acm-enable-citre t)
-;;   (setq acm-candidate-match-function 'orderless-flex)
+;;   :defer t
 ;;   :custom
-;;   (acm-enable-capf t))
+;;   (eglot-autoshutdown t)  ;; shutdown language server after closing last file
+;;   (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
+;;   :custom-face
+;;   (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
+;;   :hook
+;;   ((typst-ts-mode) . eglot-ensure)
+;;   ((markdown-mode) . eglot-ensure)
+;;   ((LaTeX-mode) . eglot-ensure)
+;;   ((python-ts-mode) . eglot-ensure)
+;;   ((c-ts-mode) . eglot-ensure)
+;;   :config
+;;   (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
+;;   (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
+;;   (add-to-list 'eglot-server-programs '(LaTeX-mode . ("texlab")))
+;;   )
+
+;; (use-package citre
+;;   :vc (citre :url "https://github.com/universal-ctags/citre"
+;;              :rev :newest)
+;;   :config
+;;   (require 'citre)
+;;   (require 'citre-config)
+;;   (setq-local
+;;    ;; Set this if you want to always use one location to create a tags file.
+;;    citre-default-create-tags-file-location 'global-cache
+;;    ;; Set this if you'd like to use ctags options generated by Citre
+;;    ;; directly, rather than further editing them.
+;;    citre-edit-ctags-options-manually nil
+;;    ;; If you only want the auto enabling citre-mode behavior to work for
+;;    ;; certain modes (like `prog-mode'), set it like this.
+;;    citre-auto-enable-citre-mode-modes '(prog-mode))
+;;   :custom
+;;   (setq-default
+;;    ;; Set this if you use project management plugin like projectile.  It's
+;;    ;; used for things like displaying paths relatively, see its docstring.
+;;    citre-project-root-function #'projectile-project-root)
+;;   :bind (("C-x c j" . citre-jump)
+;;          ("C-x c J" . citre-jump-back)
+;;          ("C-x c p" . citre-ace-peek)
+;;          ("C-x c u". citre-update-this-tags-file)))
+
+(use-package yasnippet
+  :ensure t
+  :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
+  :init (yas-global-mode t))
+(use-package lsp-bridge
+  :vc nil
+  :autoload global-lsp-bridge-mode
+  :load-path "site-lisp/lsp-bridge/"
+  :init
+  (global-lsp-bridge-mode)
+  :config
+  (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
+  (setq lsp-bridge-markdown-lsp-server 'marksman)
+  (setq acm-enable-yas t)
+  ;; (setq acm-enable-citre t)
+  (setq acm-candidate-match-function 'orderless-flex)
+  :custom
+  (acm-enable-capf t))
 
 ;; ends
 

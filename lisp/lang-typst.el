@@ -1,11 +1,9 @@
-;; -*- lexical-binding: t; -*-
-
+;;; -*- lexical-binding: t; -*-
 (use-package typst-ts-mode
-  :defer t
-  :vc (typst-ts-mode :url "https://codeberg.org/meow_king/typst-ts-mode.git"
-                     :rev :newest
-                     :lisp-dir "./"
-                     :shell-command "cargo build")
+  :ensure t
+  :mode "\\.typ"
+  :bind (:map typst-ts-mode-map
+              ("C-c C-c" . typst-ts-tmenu))
   :custom
   ;; don't add "--open" if you'd like `watch` to be an error detector
   (typst-ts-mode-watch-options "--open")
@@ -20,8 +18,7 @@
   :defer t
   :vc (typst-preview :url "https://github.com/havarddj/typst-preview.el"
                      :rev :newest)
-  :init
-  (require 'typst-preview)
+  :hook (typst-ts-mode)
   :config
   (setq-local typst-preview-executable "tinymist preview"
               typst-preview-browser "default")
@@ -30,3 +27,4 @@
 ; (setq-default eglot-workspace-configuration '(:tinymist (:exportPdf "onSave")))
 
 (provide 'lang-typst)
+;;; lang-typst ends here

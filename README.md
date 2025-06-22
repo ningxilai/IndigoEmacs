@@ -13,9 +13,6 @@ Indigo Emacs
 - [Terminal](#terminal)
   - [VTerm ](#vterm)
   - [EAT](#eat)
-- [PackageManager](#packagemanager)
-  - [package.el](#packageel)
-  - [elpaca](#elpaca)
 - [Reader](#reader)
   - [build](#build)
   - [using](#using)
@@ -197,6 +194,7 @@ uv pip3 install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog p
   :init (yas-global-mode t))
 (use-package lsp-bridge
   :vc nil
+  :autoload global-lsp-bridge-mode
   :load-path "site-lisp/lsp-bridge/"
   :init
   (global-lsp-bridge-mode)
@@ -209,15 +207,6 @@ uv pip3 install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog p
   :custom
   (acm-enable-capf t))
 ;;ends
-
-;; or elpaca
-
-(use-package lsp-bridge
-  :ensure (lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-            :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-            :build (:not compile))
-  :init
-  (global-lsp-bridge-mode))
 ```
 
 ## Terminal
@@ -233,89 +222,6 @@ _If you always want to use the vendored version as opposed to the one on you sys
 ``` bash
 [ -n "$EAT_SHELL_INTEGRATION_DIR" ] && \
   source "$EAT_SHELL_INTEGRATION_DIR/zsh"
-```
-
-## PackageManager
-
-### package.el
-
-``` emacs-lisp
-
-(setq package-user-dir
-      (expand-file-name
-       (format "elpa/%s.%s"
-           emacs-major-version emacs-minor-version)
-       user-emacs-directory))
-
-(require 'use-package-ensure)
-(require 'package)
-
-(setq package-quickstart t
-      use-package-always-ensure nil
-      use-package-always-defer t
-      use-package-expand-minimally t
-      use-package-vc-prefer-newest t
-      native-comp-deferred-compilation t
-      native-comp-jit-compilation t
-      package-native-compile t
-      version-control t
-      package-enable-at-startup t
-      delete-old-versions t
-      package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
-                         ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
-                         ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
-
-(package-initialize)
-
-```
-
-### elpaca
-
-``` emacs-lisp
-;; -*- lexical-binding: t; -*-
-
-(defvar elpaca-installer-version 0.11)
-(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
-(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
-(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1 :inherit ignore
-                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-       (build (expand-file-name "elpaca/" elpaca-builds-directory))
-       (order (cdr elpaca-order))
-       (default-directory repo))
-  (add-to-list 'load-path (if (file-exists-p build) build repo))
-  (unless (file-exists-p repo)
-    (make-directory repo t)
-    (when (<= emacs-major-version 28) (require 'subr-x))
-    (condition-case-unless-debug err
-        (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                  ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                  ,@(when-let* ((depth (plist-get order :depth)))
-                                                      (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                  ,(plist-get order :repo) ,repo))))
-                  ((zerop (call-process "git" nil buffer t "checkout"
-                                        (or (plist-get order :ref) "--"))))
-                  (emacs (concat invocation-directory invocation-name))
-                  ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                        "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                  ((require 'elpaca))
-                  ((elpaca-generate-autoloads "elpaca" repo)))
-            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-          (error "%s" (with-current-buffer buffer (buffer-string))))
-      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
-  (unless (require 'elpaca-autoloads nil t)
-    (require 'elpaca)
-    (elpaca-generate-autoloads "elpaca" repo)
-    (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
-(add-hook 'after-init-hook #'elpaca-process-queues)
-(elpaca `(,@elpaca-order))
-
-(elpaca elpaca-use-package (elpaca-use-package-mode))
-
-(provide 'elpaca-init)
 ```
 
 ## Reader
@@ -337,7 +243,8 @@ cd ../ && make all
 (use-package reader
   :vc (reader :url "https://codeberg.org/divyaranjan/emacs-reader"
               :rev :newest
-  	          :make "all"))
+  	          :make "all")
+  :autoload reader-autoloads)
 
 ;; ends
 ```
