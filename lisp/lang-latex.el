@@ -25,8 +25,8 @@
           TeX-show-compilation t)
   (setq-local TeX-output-view-style  '(("^pdf$" "." "xpdf %o %(outpage)"))
               reftex-plug-into-AUCTeX t
-              LaTeX-command  "latex -shell-escape --synctex=1"
-              ;; "latexmk -shell-escape -bibtex -xelatex -g -f %f"
+              LaTeX-command "latexmk -shell-escape -bibtex -pdf -g -f %f"
+              ;; "latex -shell-escape --synctex=1"
               TeX-command-default "XeLaTeX")
   (setq-default TeX-master nil
                 TeX-engine 'xetex

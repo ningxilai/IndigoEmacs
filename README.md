@@ -8,8 +8,8 @@ Indigo Emacs
 - [Acknowledge:](#acknowledge)
 - [Fonts](#fonts)
 - [LSP](#lsp)
-  - [eglot:](#eglot)
-  - [LSP-Bridge:](#lsp-bridge)
+  - [eglot](#eglot)
+  - [LSP-Bridge](#lsp-bridge)
 - [Terminal](#terminal)
   - [VTerm ](#vterm)
   - [EAT](#eat)
@@ -118,7 +118,7 @@ There are two packages for handling ligatures in Emacs, namely the built-in `com
 ```
 
 ## LSP
-### eglot:
+### eglot
 
 ``` bash
 cargo install emacs-lsp-booster
@@ -176,7 +176,7 @@ cargo install emacs-lsp-booster
          ("C-x c u". citre-update-this-tags-file)))
 ```
 
-### LSP-Bridge:
+### LSP-Bridge
 
 ``` bash
 uv venv -p 3.13.3 $HOME/.config/emacs/.venv && source $HOME/.config/emacs/.venv/bin/activate

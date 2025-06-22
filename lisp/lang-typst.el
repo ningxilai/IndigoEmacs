@@ -23,8 +23,8 @@
   :init
   (require 'typst-preview)
   :config
-  (setq typst-preview-executable "tinymist preview")
-  (setq typst-preview-browser "default")
+  (setq-local typst-preview-executable "tinymist preview"
+              typst-preview-browser "default")
   )
 
 ; (setq-default eglot-workspace-configuration '(:tinymist (:exportPdf "onSave")))
