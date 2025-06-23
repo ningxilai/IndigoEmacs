@@ -20,6 +20,10 @@
                    user-emacs-directory))
     (package-activate-all)
     (setq-default custom-file (expand-file-name "custom.el" user-emacs-directory))
+    :hook
+    ((text-mode) . (lambda () (setq-local auto-composition-mode nil
+                                     buffer-face-mode-face '(:family "IBM Plex Mono"))))
+    
     :custom
     (setq-local initial-scratch-echo-area-message "iris")
     (context-menu-mode t)
@@ -29,6 +33,7 @@
     
     (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
     (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
+    
     :config
     (use-package use-package
       :config
@@ -52,54 +57,6 @@
                                        ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
                                        ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
 
-    (use-package composite
-      :init
-      (global-auto-composition-mode t)
-      :hook
-      ((text-mode) . (lambda () (setq-local auto-composition-mode nil
-                                       buffer-face-mode-face '(:family "IBM Plex Mono"))))
-      :config
-      (dolist (char/ligature-re
-               `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
-                 (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
-                 (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
-                 (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<" "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>" "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+" "</" "<*")
-                                 (+ "<"))))
-                 (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
-                 (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
-                 (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
-                 (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
-                 (?&  . ,(rx (+ "&")))
-                 (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>" "|]" "|}" "|=")
-                                 (+ "|"))))
-                 (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
-                 (?+  . ,(rx (or "+>" (+ "+"))))
-                 (?\[ . ,(rx (or "[<" "[|")))
-                 (?\{ . ,(rx "{|"))
-                 (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
-                 (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
-                                 (+ "#"))))
-                 (?\; . ,(rx (+ ";")))
-                 (?_  . ,(rx (or "_|_" "__")))
-                 (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
-                 (?$  . ,(rx "$>"))
-                 (?^  . ,(rx "^="))
-                 (?\] . ,(rx "]#"))))
-        (let ((char (car char/ligature-re))
-              (ligature-re (cdr char/ligature-re)))
-          (set-char-table-range composition-function-table char
-                                `([,ligature-re 0 font-shape-gstring]))))
-      )
-    
-    (use-package dired
-      :config
-      (setq-default dired-movement-style 'cycle
-                    browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
-      (setopt dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
-      ;; this command is useful when you want to close the window of `dirvish-side'
-      ;; automatically when opening a file
-      (put 'dired-find-alternate-file 'disabled nil))
-
     (tool-bar-mode -1)
     (menu-bar-mode -1)
     (blink-cursor-mode -1)
@@ -107,6 +64,7 @@
     (scroll-bar-mode -1)
     (horizontal-scroll-bar-mode -1)
     
+    (global-auto-composition-mode t)
     (global-font-lock-mode t)
     (delete-selection-mode t)
     (global-auto-revert-mode t)
@@ -126,10 +84,42 @@
     (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal))
     (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
     (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
+
+    (dolist (char/ligature-re
+             `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
+               (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
+               (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
+               (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<" "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>" "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+" "</" "<*")
+                               (+ "<"))))
+               (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
+               (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
+               (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
+               (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
+               (?&  . ,(rx (+ "&")))
+               (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>" "|]" "|}" "|=")
+                                 (+ "|"))))
+               (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
+               (?+  . ,(rx (or "+>" (+ "+"))))
+               (?\[ . ,(rx (or "[<" "[|")))
+               (?\{ . ,(rx "{|"))
+               (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
+               (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
+                               (+ "#"))))
+               (?\; . ,(rx (+ ";")))
+               (?_  . ,(rx (or "_|_" "__")))
+               (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
+               (?$  . ,(rx "$>"))
+               (?^  . ,(rx "^="))
+               (?\] . ,(rx "]#"))))
+      (let ((char (car char/ligature-re))
+            (ligature-re (cdr char/ligature-re)))
+        (set-char-table-range composition-function-table char
+                              `([,ligature-re 0 font-shape-gstring]))))
     
     (setq-default text-mode-ispell-word-completion nil
                   auto-save-list-file-prefix t
-                  auto-save-default nil
+                  auto-save-visited-mode t
+                  auto-save-default t
                   make-backup-files nil
                   create-lockfiles nil
                   vc-follow-symlinks t
@@ -162,9 +152,10 @@
      scroll-down-aggressively 0.0
      pixel-scroll-precision-interpolate-page t)
     
-    (setopt x-select-enable-clipboard t
-            x-select-enable-primary nil
-            interprogram-cut-function #'gui-select-text)
+    (setopt
+     x-select-enable-clipboard t
+     x-select-enable-primary nil
+     interprogram-cut-function #'gui-select-text)
     
     (require 'nano)
     (require 'lang-org)
@@ -232,9 +223,9 @@
 
 (use-package async
   :ensure t
-  :config
+  :custom
   (autoload 'dired-async-mode "dired-async.el" nil t)
-  :init
+  :config
   (dired-async-mode t)
   (async-bytecomp-package-mode t))
 
@@ -346,6 +337,16 @@
   :ensure t
   :init (exec-path-from-shell-initialize))
 
+(use-package dired
+  :ensure nil
+  :config
+  (setq-default dired-movement-style 'cycle
+                browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
+  (setopt dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
+  ;; this command is useful when you want to close the window of `dirvish-side'
+  ;; automatically when opening a file
+  (put 'dired-find-alternate-file 'disabled nil))
+
 (use-package dirvish
   :ensure t
   :init
@@ -423,8 +424,14 @@
   :ensure t)
 (use-package nerd-icons-dired
   :ensure t
-  :defer dired
+  :defer t
   :hook (dired-mode . nerd-icons-dired-mode))
+(use-package nerd-icons-completion
+  :ensure t
+  :after vertico marginalia
+  :config (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup)
+  :hook
+  (vertico-mode . nerd-icons-completion-mode))
 (use-package page-break-lines
   :ensure t
   :init (global-page-break-lines-mode t)
@@ -439,21 +446,13 @@
 
 (use-package marginalia
   :ensure t
-  :bind (:map minibuffer-local-map
-              ("M-A" . marginalia-cycle))
+  :bind (("M-A" . marginalia-cycle)
+         :map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
   :custom
   (marginalia-max-relative-age 0)
   (marginalia-align 'right)
-  :init
-  (marginalia-mode))
-
-(use-package nerd-icons-completion
-  :ensure t
-  :after nerd-icons
-  :custom
-  (nerd-icons-completion-mode)
-  :hook
-  (marginalia-mode . nerd-icons-completion-marginalia-setup))
+  :init (marginalia-mode t))
 
 (use-package consult
   :ensure t
@@ -548,18 +547,22 @@
 (use-package vertico-posframe
   :ensure t
   :commands vertico-posframe-mode
-  :custom (vertico-posframe-mode t)
-  :config (setq-default vertico-multiform-commands
-                        '((consult-line
-                           posframe
-                           (vertico-posframe-poshandler . posframe-poshandler-frame-top-center)
-                           (vertico-posframe-border-width . 10)
-                           ;; NOTE: This is useful when emacs is used in both in X and
-                           ;; terminal, for posframe do not work well in terminal, so
-                           ;; vertico-buffer-mode will be used as fallback at the
-                           ;; moment.
-                           (vertico-posframe-fallback-mode . vertico-buffer-mode))
-                          (t posframe))))
+  :hook (vertico-mode . vertico-posframe-mode)
+  :custom
+  (defun posframe-poshandler-frame-center-near-bottom (info)
+    (cons (/ (- (plist-get info :parent-frame-width)
+                (plist-get info :posframe-width))
+             2)
+          (/ (+ (plist-get info :parent-frame-height)
+                (* 2 (plist-get info :font-height)))
+             2)))
+  (setopt vertico-posframe-poshandler
+          #'posframe-poshandler-frame-center-near-bottom)
+  :init
+  (vertico-posframe-mode t)
+  (setq vertico-posframe-parameters
+        '((left-fringe  . 8)
+          (right-fringe . 8))))
 
 (use-package orderless
   :ensure t
@@ -656,7 +659,7 @@
 
 (use-package colorful-mode
   :ensure t
-  :init (setq colorful-use-prefix t)
+  :init (setq-default colorful-use-prefix t)
   :config (dolist (mode '(html-mode php-mode help-mode helpful-mode))
             (add-to-list 'global-colorful-modes mode))
   :hook (after-init . global-colorful-mode))
@@ -837,7 +840,7 @@
   :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
   :init (yas-global-mode t))
 (use-package lsp-bridge
-  :vc nil
+  :vc t
   :autoload global-lsp-bridge-mode
   :load-path "site-lisp/lsp-bridge/"
   :init
@@ -854,7 +857,7 @@
 ;; ends
 
 (use-package reader
-  :vc nil
+  :vc t
   :autoload reader-autoloads
   :load-path "./site-lisp/reader/")
 

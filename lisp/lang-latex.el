@@ -83,11 +83,10 @@
 
 (use-package pdf-tools
   :ensure t
-  :init
-  (pdf-tools-install :no-query)
   :hook
   (pdf-view-mode . (lambda () (line-number-mode nil)))
   :config
+  (pdf-tools-install :no-query)
   (setq-default pdf-sync-backward-display-action t
                 pdf-sync-forward-display-action t))
 

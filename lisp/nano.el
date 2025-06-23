@@ -13,20 +13,19 @@
 
 (defun childframe-workable-p ()
   "Whether childframe is workable."
- (and (>= emacs-major-version 26)
+  (and (>= emacs-major-version 26)
        (not noninteractive)
        (not emacs-basic-display)
        (or (display-graphic-p)
            (featurep 'tty-child-frames))
-       (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
+           (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
 
 (setopt blink-matching-paren-highlight-offscreen t
         show-paren-context-when-offscreen
         (if (childframe-workable-p) 'child-frame 'overlay))
 
 (defun nano-quit ()
-  "Quit minibuffer from anywhere (code from Protesilaos Stavrou)"
-  
+  "Quit minibuffer from anywhere (code from Protesilaos Stavrou)."
   (interactive)
   (cond ((region-active-p) (keyboard-quit))
         ((derived-mode-p 'completion-list-mode) (delete-completion-window))
@@ -36,57 +35,13 @@
 (global-set-key (kbd "C-g") 'nano-quit)
 
 (defun nano-kill ()
-  "Delete frame or kill emacs if there is only one frame left"
-  
+  "Delete frame or kill emacs if there is only one frame left."
   (interactive)
   (condition-case nil
       (delete-frame)
     (error (save-buffers-kill-terminal))))
 
 (global-set-key (kbd "C-x C-c") 'nano-kill)
-
-;; --- Minimal key bindings ---------------------------------------------------
-
-;; (bind-key "C-z"  nil) ;; No suspend frame
-;; (bind-key "C-<wheel-up>" nil) ;; No text resize via mouse scroll
-;; (bind-key "C-<wheel-down>" nil) ;; No text resize via mouse scroll
-
-;; --- Minimal NANO (not a real) theme ----------------------------------------
-
-(defgroup nano-faces-light nil "nano customized light" :group 'faces)
-(defgroup nano-faces-dark  nil "nano customized dark" :group 'faces)
-
-(defface nano-default '((t)) "" :group 'nano-faces-light)   (defface nano-default-i '((t)) "" :group 'nano-faces-dark)
-(defface nano-highlight '((t)) "" :group 'nano-faces-light) (defface nano-highlight-i '((t)) "" :group 'nano-faces-dark)
-(defface nano-subtle '((t)) "" :group 'nano-faces-light)    (defface nano-subtle-i '((t)) "" :group 'nano-faces-dark)
-(defface nano-faded '((t)) "" :group 'nano-faces-light)     (defface nano-faded-i '((t)) "" :group 'nano-faces-dark)
-(defface nano-salient '((t)) "" :group 'nano-faces-light)   (defface nano-salient-i '((t)) "" :group 'nano-faces-dark)
-(defface nano-popout '((t)) "" :group 'nano-faces-light)    (defface nano-popout-i '((t)) "" :group 'nano-faces-dark)
-(defface nano-strong '((t)) "" :group 'nano-faces-light)    (defface nano-strong-i '((t)) "" :group 'nano-faces-dark)
-(defface nano-critical '((t)) "" :group 'nano-faces-light)  (defface nano-critical-i '((t)) "" :group 'nano-faces-dark)
-
-(defun nano-set-face (name &optional foreground background weight)
-  "Set NAME and NAME-i faces with given FOREGROUND, BACKGROUND and WEIGHT"
-  
-  (apply #'set-face-attribute `(,name nil
-                                      ,@(when foreground `(:foreground ,foreground))
-                                      ,@(when background `(:background ,background))
-                                      ,@(when weight `(:weight ,weight))))
-  (apply #'set-face-attribute `(,(intern (concat (symbol-name name) "-i")) nil
-                                :foreground ,(face-background 'nano-default)
-                                ,@(when foreground `(:background ,foreground))
-                                :weight regular)))
-
-(defun nano-link-face (sources faces &optional attributes)
-  "Make FACES to inherit from SOURCES faces and unspecify ATTRIBUTES."
-  
-  (let ((attributes (or attributes
-                        '( :foreground :background :family :weight
-                           :height :slant :overline :underline :box))))
-    (dolist (face (seq-filter #'facep faces))
-      (dolist (attribute attributes)
-        (set-face-attribute face nil attribute 'unspecified))
-      (set-face-attribute face nil :inherit sources))))
 
 ;; --- Header & Mode-Lines & Title---------------------------------------------
 
@@ -104,6 +59,12 @@
 ;; (setq-default header-line-format '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
 
 (setopt project-mode-line t)
+
+(defgroup nano-faces-dark nil t :group 'faces)
+
+(defface nano-default-i nil "" :group 'nano-faces-dark)
+(defface nano-faded-i nil "" :group 'nano-faces-dark)
+(defface nano-critical-i nil "" :group 'nano-faces-dark)
 
 (setq-default header-line-format
   '(:eval

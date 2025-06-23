@@ -9,7 +9,6 @@
            ;; Edit settings
            org-auto-align-tags nil
            org-tags-column 0
-           org-catch-invisible-edits 'show-and-error
            org-special-ctrl-a/e t
            org-insert-heading-respect-content t
            org-startup-with-inline-images t
@@ -18,7 +17,6 @@
            org-hide-emphasis-markers t
            org-hide-leading-stars t
            org-pretty-entities t
-           org-agenda-tags-column 0
            org-ellipsis "…")
   (setq
    org-todo-keywords
@@ -31,12 +29,16 @@
   :hook ((org-mode . org-indent-mode)
          ;; (org-mode . org-toggle-pretty-entities)
          (org-mode . (lambda () (visual-line-mode t))))
-  :custom (custom-set-faces
-           '(org-level-1 ((t (:inherit outline-1 :height 1.3))))
-           '(org-level-2 ((t (:inherit outline-2 :height 1.2))))
-           '(org-level-3 ((t (:inherit outline-3 :height 1.1))))
-           '(org-level-4 ((t (:inherit outline-4 :height 1.0))))
-           '(org-level-5 ((t (:inherit outline-5 :height 1.0)))))
+  :custom
+  (custom-set-faces
+   '(org-level-1 ((t (:inherit outline-1 :height 1.3))))
+   '(org-level-2 ((t (:inherit outline-2 :height 1.2))))
+   '(org-level-3 ((t (:inherit outline-3 :height 1.1))))
+   '(org-level-4 ((t (:inherit outline-4 :height 1.0))))
+   '(org-level-5 ((t (:inherit outline-5 :height 1.0)))))
+  (setq-local
+   org-catch-invisible-edits 'show-and-error
+   org-agenda-tags-column 0)
   )
 
 (use-package org-contrib
