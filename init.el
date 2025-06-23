@@ -24,10 +24,11 @@
     (setq-local initial-scratch-echo-area-message "iris")
     (context-menu-mode t)
     (enable-recursive-minibuffers t)
-    (read-extended-command-predicate
-     #'command-completion-default-include-p)
-    (minibuffer-prompt-properties
-   '(read-only t cursor-intangible t face minibuffer-prompt))
+    (read-extended-command-predicate #'command-completion-default-include-p)
+    (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+    
+    (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
+    (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
     :config
     (use-package use-package
       :config
@@ -50,7 +51,55 @@
                     package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
                                        ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
                                        ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
+
+    (use-package composite
+      :init
+      (global-auto-composition-mode t)
+      :hook
+      ((text-mode) . (lambda () (setq-local auto-composition-mode nil
+                                       buffer-face-mode-face '(:family "IBM Plex Mono"))))
+      :config
+      (dolist (char/ligature-re
+               `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
+                 (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
+                 (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
+                 (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<" "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>" "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+" "</" "<*")
+                                 (+ "<"))))
+                 (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
+                 (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
+                 (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
+                 (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
+                 (?&  . ,(rx (+ "&")))
+                 (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>" "|]" "|}" "|=")
+                                 (+ "|"))))
+                 (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
+                 (?+  . ,(rx (or "+>" (+ "+"))))
+                 (?\[ . ,(rx (or "[<" "[|")))
+                 (?\{ . ,(rx "{|"))
+                 (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
+                 (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
+                                 (+ "#"))))
+                 (?\; . ,(rx (+ ";")))
+                 (?_  . ,(rx (or "_|_" "__")))
+                 (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
+                 (?$  . ,(rx "$>"))
+                 (?^  . ,(rx "^="))
+                 (?\] . ,(rx "]#"))))
+        (let ((char (car char/ligature-re))
+              (ligature-re (cdr char/ligature-re)))
+          (set-char-table-range composition-function-table char
+                                `([,ligature-re 0 font-shape-gstring]))))
+      )
     
+    (use-package dired
+      :config
+      (setq-default dired-movement-style 'cycle
+                    browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
+      (setopt dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
+      ;; this command is useful when you want to close the window of `dirvish-side'
+      ;; automatically when opening a file
+      (put 'dired-find-alternate-file 'disabled nil))
+
     (tool-bar-mode -1)
     (menu-bar-mode -1)
     (blink-cursor-mode -1)
@@ -77,9 +126,6 @@
     (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal))
     (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
     (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
-  
-    (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
-    (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
     
     (setq-default text-mode-ispell-word-completion nil
                   auto-save-list-file-prefix t
@@ -90,6 +136,7 @@
                   use-short-answers t
                   package-quickstart t
                   load-prefer-newer t
+                  truncate-lines nil
                   save-interprogram-paste-before-kill t
                   find-file-suppress-same-file-warnings t)
   
@@ -103,6 +150,7 @@
                   ring-bell-function 'ignore
                   select-enable-clipboard t
                   system-time-locale "C")
+    
     (setopt
      ;; nice scroll
      scroll-step 1
@@ -119,7 +167,7 @@
             interprogram-cut-function #'gui-select-text)
     
     (require 'nano)
-    (require 'lang-typst)
+    (require 'lang-org)
     
     :bind (("C-x k" . kill-current-buffer)
            ("C-x C-r" .  recentf-open)
@@ -197,7 +245,7 @@
   ;; Highlight starts from EOL, to avoid conflicts with other overlays
   (setq hl-line-range-function (lambda () (cons (line-end-position)
                                            (line-beginning-position 2))))
-  :hook ((prog-mode) . hl-line-mode))
+  :hook prog-mode)
 
 (use-package vundo
   :ensure t
@@ -213,23 +261,51 @@
   :config (setq treesit--install-language-grammar-out-dir-history "tree-sitter"))
 
 (use-package paren
-  :ensure nil
   :config
-  (setq show-paren-delay 0.1
-        show-paren-when-point-in-periphery t))
+  (setq-default show-paren-delay 0.1
+                show-paren-when-point-in-periphery t))
 
-(use-package smartparens
-  :ensure t
-  :init
-  (show-smartparens-global-mode t)
-  :hook
-  ((prog-mode text-mode markdown-mode) . smartparens-mode)
-  :config
-  (require 'smartparens-config))
+(use-package fingertip
+  :vc (fingertip :url "https://github.com/manateelazycat/fingertip"
+                 :rev :newest)
+  :hook (lisp-mode emacs-lisp-mode markdown-mode)
+  :bind
+  (:map fingertip-mode-map
+        ("(" . fingertip-open-round)
+        ("[" . fingertip-open-bracket)
+        ("{" . fingertip-open-curly)
+        (")" . fingertip-close-round)
+        ("]" . fingertip-close-bracket)
+        ("}" . fingertip-close-curly)
+        ("=" . fingertip-equal)
+  
+        ("%" . fingertip-match-paren)
+        ("\"" . fingertip-double-quote)
+        ("'" . fingertip-single-quote)
+  
+        ("SPC" . fingertip-space)
+        ("RET" . fingertip-newline)
+
+        ("M-o" . fingertip-backward-delete)
+        ("C-d" . fingertip-forward-delete)
+        ("C-k" . fingertip-kill)
+  
+        ("M-\"" . fingertip-wrap-double-quote)
+        ("M-'" . fingertip-wrap-single-quote)
+        ("M-[" . fingertip-wrap-bracket)
+        ("M-{" . fingertip-wrap-curly)
+        ("M-(" . fingertip-wrap-round)
+        ("M-)" . fingertip-unwrap)
+
+        ("M-p" . fingertip-jump-right)
+        ("M-n" . fingertip-jump-left)
+        ("M-:" . fingertip-jump-out-pair-and-newline)
+        
+        ("C-j" . fingertip-jump-up)))
 
 (use-package rainbow-delimiters
   :ensure t
-  :hook (smartparens-mode . rainbow-delimiters-mode))
+  :hook prog-mode)
 
 (use-package region-occurrences-highlighter
   :ensure t
@@ -253,11 +329,13 @@
           icomplete-separator " . "
           icomplete-with-completion-tables t
           icomplete-max-delay-chars 0)
+  )
+
+(use-package completion
   :custom
   (setq-default completion-preview-ignore-case t
                 completion-ignore-case t
-                completion-auto-help t)
-  )
+                completion-auto-help t))
 
 (use-package flycheck
   :ensure t
@@ -266,8 +344,94 @@
 
 (use-package exec-path-from-shell
   :ensure t
+  :init (exec-path-from-shell-initialize))
+
+(use-package dirvish
+  :ensure t
   :init
-  (exec-path-from-shell-initialize))
+  (dirvish-override-dired-mode)
+  :config
+  (dirvish-peek-mode)             ; Preview files in minibuffer
+  ;; (dirvish-side-follow-mode)      ; similar to `treemacs-follow-mode'
+  (setq dirvish-mode-line-format
+        '(:left (sort symlink) :right (omit yank index)))
+  ;; open large directory (over 20000 files) asynchronously with `fd' command
+  (setq dirvish-large-directory-threshold 20000)
+  :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
+  (("C-c f" . dirvish)
+   :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
+   (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
+   ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
+   ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
+   ("f"   . dirvish-file-info-menu)    ; [f]ile info
+   ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
+   ("s"   . dirvish-quicksort)         ; [s]ort flie list
+   ("r"   . dirvish-history-jump)      ; [r]ecent visited
+   ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
+   ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
+   ("*"   . dirvish-mark-menu)
+   ("y"   . dirvish-yank-menu)
+   ("N"   . dirvish-narrow)
+   ("^"   . dirvish-history-last)
+   ("TAB" . dirvish-subtree-toggle)
+   ("M-f" . dirvish-history-go-forward)
+   ("M-b" . dirvish-history-go-backward)
+   ("M-e" . dirvish-emerge-menu))
+  :custom
+  (setq-local dirvish-attributes           ; The order *MATTERS* for some attributes
+              '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
+              dirvish-side-attributes
+              '(vc-state nerd-icons collapse file-size)))
+
+;; ends
+
+;; Menu
+
+(use-package enlight
+  :ensure t
+  :hook (enlight . (lambda () (hl-line-mode nil)))
+  :init (setopt initial-buffer-choice #'enlight)
+  :custom
+  (enlight-content
+   (concat
+    (propertize "MENU" 'face 'highlight)
+    "\n\n"
+    (enlight-menu
+     '(("\nOrg Mode"
+	("Org-Agenda (current day)" (org-agenda nil "a") "a"))
+       ("\nFolder"
+	("Desktop folder" (dired "~/Desktop") "s")
+	("Downloads folder" (dired "~/Downloads") "d"))
+       ("\nInit"
+	("init.el" (dired "~/.config/emacs/") "i"))
+       ("\nOther"
+	("Projects" project-switch-project "p"))))))
+  )
+
+;; ends
+
+;; UI
+
+(use-package nord-theme
+  :vc (nord-theme :url "https://github.com/nordtheme/emacs.git"
+                  :rev :newest)
+  :init (load-theme 'nord t nil))
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode t))
+(use-package nerd-icons
+  :ensure t)
+(use-package nerd-icons-dired
+  :ensure t
+  :defer dired
+  :hook (dired-mode . nerd-icons-dired-mode))
+(use-package page-break-lines
+  :ensure t
+  :init (global-page-break-lines-mode t)
+  :custom
+  (set-fontset-font "fontset-default"
+                    (cons page-break-lines-char page-break-lines-char)
+                    (face-attribute 'default :family)))
 
 ;; ends
 
@@ -285,12 +449,15 @@
 
 (use-package nerd-icons-completion
   :ensure t
-  :after (marginalia nerd-icons)
-  :config (nerd-icons-completion-mode)
-  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup))
+  :after nerd-icons
+  :custom
+  (nerd-icons-completion-mode)
+  :hook
+  (marginalia-mode . nerd-icons-completion-marginalia-setup))
 
 (use-package consult
   :ensure t
+  :config (setq-default register-preview-delay 0.5)
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
          ("C-c h" . consult-history)
@@ -355,7 +522,6 @@
   ;; register formatting, adds thin separator lines, register sorting and hides
   ;; the window mode line.
   (advice-add #'register-preview :override #'consult-register-window)
-  (setq register-preview-delay 0.5)
 
   :custom
   (consult-customize
@@ -379,21 +545,21 @@
   (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
   )
 
-(use-package posframe :ensure t)
 (use-package vertico-posframe
   :ensure t
-  :init (vertico-posframe-mode 1)
-  :config (setq vertico-multiform-commands
-                '((consult-line
-                   posframe
-                   (vertico-posframe-poshandler . posframe-poshandler-frame-top-center)
-                   (vertico-posframe-border-width . 10)
-                   ;; NOTE: This is useful when emacs is used in both in X and
-                   ;; terminal, for posframe do not work well in terminal, so
-                   ;; vertico-buffer-mode will be used as fallback at the
-                   ;; moment.
-                   (vertico-posframe-fallback-mode . vertico-buffer-mode))
-                  (t posframe))))
+  :commands vertico-posframe-mode
+  :custom (vertico-posframe-mode t)
+  :config (setq-default vertico-multiform-commands
+                        '((consult-line
+                           posframe
+                           (vertico-posframe-poshandler . posframe-poshandler-frame-top-center)
+                           (vertico-posframe-border-width . 10)
+                           ;; NOTE: This is useful when emacs is used in both in X and
+                           ;; terminal, for posframe do not work well in terminal, so
+                           ;; vertico-buffer-mode will be used as fallback at the
+                           ;; moment.
+                           (vertico-posframe-fallback-mode . vertico-buffer-mode))
+                          (t posframe))))
 
 (use-package orderless
   :ensure t
@@ -403,62 +569,65 @@
 
 ;; ends
 
-;; ProjectManager
+;; Project
 
-(use-package magit :defer t :ensure t)
-(use-package ghub :defer t :ensure t :demand t :after magit)
-(use-package projectile :defer t :ensure t)
-(use-package transient :defer t :ensure t)
+(use-package magit
+  :defer t
+  :ensure t
+  :hook (magit-post-refresh . diff-hl-magit-post))
+
+(use-package ghub
+  :defer t
+  :ensure t
+  :after magit)
+
+(use-package project
+  ;; https://emacs.liujiacai.net/post/010/
+  ;; https://christiantietze.de/posts/2022/03/mark-local-project.el-directories/
+  :custom
+    (defgroup project-local nil
+    "Local, non-VC-backed project.el root directories."
+    :group 'project)
+  
+    (defcustom project-local-identifier ".project"
+      "You can specify a single filename or a list of names."
+      :type '(choice (string :tag "Single file")
+                     (repeat (string :tag "Filename")))
+      :group 'project-local)
+
+    (cl-defmethod project-root ((project (head local)))
+      "Return root directory of current PROJECT."
+      (cdr project))
+    
+    (defun project-local-try-local (dir)
+      "Determine if DIR is a non-VC project DIR must include a file with the name determined by the variable `project-local-identifier' to be considered a project."
+      (if-let* ((root (if (listp project-local-identifier)
+                          (seq-some (lambda (n)
+                                      (locate-dominating-file dir n))
+                                    project-local-identifier)
+                        (locate-dominating-file dir project-local-identifier))))
+          (cons 'local root)))
+    
+    (setq-local project-find-functions '(project-local-try-local project-try-vc))
+    
+    (defun my/project-files-in-directory (dir)
+      "Use `fd' to list files in DIR."
+      (let* ((default-directory dir)
+           (localdir (file-local-name (expand-file-name dir)))
+           (command (format "fd -H -t f -0 . %s" localdir)))
+        (project--remote-file-names
+         (sort (split-string (shell-command-to-string command) "\0" t)
+               #'string<))))
+  
+    (cl-defmethod project-files ((project (head local)) &optional dirs)
+      "Override `project-files' to use `fd' in local projects."
+      (mapcan #'my/project-files-in-directory
+              (or dirs (list (project-root project)))))
+    )
 
 ;; ends
 
-;; Menu
-
-(use-package enlight
-  :ensure t
-  :hook (enlight . (lambda () (hl-line-mode nil)))
-  :init (setopt initial-buffer-choice #'enlight)
-  :custom
-  (enlight-content
-   (concat
-    (propertize "MENU" 'face 'highlight)
-    "\n\n"
-    (enlight-menu
-     '(("\nOrg Mode"
-	("Org-Agenda (current day)" (org-agenda nil "a") "a"))
-       ("\nFolder"
-	("Desktop folder" (dired "~/Desktop") "s")
-	("Downloads folder" (dired "~/Downloads") "d"))
-       ("\nInit"
-	("init.el" (dired "~/.config/emacs/") "i"))
-       ("\nOther"
-	("Projects" project-switch-project "p"))))))
-  )
-
-;; ends
-
-;; UI
-
-(use-package nord-theme
-  :vc (nord-theme :url "https://github.com/nordtheme/emacs.git"
-                  :rev :newest)
-  :init (load-theme 'nord t nil))
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode t))
-(use-package nerd-icons
-  :ensure t)
-(use-package nerd-icons-dired
-  :ensure t
-  :defer dired
-  :hook (dired-mode . nerd-icons-dired-mode))
-(use-package page-break-lines
-  :ensure t
-  :init (global-page-break-lines-mode t)
-  :custom
-  (set-fontset-font "fontset-default"
-                    (cons page-break-lines-char page-break-lines-char)
-                    (face-attribute 'default :family)))
+;; Color & Face
 
 (use-package indent-bars
   :ensure t
@@ -485,46 +654,6 @@
   :hook
   ((prog-mode yaml-mode) . indent-bars-mode))
 
-(use-package composite
-  :ensure nil
-  :init
-  (global-auto-composition-mode t)
-  :hook
-  ((text-mode) . (lambda () (setq-local auto-composition-mode nil
-                                   buffer-face-mode-face '(:family "IBM Plex Mono"))))
-  :config
-  (dolist (char/ligature-re
-           `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
-             (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
-             (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
-             (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<" "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>" "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+" "</" "<*")
-                           (+ "<"))))
-             (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
-             (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
-             (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
-             (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
-             (?&  . ,(rx (+ "&")))
-             (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>" "|]" "|}" "|=")
-                             (+ "|"))))
-             (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
-             (?+  . ,(rx (or "+>" (+ "+"))))
-           (?\[ . ,(rx (or "[<" "[|")))
-           (?\{ . ,(rx "{|"))
-           (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
-           (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
-                           (+ "#"))))
-           (?\; . ,(rx (+ ";")))
-           (?_  . ,(rx (or "_|_" "__")))
-           (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
-           (?$  . ,(rx "$>"))
-           (?^  . ,(rx "^="))
-           (?\] . ,(rx "]#"))))
-    (let ((char (car char/ligature-re))
-          (ligature-re (cdr char/ligature-re)))
-      (set-char-table-range composition-function-table char
-                            `([,ligature-re 0 font-shape-gstring]))))
-  )
-
 (use-package colorful-mode
   :ensure t
   :init (setq colorful-use-prefix t)
@@ -534,64 +663,12 @@
 
 ;; ends
 
-;; dired
-
-(use-package dired
-  :ensure nil
-  :config
-  (setq-default dired-movement-style 'cycle
-                browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
-  (setopt dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
-  ;; this command is useful when you want to close the window of `dirvish-side'
-  ;; automatically when opening a file
-  (put 'dired-find-alternate-file 'disabled nil))
-
-(use-package dirvish
-  :ensure t
-  :init
-  (dirvish-override-dired-mode)
-  :config
-  (dirvish-peek-mode)             ; Preview files in minibuffer
-  ;; (dirvish-side-follow-mode)      ; similar to `treemacs-follow-mode'
-  (setq dirvish-mode-line-format
-        '(:left (sort symlink) :right (omit yank index)))
-  ;; open large directory (over 20000 files) asynchronously with `fd' command
-  (setq dirvish-large-directory-threshold 20000)
-  :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
-  (("C-c f" . dirvish)
-   :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
-   (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
-   ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
-   ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
-   ("f"   . dirvish-file-info-menu)    ; [f]ile info
-   ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
-   ("s"   . dirvish-quicksort)         ; [s]ort flie list
-   ("r"   . dirvish-history-jump)      ; [r]ecent visited
-   ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
-   ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
-   ("*"   . dirvish-mark-menu)
-   ("y"   . dirvish-yank-menu)
-   ("N"   . dirvish-narrow)
-   ("^"   . dirvish-history-last)
-   ("TAB" . dirvish-subtree-toggle)
-   ("M-f" . dirvish-history-go-forward)
-   ("M-b" . dirvish-history-go-backward)
-   ("M-e" . dirvish-emerge-menu))
-  :custom
-  (setq-local dirvish-attributes           ; The order *MATTERS* for some attributes
-              '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
-              dirvish-side-attributes
-              '(vc-state nerd-icons collapse file-size)))
-
-;; ends
-
 ;; Quarto
 
 (use-package ess
   :ensure t
   :after quarto-mode)
 (use-package quarto-mode
-  :defer t
   :ensure t
   :mode (("\\.Rmd" . poly-quarto-mode)))
 
@@ -653,7 +730,8 @@
   (vterm-mode . (lambda()(set (make-local-variable 'buffer-face-mode-face) '(:family "FiraCode Nerd Font"))
                   (buffer-face-mode t)))
   (vterm-set-title-functions . vterm--rename-buffer-as-title))
-(use-package multi-vterm :ensure t)
+(use-package multi-vterm
+  :ensure t)
 (use-package vterm-toggle
   :ensure t
   :after vterm
@@ -729,30 +807,30 @@
 ;;   (add-to-list 'eglot-server-programs '(LaTeX-mode . ("texlab")))
 ;;   )
 
-;; (use-package citre
-;;   :vc (citre :url "https://github.com/universal-ctags/citre"
-;;              :rev :newest)
-;;   :config
-;;   (require 'citre)
-;;   (require 'citre-config)
-;;   (setq-local
-;;    ;; Set this if you want to always use one location to create a tags file.
-;;    citre-default-create-tags-file-location 'global-cache
-;;    ;; Set this if you'd like to use ctags options generated by Citre
-;;    ;; directly, rather than further editing them.
-;;    citre-edit-ctags-options-manually nil
-;;    ;; If you only want the auto enabling citre-mode behavior to work for
-;;    ;; certain modes (like `prog-mode'), set it like this.
-;;    citre-auto-enable-citre-mode-modes '(prog-mode))
-;;   :custom
-;;   (setq-default
-;;    ;; Set this if you use project management plugin like projectile.  It's
-;;    ;; used for things like displaying paths relatively, see its docstring.
-;;    citre-project-root-function #'projectile-project-root)
-;;   :bind (("C-x c j" . citre-jump)
-;;          ("C-x c J" . citre-jump-back)
-;;          ("C-x c p" . citre-ace-peek)
-;;          ("C-x c u". citre-update-this-tags-file)))
+(use-package citre
+  :vc (citre :url "https://github.com/universal-ctags/citre"
+             :rev :newest)
+  :config
+  (require 'citre)
+  (require 'citre-config)
+  (setq-local
+   ;; Set this if you want to always use one location to create a tags file.
+   citre-default-create-tags-file-location 'global-cache
+   ;; Set this if you'd like to use ctags options generated by Citre
+   ;; directly, rather than further editing them.
+   citre-edit-ctags-options-manually nil
+   ;; If you only want the auto enabling citre-mode behavior to work for
+   ;; certain modes (like `prog-mode'), set it like this.
+   citre-auto-enable-citre-mode-modes '(prog-mode))
+  :custom
+  (setq-default
+   ;; Set this if you use project management plugin like projectile.  It's
+   ;; used for things like displaying paths relatively, see its docstring.
+   citre-project-root-function #'projectile-project-root)
+  :bind (("C-x c j" . citre-jump)
+         ("C-x c J" . citre-jump-back)
+         ("C-x c p" . citre-ace-peek)
+         ("C-x c u". citre-update-this-tags-file)))
 
 (use-package yasnippet
   :ensure t
@@ -768,7 +846,7 @@
   (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
   (setq lsp-bridge-markdown-lsp-server 'marksman)
   (setq acm-enable-yas t)
-  ;; (setq acm-enable-citre t)
+  (setq acm-enable-citre t)
   (setq acm-candidate-match-function 'orderless-flex)
   :custom
   (acm-enable-capf t))

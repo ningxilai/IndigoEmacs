@@ -1,5 +1,6 @@
 ;;; -*- lexical-binding: t; -*-
 (use-package typst-ts-mode
+  ;; https://github.com/Ziqi-Yang/tree-sitter-typst
   :ensure t
   :mode "\\.typ"
   :bind (:map typst-ts-mode-map

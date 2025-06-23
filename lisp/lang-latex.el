@@ -14,7 +14,7 @@
   :no-require t
   :ensure auctex
   :commands LaTeX-mode
-  :mode "\\.tex\\'" "\\.stex\\'" "\\.texi\\'"
+  :mode "\\.tex" "\\.stex" "\\.texi"
   :init
   ;; PDF View
   (setq-default TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view))

@@ -52,37 +52,41 @@
 ;; (bind-key "C-<wheel-down>" nil) ;; No text resize via mouse scroll
 
 ;; --- Minimal NANO (not a real) theme ----------------------------------------
-  (defface nano-default '((t)) "" :group 'nano-faces-light)   (defface nano-default-i '((t)) "" :group 'nano-faces-dark)
-  (defface nano-highlight '((t)) "" :group 'nano-faces-light) (defface nano-highlight-i '((t)) "" :group 'nano-faces-dark)
-  (defface nano-subtle '((t)) "" :group 'nano-faces-light)    (defface nano-subtle-i '((t)) "" :group 'nano-faces-dark)
-  (defface nano-faded '((t)) "" :group 'nano-faces-light)     (defface nano-faded-i '((t)) "" :group 'nano-faces-dark)
-  (defface nano-salient '((t)) "" :group 'nano-faces-light)   (defface nano-salient-i '((t)) "" :group 'nano-faces-dark)
-  (defface nano-popout '((t)) "" :group 'nano-faces-light)    (defface nano-popout-i '((t)) "" :group 'nano-faces-dark)
-  (defface nano-strong '((t)) "" :group 'nano-faces-light)    (defface nano-strong-i '((t)) "" :group 'nano-faces-dark)
-  (defface nano-critical '((t)) "" :group 'nano-faces-light)  (defface nano-critical-i '((t)) "" :group 'nano-faces-dark)
 
-  (defun nano-set-face (name &optional foreground background weight)
-    "Set NAME and NAME-i faces with given FOREGROUND, BACKGROUND and WEIGHT"
-    
-    (apply #'set-face-attribute `(,name nil
-                                        ,@(when foreground `(:foreground ,foreground))
-                                        ,@(when background `(:background ,background))
-                                        ,@(when weight `(:weight ,weight))))
-    (apply #'set-face-attribute `(,(intern (concat (symbol-name name) "-i")) nil
-                                  :foreground ,(face-background 'nano-default)
-                                  ,@(when foreground `(:background ,foreground))
-                                  :weight regular)))
+(defgroup nano-faces-light nil "nano customized light" :group 'faces)
+(defgroup nano-faces-dark  nil "nano customized dark" :group 'faces)
+
+(defface nano-default '((t)) "" :group 'nano-faces-light)   (defface nano-default-i '((t)) "" :group 'nano-faces-dark)
+(defface nano-highlight '((t)) "" :group 'nano-faces-light) (defface nano-highlight-i '((t)) "" :group 'nano-faces-dark)
+(defface nano-subtle '((t)) "" :group 'nano-faces-light)    (defface nano-subtle-i '((t)) "" :group 'nano-faces-dark)
+(defface nano-faded '((t)) "" :group 'nano-faces-light)     (defface nano-faded-i '((t)) "" :group 'nano-faces-dark)
+(defface nano-salient '((t)) "" :group 'nano-faces-light)   (defface nano-salient-i '((t)) "" :group 'nano-faces-dark)
+(defface nano-popout '((t)) "" :group 'nano-faces-light)    (defface nano-popout-i '((t)) "" :group 'nano-faces-dark)
+(defface nano-strong '((t)) "" :group 'nano-faces-light)    (defface nano-strong-i '((t)) "" :group 'nano-faces-dark)
+(defface nano-critical '((t)) "" :group 'nano-faces-light)  (defface nano-critical-i '((t)) "" :group 'nano-faces-dark)
+
+(defun nano-set-face (name &optional foreground background weight)
+  "Set NAME and NAME-i faces with given FOREGROUND, BACKGROUND and WEIGHT"
   
-  (defun nano-link-face (sources faces &optional attributes)
-    "Make FACES to inherit from SOURCES faces and unspecify ATTRIBUTES."
-    
-    (let ((attributes (or attributes
-                          '( :foreground :background :family :weight
-                             :height :slant :overline :underline :box))))
-      (dolist (face (seq-filter #'facep faces))
-        (dolist (attribute attributes)
-          (set-face-attribute face nil attribute 'unspecified))
-        (set-face-attribute face nil :inherit sources))))
+  (apply #'set-face-attribute `(,name nil
+                                      ,@(when foreground `(:foreground ,foreground))
+                                      ,@(when background `(:background ,background))
+                                      ,@(when weight `(:weight ,weight))))
+  (apply #'set-face-attribute `(,(intern (concat (symbol-name name) "-i")) nil
+                                :foreground ,(face-background 'nano-default)
+                                ,@(when foreground `(:background ,foreground))
+                                :weight regular)))
+
+(defun nano-link-face (sources faces &optional attributes)
+  "Make FACES to inherit from SOURCES faces and unspecify ATTRIBUTES."
+  
+  (let ((attributes (or attributes
+                        '( :foreground :background :family :weight
+                           :height :slant :overline :underline :box))))
+    (dolist (face (seq-filter #'facep faces))
+      (dolist (attribute attributes)
+        (set-face-attribute face nil attribute 'unspecified))
+      (set-face-attribute face nil :inherit sources))))
 
 ;; --- Header & Mode-Lines & Title---------------------------------------------
 
