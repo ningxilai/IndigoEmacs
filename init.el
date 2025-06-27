@@ -30,10 +30,7 @@
     (enable-recursive-minibuffers t)
     (read-extended-command-predicate #'command-completion-default-include-p)
     (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
-    
-    (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
-    (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
-    
+
     :config
     (use-package use-package
       :config
@@ -56,7 +53,127 @@
                     package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
                                        ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
                                        ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
-
+    
+    (use-package fontset
+      :config
+      (set-face-attribute 'default (selected-frame)
+                          :height 120 :weight 'light :family "Lilex Nerd Font") ;; IBM Plex Mono
+      (set-face-attribute 'bold nil :weight 'regular)
+      (set-face-attribute 'bold-italic nil :weight 'regular)
+      
+      (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal))
+      (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
+      (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
+        
+      (dolist (char/ligature-re
+               `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
+                 (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
+                 (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
+                 (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<" "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>" "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+" "</" "<*")
+                                 (+ "<"))))
+                 (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
+                 (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
+                 (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
+                 (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
+                 (?&  . ,(rx (+ "&")))
+                 (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>" "|]" "|}" "|=")
+                                 (+ "|"))))
+                 (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
+                 (?+  . ,(rx (or "+>" (+ "+"))))
+                 (?\[ . ,(rx (or "[<" "[|")))
+                 (?\{ . ,(rx "{|"))
+                 (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
+                 (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
+                                 (+ "#"))))
+                 (?\; . ,(rx (+ ";")))
+                 (?_  . ,(rx (or "_|_" "__")))
+                 (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
+                 (?$  . ,(rx "$>"))
+                 (?^  . ,(rx "^="))
+                 (?\] . ,(rx "]#"))))
+        (let ((char (car char/ligature-re))
+              (ligature-re (cdr char/ligature-re)))
+          (set-char-table-range composition-function-table char
+                                `([,ligature-re 0 font-shape-gstring]))))
+      :init
+      (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
+      (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
+      )
+     
+    (setq-default frame-title-format
+              '(:eval (concat
+	               (if (and buffer-file-name (buffer-modified-p)) "•")
+	               (buffer-name)
+	               (if buffer-file-name
+		           (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
+    
+    (eval-when-compile
+      (defgroup nano-faces-dark nil t :group 'faces)
+      
+      (defface nano-default-i nil "" :group 'nano-faces-dark)
+      (defface nano-faded-i nil "" :group 'nano-faces-dark)
+      (defface nano-critical-i nil "" :group 'nano-faces-dark)
+      
+      (setq-default header-line-format
+                    '(:eval
+                      (let ((prefix (cond (buffer-read-only     '("RO" . nano-default-i))
+                                          ((buffer-modified-p)  '("**" . nano-critical-i))
+                                          (t                    '("RW" . nano-faded-i))))
+                            (mode (concat "(" (downcase (cond ((consp mode-name) (car mode-name))
+                                                              ((stringp mode-name) mode-name)
+                                                              (t "unknow")))
+                                          " mode)"))
+          (coords (format-mode-line "%c:%l ")))
+                        (list
+                         (propertize " " 'face (cdr prefix)  'display '(raise -0.25))
+                         (propertize (car prefix) 'face (cdr prefix))
+                         (propertize " " 'face (cdr prefix) 'display '(raise +0.25))
+                         (propertize (format-mode-line " %b ") 'face 'nano-strong)
+                         (propertize mode 'face 'header-line)
+                         (propertize " " 'display `(space :align-to (- right ,(length coords))))
+                         (propertize coords 'face 'nano-faded)))))
+      )
+    
+    (eval-and-compile
+      
+      ;; Copy by Seagle0128
+      
+      (defun childframe-workable-p ()
+        "Whether childframe is workable."
+        (and (>= emacs-major-version 26)
+             (not noninteractive)
+             (not emacs-basic-display)
+             (or (display-graphic-p)
+                 (featurep 'tty-child-frames))
+             (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
+      
+      (setopt blink-matching-paren-highlight-offscreen t
+              show-paren-context-when-offscreen
+              (if (childframe-workable-p) 'child-frame 'overlay))
+      
+      ;; copy by nano
+      
+      (defun nano-quit ()
+        "Quit minibuffer from anywhere (code from Protesilaos Stavrou)."
+        (interactive)
+        (cond ((region-active-p) (keyboard-quit))
+              ((derived-mode-p 'completion-list-mode) (delete-completion-window))
+              ((> (minibuffer-depth) 0) (abort-recursive-edit))
+              (t (keyboard-quit))))
+      
+      (global-set-key (kbd "C-g") 'nano-quit)
+  
+      (defun nano-kill ()
+        "Delete frame or kill emacs if there is only one frame left."
+        (interactive)
+        (condition-case nil
+            (delete-frame)
+          (error (save-buffers-kill-terminal))))
+      
+      (global-set-key (kbd "C-x C-c") 'nano-kill)
+      
+      )
+    
     (tool-bar-mode -1)
     (menu-bar-mode -1)
     (blink-cursor-mode -1)
@@ -75,46 +192,6 @@
     (auto-revert-mode t)
     (display-time-mode t)
     (which-key-mode t)
-
-    (set-face-attribute 'default (selected-frame)
-                        :height 120 :weight 'light :family "Lilex Nerd Font") ;; IBM Plex Mono
-    (set-face-attribute 'bold nil :weight 'regular)
-    (set-face-attribute 'bold-italic nil :weight 'regular)
-    
-    (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal))
-    (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
-    (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
-
-    (dolist (char/ligature-re
-             `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
-               (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
-               (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
-               (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<" "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>" "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+" "</" "<*")
-                               (+ "<"))))
-               (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
-               (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
-               (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
-               (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
-               (?&  . ,(rx (+ "&")))
-               (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>" "|]" "|}" "|=")
-                                 (+ "|"))))
-               (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
-               (?+  . ,(rx (or "+>" (+ "+"))))
-               (?\[ . ,(rx (or "[<" "[|")))
-               (?\{ . ,(rx "{|"))
-               (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
-               (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
-                               (+ "#"))))
-               (?\; . ,(rx (+ ";")))
-               (?_  . ,(rx (or "_|_" "__")))
-               (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
-               (?$  . ,(rx "$>"))
-               (?^  . ,(rx "^="))
-               (?\] . ,(rx "]#"))))
-      (let ((char (car char/ligature-re))
-            (ligature-re (cdr char/ligature-re)))
-        (set-char-table-range composition-function-table char
-                              `([,ligature-re 0 font-shape-gstring]))))
     
     (setq-default text-mode-ispell-word-completion nil
                   auto-save-list-file-prefix t
@@ -128,7 +205,8 @@
                   load-prefer-newer t
                   truncate-lines nil
                   save-interprogram-paste-before-kill t
-                  find-file-suppress-same-file-warnings t)
+                  find-file-suppress-same-file-warnings t
+                  project-mode-line t)
   
     (setq-default c-set-style 'linux
                   flymake-mode nil
@@ -157,9 +235,9 @@
      x-select-enable-primary nil
      interprogram-cut-function #'gui-select-text)
     
-    (require 'nano)
-    (require 'lang-org)
-    
+    (require 'lang-latex)
+    (require 'lang-typst)
+
     :bind (("C-x k" . kill-current-buffer)
            ("C-x C-r" .  recentf-open)
            ("M-n" . make-frame))
@@ -223,10 +301,7 @@
 
 (use-package async
   :ensure t
-  :custom
-  (autoload 'dired-async-mode "dired-async.el" nil t)
   :config
-  (dired-async-mode t)
   (async-bytecomp-package-mode t))
 
 (use-package hl-line
@@ -339,6 +414,7 @@
 
 (use-package dired
   :ensure nil
+  :init (dired-async-mode t)
   :config
   (setq-default dired-movement-style 'cycle
                 browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
@@ -560,9 +636,9 @@
           #'posframe-poshandler-frame-center-near-bottom)
   :init
   (vertico-posframe-mode t)
-  (setq vertico-posframe-parameters
-        '((left-fringe  . 8)
-          (right-fringe . 8))))
+  (setq-default vertico-posframe-parameters
+                '((left-fringe  . 8)
+                  (right-fringe . 8))))
 
 (use-package orderless
   :ensure t
@@ -588,7 +664,7 @@
   ;; https://emacs.liujiacai.net/post/010/
   ;; https://christiantietze.de/posts/2022/03/mark-local-project.el-directories/
   :custom
-    (defgroup project-local nil
+  (defgroup project-local nil
     "Local, non-VC-backed project.el root directories."
     :group 'project)
   
@@ -756,6 +832,19 @@
 
 ;; ends
 
+(use-package gnu-apl-mode
+  :ensure t
+  :config (require 'apl)
+  :hook (gnu-apl-mode . (lambda ()
+                          (set-input-method "apl-ascii")
+                          (setq-local buffer-face-mode-face '(:family "APL386 Unicode")) (buffer-face-mode)
+                          ;; https://github.com/abrudz/APL386
+                          ;; https://aplwiki.com/wiki/Fonts
+                          ;; https://www.metalevel.at/unicapl/
+                          )
+                      )
+  )
+
 ;; eglot
 
 ;; (use-package markdown-ts-mode :mode "\\.md\\'")
@@ -783,32 +872,32 @@
 
 (use-package markdown-toc :ensure t :defer markdown-mode)
 
-;; (use-package eglot-booster
-;;     :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
-;;     :after eglot
-;;     :config
-;;     (eglot-booster-mode)
-;;     (setq-local eglot-booster-io-only t))
+(use-package eglot-booster
+    :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
+    :after eglot
+    :config
+    (eglot-booster-mode)
+    (setq-local eglot-booster-io-only t))
 
-;; (use-package eglot
-;;   :ensure t
-;;   :defer t
-;;   :custom
-;;   (eglot-autoshutdown t)  ;; shutdown language server after closing last file
-;;   (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
-;;   :custom-face
-;;   (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
-;;   :hook
-;;   ((typst-ts-mode) . eglot-ensure)
-;;   ((markdown-mode) . eglot-ensure)
-;;   ((LaTeX-mode) . eglot-ensure)
-;;   ((python-ts-mode) . eglot-ensure)
-;;   ((c-ts-mode) . eglot-ensure)
-;;   :config
-;;   (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
-;;   (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
-;;   (add-to-list 'eglot-server-programs '(LaTeX-mode . ("texlab")))
-;;   )
+(use-package eglot
+  :ensure t
+  :defer t
+  :custom
+  (eglot-autoshutdown t)  ;; shutdown language server after closing last file
+  (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
+  :custom-face
+  (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
+  :hook
+  ((typst-ts-mode) . eglot-ensure)
+  ((markdown-mode) . eglot-ensure)
+  ((LaTeX-mode) . eglot-ensure)
+  ((python-ts-mode) . eglot-ensure)
+  ((c-ts-mode) . eglot-ensure)
+  :config
+  (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
+  (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
+  (add-to-list 'eglot-server-programs '(LaTeX-mode . ("texlab")))
+  )
 
 (use-package citre
   :vc (citre :url "https://github.com/universal-ctags/citre"
@@ -835,24 +924,25 @@
          ("C-x c p" . citre-ace-peek)
          ("C-x c u". citre-update-this-tags-file)))
 
-(use-package yasnippet
-  :ensure t
-  :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
-  :init (yas-global-mode t))
-(use-package lsp-bridge
-  :vc t
-  :autoload global-lsp-bridge-mode
-  :load-path "site-lisp/lsp-bridge/"
-  :init
-  (global-lsp-bridge-mode)
-  :config
-  (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
-  (setq lsp-bridge-markdown-lsp-server 'marksman)
-  (setq acm-enable-yas t)
-  (setq acm-enable-citre t)
-  (setq acm-candidate-match-function 'orderless-flex)
-  :custom
-  (acm-enable-capf t))
+;; (use-package yasnippet
+;;   :ensure t
+;;   :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
+;;   :init (yas-global-mode t))
+
+;; (use-package lsp-bridge
+;;   :vc t
+;;   :autoload global-lsp-bridge-mode
+;;   :load-path "site-lisp/lsp-bridge/"
+;;   :init
+;;   (global-lsp-bridge-mode)
+;;   :config
+;;   (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
+;;   (setq lsp-bridge-markdown-lsp-server 'marksman)
+;;   (setq acm-enable-yas t)
+;;   (setq acm-enable-citre t)
+;;   (setq acm-candidate-match-function 'orderless-flex)
+;;   :custom
+;;   (acm-enable-capf t))
 
 ;; ends
 

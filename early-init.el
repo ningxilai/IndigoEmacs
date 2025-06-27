@@ -49,4 +49,11 @@
 (setenv "LC_ALL" "en_US.UTF-8")
 (setenv "LANG" "en_US.UTF-8")
 
+;; (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
+
+;; (setq-default frame-title-format "%b")
+
+
+;; (setq-default header-line-format '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
+
 ;;; early-init.el ends here
