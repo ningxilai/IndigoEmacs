@@ -1,4 +1,4 @@
-;;; apl.el --- APL input method for Emacs
+;;; apl.el --- APL input method for Emacs  -*- lexical-binding: t; -*-
 
 ;; Author: Markus Triska <triska@metalevel.at>
 ;; Homepage: https://www.metalevel.at/unicapl/

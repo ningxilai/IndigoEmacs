@@ -11,7 +11,9 @@
   
   (use-package emacs
     :init
-    (dolist (dir '("lisp" "site-lisp"))
+    (dolist (dir '("lisp"
+		   ;; "site-lisp"
+		   ))
       (push (expand-file-name dir user-emacs-directory) load-path))
     (setq-default package-user-dir
                   (expand-file-name
@@ -833,16 +835,26 @@
 ;; ends
 
 (use-package gnu-apl-mode
-  :ensure t
-  :config (require 'apl)
-  :hook (gnu-apl-mode . (lambda ()
-                          (set-input-method "apl-ascii")
-                          (setq-local buffer-face-mode-face '(:family "APL386 Unicode")) (buffer-face-mode)
-                          ;; https://github.com/abrudz/APL386
-                          ;; https://aplwiki.com/wiki/Fonts
-                          ;; https://www.metalevel.at/unicapl/
-                          )
-                      )
+  :vc (gnu-apl-mode :url "https://github.com/lokedhs/gnu-apl-mode"
+                    :rev :newest)
+  :config
+  (setq-default gnu-apl-show-tips-on-start nil)
+  :hook
+  (gnu-apl-mode . (lambda ()
+                    (set-input-method "APL-Z")
+                    (setq-local buffer-face-mode-face '(:family "APL386 Unicode")) (buffer-face-mode)
+                    ;; https://github.com/abrudz/APL386
+                    ;; https://aplwiki.com/wiki/Fonts
+                    )
+                )
+  (gnu-apl-interactive-mode . (lambda ()
+                                (set-input-method "APL-Z")
+                                (setq-local buffer-face-mode-face '(:family "BQN386 Unicode")) (buffer-face-mode)
+                                ;; (require 'apl)
+                                ;; (set-input-method "apl-ascii")
+                                ;; https://www.metalevel.at/unicapl/
+                                )
+                            )
   )
 
 ;; eglot
@@ -946,9 +958,9 @@
 
 ;; ends
 
-(use-package reader
-  :vc t
-  :autoload reader-autoloads
-  :load-path "./site-lisp/reader/")
+;; (use-package reader
+;;   :vc t
+;;   :autoload reader-autoloads
+;;   :load-path "./site-lisp/reader/")
 
 ;;; init.el ends here

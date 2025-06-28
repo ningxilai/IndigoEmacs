@@ -19,7 +19,8 @@
   :defer t
   :vc (typst-preview :url "https://github.com/havarddj/typst-preview.el"
                      :rev :newest)
-  :hook (typst-ts-mode)
+  :bind (:map typst-ts-mode-map
+              ("C-c C-t p" . typst-preview-start))
   :config
   (setq-local typst-preview-executable "tinymist preview"
               typst-preview-browser "default")
