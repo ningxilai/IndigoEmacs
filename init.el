@@ -109,33 +109,6 @@
 	               (if buffer-file-name
 		           (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
     
-    (eval-when-compile
-      (defgroup nano-faces-dark nil t :group 'faces)
-      
-      (defface nano-default-i nil "" :group 'nano-faces-dark)
-      (defface nano-faded-i nil "" :group 'nano-faces-dark)
-      (defface nano-critical-i nil "" :group 'nano-faces-dark)
-      
-      (setq-default header-line-format
-                    '(:eval
-                      (let ((prefix (cond (buffer-read-only     '("RO" . nano-default-i))
-                                          ((buffer-modified-p)  '("**" . nano-critical-i))
-                                          (t                    '("RW" . nano-faded-i))))
-                            (mode (concat "(" (downcase (cond ((consp mode-name) (car mode-name))
-                                                              ((stringp mode-name) mode-name)
-                                                              (t "unknow")))
-                                          " mode)"))
-          (coords (format-mode-line "%c:%l ")))
-                        (list
-                         (propertize " " 'face (cdr prefix)  'display '(raise -0.25))
-                         (propertize (car prefix) 'face (cdr prefix))
-                         (propertize " " 'face (cdr prefix) 'display '(raise +0.25))
-                         (propertize (format-mode-line " %b ") 'face 'nano-strong)
-                         (propertize mode 'face 'header-line)
-                         (propertize " " 'display `(space :align-to (- right ,(length coords))))
-                         (propertize coords 'face 'nano-faded)))))
-      )
-    
     (eval-and-compile
       
       ;; Copy by Seagle0128
@@ -154,6 +127,54 @@
               (if (childframe-workable-p) 'child-frame 'overlay))
       
       ;; copy by nano
+      
+      (defgroup nano-face nil "" :group 'faces)
+      (defface nano-faded '((t)) "" :group 'nano-face)
+      (defface nano-strong '((t)) "" :group 'nano-face)
+      (defface nano-default '((t)) "" :group 'nano-face)
+      (defface nano-faded-i '((t)) "" :group 'nano-face)
+      (defface nano-strong-i '((t)) "" :group 'nano-face)
+      (defface nano-default-i '((t)) "" :group 'nano-face)
+      (defface nano-critical '((t)) "" :group 'nano-face)
+      (defface nano-critical-i '((t)) "" :group 'nano-face)
+      
+      (defun nano-set-face (name &optional foreground background weight)
+	"Set NAME and NAME-i faces with given FOREGROUND, BACKGROUND and WEIGHT"
+	
+	(apply #'set-face-attribute `(,name nil
+					    ,@(when foreground `(:foreground ,foreground))
+					    ,@(when background `(:background ,background))
+					    ,@(when weight `(:weight ,weight))))
+	(apply #'set-face-attribute `(,(intern (concat (symbol-name name) "-i")) nil
+                                      :foreground ,(face-background 'nano-default)
+                                      ,@(when foreground `(:background ,foreground))
+                                      :weight regular)))
+      
+      (nano-set-face 'nano-strong "#ECEFF4" nil 'regular)
+      (nano-set-face 'nano-faded "#90A4AE")
+      (nano-set-face 'nano-critical "#EBCB8B")
+      
+      (setq-default header-line-format
+                    '(:eval
+                      (let ((prefix (cond (buffer-read-only     '("RO" . nano-default-i))
+                                          ((buffer-modified-p)  '("**" . nano-critical-i))
+                                          (t                    '("RW" . nano-faded-i))
+                                          )
+                                    )
+                            (mode (concat "(" (downcase (cond ((consp mode-name) (car mode-name))
+                                            ((stringp mode-name) mode-name)
+                                            (t "unknow")))
+                                          " mode)"))
+                            (coords (format-mode-line "%c:%l ")))
+                        (list
+                         (propertize " " 'face (cdr prefix)  'display '(raise -0.25))
+                         (propertize (car prefix) 'face (cdr prefix))
+                         (propertize " " 'face (cdr prefix) 'display '(raise +0.25))
+                         (propertize (format-mode-line " %b ") 'face 'nano-strong)
+                         (propertize mode 'face 'header-line)
+                         (propertize " " 'display `(space :align-to (- right ,(length coords))))
+                         (propertize coords 'face 'nano-faded)
+                         ))))
       
       (defun nano-quit ()
         "Quit minibuffer from anywhere (code from Protesilaos Stavrou)."
