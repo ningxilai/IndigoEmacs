@@ -176,11 +176,7 @@ cargo install emacs-lsp-booster
 ### LSP-Bridge
 
 ``` bash
-uv venv -p 3.13.3 $HOME/.config/emacs/.venv && source $HOME/.config/emacs/.venv/bin/activate
-```
-
-``` bash
-uv pip3 install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog packaging
+uv lock --locked
 ```
 
 ``` emacs-lisp
@@ -199,7 +195,7 @@ uv pip3 install epc orjson sexpdata six setuptools paramiko rapidfuzz watchdog p
   :init
   (global-lsp-bridge-mode)
   :config
-  (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
+  (setq lsp-bridge-python-command "site-lisp/lsp-bridge/.venv/bin/python3")
   (setq lsp-bridge-markdown-lsp-server 'marksman)
   (setq acm-enable-yas t)
   ;; (setq acm-enable-citre t)

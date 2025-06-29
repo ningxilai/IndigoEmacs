@@ -258,7 +258,6 @@
      x-select-enable-primary nil
      interprogram-cut-function #'gui-select-text)
     
-    (require 'lang-latex)
     (require 'lang-typst)
 
     :bind (("C-x k" . kill-current-buffer)
@@ -979,9 +978,9 @@
 
 ;; ends
 
-;; (use-package reader
-;;   :vc t
-;;   :autoload reader-autoloads
-;;   :load-path "./site-lisp/reader/")
+(use-package reader
+  :vc t
+  :autoload reader-autoloads
+  :load-path "./site-lisp/reader/")
 
 ;;; init.el ends here
