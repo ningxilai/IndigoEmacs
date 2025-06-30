@@ -97,9 +97,6 @@
               (ligature-re (cdr char/ligature-re)))
           (set-char-table-range composition-function-table char
                                 `([,ligature-re 0 font-shape-gstring]))))
-      :init
-      (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
-      (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
       )
      
     (setq-default frame-title-format
@@ -108,7 +105,67 @@
 	               (buffer-name)
 	               (if buffer-file-name
 		           (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
+    (tool-bar-mode -1)
+    (menu-bar-mode -1)
+    (blink-cursor-mode -1)
+    (pixel-scroll-precision-mode 1)
+    (scroll-bar-mode -1)
+    (horizontal-scroll-bar-mode -1)
     
+    (global-auto-composition-mode t)
+    (global-font-lock-mode t)
+    (delete-selection-mode t)
+    (global-auto-revert-mode t)
+    (electric-pair-mode t)
+    (global-so-long-mode t)
+    (global-subword-mode t)
+    (global-prettify-symbols-mode t)
+    (auto-revert-mode t)
+    (display-time-mode t)
+    (which-key-mode t)
+    
+    (setq-default text-mode-ispell-word-completion nil
+                  auto-save-list-file-prefix t
+                  auto-save-visited-mode t
+                  auto-save-default t
+                  make-backup-files nil
+                  create-lockfiles nil
+                  vc-follow-symlinks t
+                  use-short-answers t
+                  package-quickstart t
+                  load-prefer-newer t
+                  truncate-lines nil
+                  save-interprogram-paste-before-kill t
+                  find-file-suppress-same-file-warnings t
+                  project-mode-line t)
+  
+    (setq-default c-set-style 'linux
+                  flymake-mode nil
+                  warning-minimum-level :warning
+                  kill-ring-max 200
+                  tab-always-indent 'complete
+                  resize-mini-windows 'grow-only
+                  indent-tabs-mode nil
+                  ring-bell-function 'ignore
+                  select-enable-clipboard t
+                  system-time-locale "C")
+    
+    (setopt
+     ;; nice scroll
+     scroll-step 1
+     scroll-preserve-screen-position t
+     scroll-margin 3
+     scroll-conservatively 10
+     maximum-scroll-margin 0.3
+     scroll-up-aggressively 0.0
+     scroll-down-aggressively 0.0
+     pixel-scroll-precision-interpolate-page t)
+    
+    (setopt
+     x-select-enable-clipboard t
+     x-select-enable-primary nil
+     interprogram-cut-function #'gui-select-text)
+            
     (eval-and-compile
       
       ;; Copy by Seagle0128
@@ -195,70 +252,12 @@
       
       (global-set-key (kbd "C-x C-c") 'nano-kill)
       
+      (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
+      (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
+      
       )
     
-    (tool-bar-mode -1)
-    (menu-bar-mode -1)
-    (blink-cursor-mode -1)
-    (pixel-scroll-precision-mode 1)
-    (scroll-bar-mode -1)
-    (horizontal-scroll-bar-mode -1)
-    
-    (global-auto-composition-mode t)
-    (global-font-lock-mode t)
-    (delete-selection-mode t)
-    (global-auto-revert-mode t)
-    (electric-pair-mode t)
-    (global-so-long-mode t)
-    (global-subword-mode t)
-    (global-prettify-symbols-mode t)
-    (auto-revert-mode t)
-    (display-time-mode t)
-    (which-key-mode t)
-    
-    (setq-default text-mode-ispell-word-completion nil
-                  auto-save-list-file-prefix t
-                  auto-save-visited-mode t
-                  auto-save-default t
-                  make-backup-files nil
-                  create-lockfiles nil
-                  vc-follow-symlinks t
-                  use-short-answers t
-                  package-quickstart t
-                  load-prefer-newer t
-                  truncate-lines nil
-                  save-interprogram-paste-before-kill t
-                  find-file-suppress-same-file-warnings t
-                  project-mode-line t)
-  
-    (setq-default c-set-style 'linux
-                  flymake-mode nil
-                  warning-minimum-level :warning
-                  kill-ring-max 200
-                  tab-always-indent 'complete
-                  resize-mini-windows 'grow-only
-                  indent-tabs-mode nil
-                  ring-bell-function 'ignore
-                  select-enable-clipboard t
-                  system-time-locale "C")
-    
-    (setopt
-     ;; nice scroll
-     scroll-step 1
-     scroll-preserve-screen-position t
-     scroll-margin 3
-     scroll-conservatively 10
-     maximum-scroll-margin 0.3
-     scroll-up-aggressively 0.0
-     scroll-down-aggressively 0.0
-     pixel-scroll-precision-interpolate-page t)
-    
-    (setopt
-     x-select-enable-clipboard t
-     x-select-enable-primary nil
-     interprogram-cut-function #'gui-select-text)
-    
-    (require 'lang-typst)
+    (require 'lang-org)
 
     :bind (("C-x k" . kill-current-buffer)
            ("C-x C-r" .  recentf-open)
@@ -279,8 +278,7 @@
   (gcmh-high-cons-threshold (* 16 1024 1024)))
 
 (use-package no-littering
-  :vc (no-littering :url "https://github.com/emacscollective/no-littering"
-                    :rev :newest)
+  :ensure t
   :init (require 'no-littering)
   :custom
   (let ((dir (no-littering-expand-var-file-name "lock-files/")))
@@ -512,8 +510,7 @@
 ;; UI
 
 (use-package nord-theme
-  :vc (nord-theme :url "https://github.com/nordtheme/emacs.git"
-                  :rev :newest)
+  :ensure t
   :init (load-theme 'nord t nil))
 (use-package doom-modeline
   :ensure t
@@ -530,6 +527,22 @@
   :config (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup)
   :hook
   (vertico-mode . nerd-icons-completion-mode))
+(use-package nerd-icons-corfu
+  :ensure t
+  :config
+  ;; Optionally:
+  (setq nerd-icons-corfu-mapping
+        '((array :style "cod" :icon "symbol_array" :face font-lock-type-face)
+          (boolean :style "cod" :icon "symbol_boolean" :face font-lock-builtin-face)
+          ;; You can alternatively specify a function to perform the mapping,
+          ;; use this when knowing the exact completion candidate is important.
+          (file :fn nerd-icons-icon-for-file :face font-lock-string-face)
+          ;; ...
+          (t :style "cod" :icon "code" :face font-lock-warning-face)))
+  ;; Remember to add an entry for `t', the library uses that as default.
+  
+  ;; The Custom interface is also supported for tuning the variable above.
+  )
 (use-package page-break-lines
   :ensure t
   :init (global-page-break-lines-mode t)
@@ -551,6 +564,22 @@
   (marginalia-max-relative-age 0)
   (marginalia-align 'right)
   :init (marginalia-mode t))
+
+(use-package corfu
+  :ensure t
+  :custom
+  (corfu-auto t)
+  (corfu-auto-prefix 2)
+  (corfu-preview-current nil)
+  (corfu-auto-delay 0.2)
+  (corfu-popupinfo-delay '(0.4 . 0.2))
+  :custom-face
+  (corfu-border ((t (:inherit region :background unspecified))))
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
+  :bind ("M-/" . completion-at-point)
+  :hook ((after-init . global-corfu-mode)
+         (global-corfu-mode . corfu-popupinfo-mode)))
 
 (use-package consult
   :ensure t
@@ -855,8 +884,7 @@
 ;; ends
 
 (use-package gnu-apl-mode
-  :vc (gnu-apl-mode :url "https://github.com/lokedhs/gnu-apl-mode"
-                    :rev :newest)
+  :ensure t
   :config
   (setq-default gnu-apl-show-tips-on-start nil)
   :hook
@@ -968,7 +996,7 @@
 ;;   :init
 ;;   (global-lsp-bridge-mode)
 ;;   :config
-;;   (setq lsp-bridge-python-command "~/.config/emacs/.venv/bin/python3")
+;;   (setq lsp-bridge-python-command "site-lisp/lsp-bridge/.venv/bin/python3")
 ;;   (setq lsp-bridge-markdown-lsp-server 'marksman)
 ;;   (setq acm-enable-yas t)
 ;;   (setq acm-enable-citre t)

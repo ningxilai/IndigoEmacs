@@ -1,21 +1,33 @@
-Indigo Emacs
---------------------
+# Indigo Emacs
+
+<!--toc:start-->
+- [Indigo Emacs](#indigo-emacs)
+  - [Acknowledge:](#acknowledge)
+  - [Fonts](#fonts)
+  - [LSP](#lsp)
+    - [eglot](#eglot)
+    - [LSP-Bridge](#lsp-bridge)
+  - [Terminal](#terminal)
+    - [Kitty](#kitty)
+    - [VTerm](#vterm)
+    - [EAT](#eat)
+  - [Reader](#reader)
+    - [build](#build)
+    - [using](#using)
+<!--toc:end-->
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
 
 - [Indigo Emacs](#indigo-emacs)
-- [Acknowledge:](#acknowledge)
-- [Fonts](#fonts)
-- [LSP](#lsp)
-  - [eglot](#eglot)
-  - [LSP-Bridge](#lsp-bridge)
-- [Terminal](#terminal)
-  - [VTerm ](#vterm)
-  - [EAT](#eat)
-- [Reader](#reader)
-  - [build](#build)
-  - [using](#using)
+  - [Fonts](#fonts)
+  - [LSP](#lsp)
+    - [LSP-Bridge](#lsp-bridge)
+  - [Terminal](#terminal)
+    - [VTerm](#vterm)
+    - [EAT](#eat)
+  - [Reader](#reader)
+    - [using](#using)
 
 <!-- markdown-toc end -->
 
@@ -68,50 +80,6 @@ There are two packages for handling ligatures in Emacs, namely the built-in `com
   ;; per mode with `ligature-mode'.
   :hook ((prog-mode vterm-mode) . ligature-mode)
   :init (global-ligature-mode nil))
-```
-
-``` emacs-lisp
-(use-package composite
-  :init
-  (global-auto-composition-mode nil)
-  :hook
-  (prog-mode . auto-composition-mode)
-  :config
-  (dolist (char/ligature-re
-           `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
-             (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
-             (?*  . ,(rx (or (or "*>" "*/") (+ "*"))))
-             (?<  . ,(rx (or (or "<<=" "<<-" "<|||" "<==>" "<!--" "<=>" "<||" "<|>" "<-<"
-                                 "<==" "<=<" "<-|" "<~>" "<=|" "<~~" "<$>" "<+>" "</>"
-                                 "<*>" "<->" "<=" "<|" "<:" "<>"  "<$" "<-" "<~" "<+"
-                                 "</" "<*")
-                           (+ "<"))))
-             (?:  . ,(rx (or (or ":?>" "::=" ":>" ":<" ":?" ":=") (+ ":"))))
-             (?=  . ,(rx (or (or "=>>" "==>" "=/=" "=!=" "=>" "=:=") (+ "="))))
-             (?!  . ,(rx (or (or "!==" "!=") (+ "!"))))
-             (?>  . ,(rx (or (or ">>-" ">>=" ">=>" ">]" ">:" ">-" ">=") (+ ">"))))
-             (?&  . ,(rx (+ "&")))
-             (?|  . ,(rx (or (or "|->" "|||>" "||>" "|=>" "||-" "||=" "|-" "|>"
-                                 "|]" "|}" "|=")
-                             (+ "|"))))
-             (?.  . ,(rx (or (or ".?" ".=" ".-" "..<") (+ "."))))
-             (?+  . ,(rx (or "+>" (+ "+"))))
-           (?\[ . ,(rx (or "[<" "[|")))
-           (?\{ . ,(rx "{|"))
-           (?\? . ,(rx (or (or "?." "?=" "?:") (+ "?"))))
-           (?#  . ,(rx (or (or "#_(" "#[" "#{" "#=" "#!" "#:" "#_" "#?" "#(")
-                           (+ "#"))))
-           (?\; . ,(rx (+ ";")))
-           (?_  . ,(rx (or "_|_" "__")))
-           (?~  . ,(rx (or "~~>" "~~" "~>" "~-" "~@")))
-           (?$  . ,(rx "$>"))
-           (?^  . ,(rx "^="))
-           (?\] . ,(rx "]#"))))
-    (let ((char (car char/ligature-re))
-          (ligature-re (cdr char/ligature-re)))
-      (set-char-table-range composition-function-table char
-                            `([,ligature-re 0 font-shape-gstring]))))
-  )
 ```
 
 ## LSP
@@ -206,6 +174,19 @@ uv lock --locked
 ```
 
 ## Terminal
+
+### Kitty
+
+[keyboard-protocol.rst]("https://github.com/kovidgoyal/kitty/blob/master/docs/keyboard-protocol.rst")
+
+``` emacs-lisp
+(when (display-graphic-p)
+  (use-package kkp
+    :vc (kkp :url "https://github.com/benotn/kkp.git"
+             :rev :newest)
+    :config (global-kkp-mode t))
+)
+```
 
 ### VTerm 
 
