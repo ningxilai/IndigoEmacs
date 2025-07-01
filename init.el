@@ -12,7 +12,7 @@
   (use-package emacs
     :init
     (dolist (dir '("lisp"
-		   ;; "site-lisp"
+		   "site-lisp"
 		   ))
       (push (expand-file-name dir user-emacs-directory) load-path))
     (setq-default package-user-dir
@@ -25,6 +25,7 @@
     :hook
     ((text-mode) . (lambda () (setq-local auto-composition-mode nil
                                      buffer-face-mode-face '(:family "IBM Plex Mono"))))
+    (prog-mode . completion-preview-mode)
     
     :custom
     (setq-local initial-scratch-echo-area-message "iris")
@@ -52,9 +53,9 @@
                     version-control t
                     package-enable-at-startup t
                     delete-old-versions t
-                    package-archives '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                                       ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
-                                       ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
+                    package-archives '(("gnu"    . "https://mirrors.zju.edu.cn/elpa/gnu/")
+                                       ("nongnu" . "https://mirrors.zju.edu.cn/elpa/nongnu/")
+                                       ("melpa"  . "https://mirrors.zju.edu.cn/elpa/melpa/"))))
     
     (use-package fontset
       :config
@@ -66,7 +67,7 @@
       (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal))
       (set-fontset-font t 'han (font-spec :family "LXGW WenKai" :weight 'normal :slant 'normal))
       (set-fontset-font t 'kana (font-spec :family "Sarasa Gothic" :weight 'normal :slant 'normal))
-        
+      
       (dolist (char/ligature-re
                `((?-  . ,(rx (or (or "-->" "-<<" "->>" "-|" "-~" "-<" "->") (+ "-"))))
                  (?/  . ,(rx (or (or "/==" "/=" "/>" "/**" "/*") (+ "/"))))
@@ -98,19 +99,69 @@
           (set-char-table-range composition-function-table char
                                 `([,ligature-re 0 font-shape-gstring]))))
       )
-     
     (setq-default frame-title-format
-              '(:eval (concat
-	               (if (and buffer-file-name (buffer-modified-p)) "•")
-	               (buffer-name)
-	               (if buffer-file-name
-		           (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
+                  '(:eval (concat
+	                   (if (and buffer-file-name (buffer-modified-p)) "•")
+	                   (buffer-name)
+	                   (if buffer-file-name
+		               (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
+    
     (tool-bar-mode -1)
     (menu-bar-mode -1)
     (blink-cursor-mode -1)
     (pixel-scroll-precision-mode 1)
     (scroll-bar-mode -1)
     (horizontal-scroll-bar-mode -1)
+    
+    (eval-when-compile
+      
+      ;; copy by nano
+      
+      (defgroup nano-face nil "" :group 'faces)
+      (defface nano-faded '((t)) "" :group 'nano-face)
+      (defface nano-strong '((t)) "" :group 'nano-face)
+      (defface nano-default '((t)) "" :group 'nano-face)
+      (defface nano-faded-i '((t)) "" :group 'nano-face)
+      (defface nano-strong-i '((t)) "" :group 'nano-face)
+      (defface nano-default-i '((t)) "" :group 'nano-face)
+      (defface nano-critical '((t)) "" :group 'nano-face)
+      (defface nano-critical-i '((t)) "" :group 'nano-face)
+      
+      (defun nano-set-face (name &optional foreground background weight)
+        "Set NAME and NAME-i faces with given FOREGROUND, BACKGROUND and WEIGHT"
+        
+        (apply #'set-face-attribute `(,name nil
+                                            ,@(when foreground `(:foreground ,foreground))
+                                            ,@(when background `(:background ,background))
+                                            ,@(when weight `(:weight ,weight))))
+        (apply #'set-face-attribute `(,(intern (concat (symbol-name name) "-i")) nil
+                                      :foreground ,(face-background 'nano-default)
+                                      ,@(when foreground `(:background ,foreground))
+                                      :weight regular)))
+      
+      (nano-set-face 'nano-strong "#ECEFF4" nil 'regular)
+      (nano-set-face 'nano-faded "#90A4AE")
+      (nano-set-face 'nano-critical "#EBCB8B")
+      
+      (setq-default header-line-format
+                    '(:eval
+                      (let ((prefix (cond (buffer-read-only     '("RO" . nano-default-i))
+                                          ((buffer-modified-p)  '("**" . nano-critical-i))
+                                          (t                    '("RW" . nano-faded-i))))
+                            (mode (concat "(" (downcase (cond ((consp mode-name) (car mode-name))
+                                                              ((stringp mode-name) mode-name)
+                                                              (t "unknow")))
+                                          " mode)"))
+                            (coords (format-mode-line "%c:%l ")))
+                        (list
+                         (propertize " " 'face (cdr prefix)  'display '(raise -0.25))
+                         (propertize (car prefix) 'face (cdr prefix))
+                         (propertize " " 'face (cdr prefix) 'display '(raise +0.25))
+                         (propertize (format-mode-line " %b ") 'face 'nano-strong)
+                         (propertize mode 'face 'header-line)
+                         (propertize " " 'display `(space :align-to (- right ,(length coords))))
+                         (propertize coords 'face 'nano-faded)))))
+      )
     
     (global-auto-composition-mode t)
     (global-font-lock-mode t)
@@ -125,20 +176,16 @@
     (which-key-mode t)
     
     (setq-default text-mode-ispell-word-completion nil
-                  auto-save-list-file-prefix t
-                  auto-save-visited-mode t
-                  auto-save-default t
                   make-backup-files nil
                   create-lockfiles nil
                   vc-follow-symlinks t
                   use-short-answers t
-                  package-quickstart t
                   load-prefer-newer t
                   truncate-lines nil
                   save-interprogram-paste-before-kill t
                   find-file-suppress-same-file-warnings t
                   project-mode-line t)
-  
+    
     (setq-default c-set-style 'linux
                   flymake-mode nil
                   warning-minimum-level :warning
@@ -165,7 +212,7 @@
      x-select-enable-clipboard t
      x-select-enable-primary nil
      interprogram-cut-function #'gui-select-text)
-            
+    
     (eval-and-compile
       
       ;; Copy by Seagle0128
@@ -185,54 +232,6 @@
       
       ;; copy by nano
       
-      (defgroup nano-face nil "" :group 'faces)
-      (defface nano-faded '((t)) "" :group 'nano-face)
-      (defface nano-strong '((t)) "" :group 'nano-face)
-      (defface nano-default '((t)) "" :group 'nano-face)
-      (defface nano-faded-i '((t)) "" :group 'nano-face)
-      (defface nano-strong-i '((t)) "" :group 'nano-face)
-      (defface nano-default-i '((t)) "" :group 'nano-face)
-      (defface nano-critical '((t)) "" :group 'nano-face)
-      (defface nano-critical-i '((t)) "" :group 'nano-face)
-      
-      (defun nano-set-face (name &optional foreground background weight)
-	"Set NAME and NAME-i faces with given FOREGROUND, BACKGROUND and WEIGHT"
-	
-	(apply #'set-face-attribute `(,name nil
-					    ,@(when foreground `(:foreground ,foreground))
-					    ,@(when background `(:background ,background))
-					    ,@(when weight `(:weight ,weight))))
-	(apply #'set-face-attribute `(,(intern (concat (symbol-name name) "-i")) nil
-                                      :foreground ,(face-background 'nano-default)
-                                      ,@(when foreground `(:background ,foreground))
-                                      :weight regular)))
-      
-      (nano-set-face 'nano-strong "#ECEFF4" nil 'regular)
-      (nano-set-face 'nano-faded "#90A4AE")
-      (nano-set-face 'nano-critical "#EBCB8B")
-      
-      (setq-default header-line-format
-                    '(:eval
-                      (let ((prefix (cond (buffer-read-only     '("RO" . nano-default-i))
-                                          ((buffer-modified-p)  '("**" . nano-critical-i))
-                                          (t                    '("RW" . nano-faded-i))
-                                          )
-                                    )
-                            (mode (concat "(" (downcase (cond ((consp mode-name) (car mode-name))
-                                            ((stringp mode-name) mode-name)
-                                            (t "unknow")))
-                                          " mode)"))
-                            (coords (format-mode-line "%c:%l ")))
-                        (list
-                         (propertize " " 'face (cdr prefix)  'display '(raise -0.25))
-                         (propertize (car prefix) 'face (cdr prefix))
-                         (propertize " " 'face (cdr prefix) 'display '(raise +0.25))
-                         (propertize (format-mode-line " %b ") 'face 'nano-strong)
-                         (propertize mode 'face 'header-line)
-                         (propertize " " 'display `(space :align-to (- right ,(length coords))))
-                         (propertize coords 'face 'nano-faded)
-                         ))))
-      
       (defun nano-quit ()
         "Quit minibuffer from anywhere (code from Protesilaos Stavrou)."
         (interactive)
@@ -242,7 +241,7 @@
               (t (keyboard-quit))))
       
       (global-set-key (kbd "C-g") 'nano-quit)
-  
+      
       (defun nano-kill ()
         "Delete frame or kill emacs if there is only one frame left."
         (interactive)
@@ -295,27 +294,32 @@
     (add-to-list 'recentf-exclude
                  (recentf-expand-file-name no-littering-etc-directory)))
   
-    (use-package savehist
-      :custom
-      ;; Minibuffer history
-      (setq-default enable-recursive-minibuffers t ; Allow commands in minibuffers
-                    history-length 1000
-                    savehist-additional-variables '(search-ring
-                                                    regexp-search-ring
-                                                    extended-command-history
-                                                    kill-ring
-                                                    kmacro-ring
-                                                    log-edit-comment-ring)
-                    ;; We use an idle timer instead, as saving can cause
-                    ;; noticable delays with large histories.
-                    savehist-autosave-interval nil)
-      :init (savehist-mode t))
-    
-    (use-package saveplace
-      :init
-      (save-place-mode)
-      (save-place-local-mode))
-    )
+  (use-package savehist
+    :custom
+    ;; Minibuffer history
+    (setq-default enable-recursive-minibuffers t ; Allow commands in minibuffers
+                  history-length 1000
+                  savehist-additional-variables '(search-ring
+                                                  regexp-search-ring
+                                                  extended-command-history
+                                                  kill-ring
+                                                  kmacro-ring
+                                                  log-edit-comment-ring)
+                  ;; We use an idle timer instead, as saving can cause
+                  ;; noticable delays with large histories.
+                  savehist-autosave-interval nil)
+    :init (savehist-mode t))
+
+  (use-package saveplace
+    :init
+    (save-place-mode)
+    (save-place-local-mode)
+    :config
+    (setq-default
+     auto-save-list-file-prefix t
+     auto-save-visited-mode t
+     auto-save-default t))
+  )
 
 ;; Main
 
@@ -354,7 +358,7 @@
 (use-package fingertip
   :vc (fingertip :url "https://github.com/manateelazycat/fingertip"
                  :rev :newest)
-  :hook (lisp-mode emacs-lisp-mode markdown-mode)
+  :hook (lisp-mode emacs-lisp-mode scheme-mode markdown-mode)
   :bind
   (:map fingertip-mode-map
         ("(" . fingertip-open-round)
@@ -364,18 +368,18 @@
         ("]" . fingertip-close-bracket)
         ("}" . fingertip-close-curly)
         ("=" . fingertip-equal)
-  
+        
         ("%" . fingertip-match-paren)
         ("\"" . fingertip-double-quote)
         ("'" . fingertip-single-quote)
-  
+        
         ("SPC" . fingertip-space)
         ("RET" . fingertip-newline)
 
         ("M-o" . fingertip-backward-delete)
         ("C-d" . fingertip-forward-delete)
         ("C-k" . fingertip-kill)
-  
+        
         ("M-\"" . fingertip-wrap-double-quote)
         ("M-'" . fingertip-wrap-single-quote)
         ("M-[" . fingertip-wrap-bracket)
@@ -512,6 +516,7 @@
 (use-package nord-theme
   :ensure t
   :init (load-theme 'nord t nil))
+
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode t))
@@ -549,7 +554,7 @@
   :custom
   (set-fontset-font "fontset-default"
                     (cons page-break-lines-char page-break-lines-char)
-                    (face-attribute 'default :family)))
+                    (face-attriute 'default :family)))
 
 ;; ends
 
@@ -658,7 +663,7 @@
    consult--source-recent-file consult--source-project-recent-file
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
-)
+  )
 
 (use-package vertico
   :ensure t
@@ -719,41 +724,41 @@
     "Local, non-VC-backed project.el root directories."
     :group 'project)
   
-    (defcustom project-local-identifier ".project"
-      "You can specify a single filename or a list of names."
-      :type '(choice (string :tag "Single file")
-                     (repeat (string :tag "Filename")))
-      :group 'project-local)
+  (defcustom project-local-identifier ".project"
+    "You can specify a single filename or a list of names."
+    :type '(choice (string :tag "Single file")
+                   (repeat (string :tag "Filename")))
+    :group 'project-local)
 
-    (cl-defmethod project-root ((project (head local)))
-      "Return root directory of current PROJECT."
-      (cdr project))
-    
-    (defun project-local-try-local (dir)
-      "Determine if DIR is a non-VC project DIR must include a file with the name determined by the variable `project-local-identifier' to be considered a project."
-      (if-let* ((root (if (listp project-local-identifier)
-                          (seq-some (lambda (n)
-                                      (locate-dominating-file dir n))
-                                    project-local-identifier)
-                        (locate-dominating-file dir project-local-identifier))))
-          (cons 'local root)))
-    
-    (setq-local project-find-functions '(project-local-try-local project-try-vc))
-    
-    (defun my/project-files-in-directory (dir)
-      "Use `fd' to list files in DIR."
-      (let* ((default-directory dir)
+  (cl-defmethod project-root ((project (head local)))
+    "Return root directory of current PROJECT."
+    (cdr project))
+  
+  (defun project-local-try-local (dir)
+    "Determine if DIR is a non-VC project DIR must include a file with the name determined by the variable `project-local-identifier' to be considered a project."
+    (if-let* ((root (if (listp project-local-identifier)
+                        (seq-some (lambda (n)
+                                    (locate-dominating-file dir n))
+                                  project-local-identifier)
+                      (locate-dominating-file dir project-local-identifier))))
+        (cons 'local root)))
+  
+  (setq-local project-find-functions '(project-local-try-local project-try-vc))
+  
+  (defun my/project-files-in-directory (dir)
+    "Use `fd' to list files in DIR."
+    (let* ((default-directory dir)
            (localdir (file-local-name (expand-file-name dir)))
            (command (format "fd -H -t f -0 . %s" localdir)))
-        (project--remote-file-names
-         (sort (split-string (shell-command-to-string command) "\0" t)
-               #'string<))))
+      (project--remote-file-names
+       (sort (split-string (shell-command-to-string command) "\0" t)
+             #'string<))))
   
-    (cl-defmethod project-files ((project (head local)) &optional dirs)
-      "Override `project-files' to use `fd' in local projects."
-      (mapcan #'my/project-files-in-directory
-              (or dirs (list (project-root project)))))
-    )
+  (cl-defmethod project-files ((project (head local)) &optional dirs)
+    "Override `project-files' to use `fd' in local projects."
+    (mapcan #'my/project-files-in-directory
+            (or dirs (list (project-root project)))))
+  )
 
 ;; ends
 
@@ -812,15 +817,15 @@
   :custom
   (setq-local eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
   (setq-default eshell-prompt-function
-              (lambda nil
-                (concat
-                 (if (string= (eshell/pwd) (getenv "HOME"))
+                (lambda nil
+                  (concat
+                               (if (string= (eshell/pwd) (getenv "HOME"))
                      (propertize "~" 'face `(:foreground "#99CCFF"))
                    (replace-regexp-in-string
                     (getenv "HOME")
                     (propertize "~" 'face `(:foreground "#99CCFF"))
                     (propertize (eshell/pwd) 'face `(:foreground "#99CCFF"))))
-                 (if (= (user-uid) 0)
+                               (if (= (user-uid) 0)
                      (propertize " α " 'face `(:foreground "#FF6666"))
                    (propertize " λ " 'face `(:foreground "#A6E22E"))))))
   
@@ -832,7 +837,7 @@
   (defun eshell/sudo-open (filename)
     "Open a file as root in Eshell."
     (let ((qual-filename (if (string-match "^/" filename)
-                               filename
+                             filename
                            (concat (expand-file-name (eshell/pwd)) "/" filename))))
       (switch-to-buffer
        (find-file-noselect
@@ -841,14 +846,14 @@
   (defun eshell-other-window ()
     "Create or visit an eshell buffer."
     (interactive)
-      (if (not (get-buffer "*eshell*"))
-          (progn
-            (split-window-sensibly (selected-window))
-            (other-window 1)
-            (eshell))
-        (switch-to-buffer-other-window "*eshell*")))
+    (if (not (get-buffer "*eshell*"))
+        (progn
+          (split-window-sensibly (selected-window))
+          (other-window 1)
+          (eshell))
+      (switch-to-buffer-other-window "*eshell*")))
   
-    (global-set-key (kbd "<s-C-return>") 'eshell-other-window))
+  (global-set-key (kbd "<s-C-return>") 'eshell-other-window))
 
 (use-package vterm
   :ensure t
@@ -883,26 +888,12 @@
 
 ;; ends
 
-(use-package gnu-apl-mode
+(use-package geiser
   :ensure t
-  :config
-  (setq-default gnu-apl-show-tips-on-start nil)
-  :hook
-  (gnu-apl-mode . (lambda ()
-                    (set-input-method "APL-Z")
-                    (setq-local buffer-face-mode-face '(:family "APL386 Unicode")) (buffer-face-mode)
-                    ;; https://github.com/abrudz/APL386
-                    ;; https://aplwiki.com/wiki/Fonts
-                    )
-                )
-  (gnu-apl-interactive-mode . (lambda ()
-                                (set-input-method "APL-Z")
-                                (setq-local buffer-face-mode-face '(:family "BQN386 Unicode")) (buffer-face-mode)
-                                ;; (require 'apl)
-                                ;; (set-input-method "apl-ascii")
-                                ;; https://www.metalevel.at/unicapl/
-                                )
-                            )
+  :config (use-package geiser-mit
+            :ensure t
+	    :hook scheme-mode
+            )
   )
 
 ;; eglot
@@ -930,14 +921,14 @@
                  markdown-mode-font-lock-keywords))
   )
 
-(use-package markdown-toc :ensure t :defer markdown-mode)
+;; (use-package markdown-toc :ensure t :defer markdown-mode)
 
 (use-package eglot-booster
-    :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
-    :after eglot
-    :config
-    (eglot-booster-mode)
-    (setq-local eglot-booster-io-only t))
+  :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
+  :after eglot
+  :config
+  (eglot-booster-mode)
+  (setq-local eglot-booster-io-only t))
 
 (use-package eglot
   :ensure t
