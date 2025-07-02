@@ -11,8 +11,6 @@
  (convert-standard-filename
   (expand-file-name  "var/eln-cache/" user-emacs-directory)))
 
-(setq package-enable-at-startup t)
-
 ;; --- Frame / windows layout & behavior --------------------------------------
 (setq-default default-frame-alist
               '((height . 50)
