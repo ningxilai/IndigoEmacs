@@ -1,8 +1,9 @@
 ;;; -*- lexical-binding: t; -*-
 (use-package typst-ts-mode
   ;; https://github.com/Ziqi-Yang/tree-sitter-typst
-  :ensure t
-  :mode "\\.typ"
+  :vc (typst-ts-mode :url "https://codeberg.org/meow_king/typst-ts-mode"
+                     :rev :newest)
+  :mode ("\\.typ'" . typst-ts-mode)
   :bind (:map typst-ts-mode-map
               ("C-c C-c" . typst-ts-tmenu))
   :custom

@@ -258,7 +258,8 @@
       )
     
     (require 'lang-org)
-
+    (require 'lang-chinese)
+    
     :bind (("C-x k" . kill-current-buffer)
            ("C-x C-r" .  recentf-open)
            ("M-n" . make-frame))
@@ -799,80 +800,6 @@
 
 ;; ends
 
-;; Quarto
-
-(use-package ess
-  :ensure t
-  :after quarto-mode)
-
-;; (use-package markdown-ts-mode :mode "\\.md\\'")
-(use-package markdown-mode
-  :defer t
-  :ensure t
-  :init
-  (setq markdown-open-command "firefox"
-        markdown-enable-wiki-links t
-        markdown-italic-underscore t
-        markdown-asymmetric-header t
-        markdown-make-gfm-checkboxes-buttons t
-        markdown-gfm-uppercase-checkbox t
-        markdown-fontify-code-blocks-natively t
-        markdown-gfm-additional-languages "Mermaid")
-  :mode
-  ("README\\.md\\'" . gfm-mode)
-  :config
-  (setq-default markdown-mode-font-lock-keywords
-                (cl-remove-if
-                 (lambda (item) (equal item '(markdown-fontify-tables)))
-                 markdown-mode-font-lock-keywords))
-  )
-
-(use-package pyim
-  :defer t
-  :init
-  (setq-default default-input-method "pyim")
-  (setq pyim-dicts
-        '((:name "tuna" :file "elpa/31.0/pyim-greatdict/pyim-greatdict.pyim" :coding utf-8)
-          (:name "base" :file "elpa/31.0/pyim-tsinghua-dict/pyim-tsinghua-dict.pyim" :coding utf-8)
-          (:name "tuna" :file "elpa/31.0/pyim-basedict/pyim-basedict.pyim" :coding utf-8)
-          ))
-  :config
-  (setq-local pyim-page-tooltip 'minibuffer)
-  (setq-default pyim-punctuation-translate-p '(auto))
-  :bind ("C-\\" . toggle-input-method))
-(use-package pyim-tsinghua-dict
-  :vc (pyim-tsinghua-dict :url "https://github.com/redguardtoo/pyim-tsinghua-dict.git"
-                          :rev :newest)
-  :config (pyim-tsinghua-dict-enable))
-(use-package pyim-basedict
-  :vc (pyim-basedict :url "https://github.com/tumashu/pyim-basedict.git"
-                     :rev :newest)
-  :config
-  (pyim-basedict-enable))
-(use-package pyim-greatdict
-  :vc (pyim-greatdict :url "https://github.com/tumashu/pyim-greatdict.git"
-                      :rev :newest)
-  :config (pyim-greatdict-enable))
-(use-package chinese-conv
-  :ensure t
-  :defer t)
-(use-package pangu-spacing
-  :defer t
-  :ensure t
-  :init
-  (global-pangu-spacing-mode t)
-  :hook
-  (org-mode . (lambda () (setq-local pangu-spacing-real-insert-separtor t))))
-
-;; (use-package markdown-toc :ensure t :defer markdown-mode)
-
-(use-package quarto-mode
-  :ensure t
-  :mode (("\\.Rmd" . poly-quarto-mode))
-  :hook (poly-markdown-mode . (lambda()(set-input-method "pyim"))))
-
-;; ends
-
 ;; Term
 
 (use-package eshell
@@ -1033,6 +960,27 @@
 ;;   (setq acm-candidate-match-function 'orderless-flex)
 ;;   :custom
 ;;   (acm-enable-capf t))
+
+(use-package markdown-mode
+  :defer t
+  :ensure t
+  :init
+  (setq markdown-open-command "firefox"
+        markdown-enable-wiki-links t
+        markdown-italic-underscore t
+        markdown-asymmetric-header t
+        markdown-make-gfm-checkboxes-buttons t
+        markdown-gfm-uppercase-checkbox t
+        markdown-fontify-code-blocks-natively t
+        markdown-gfm-additional-languages "Mermaid")
+  :mode
+  ("README\\.md\\'" . gfm-mode)
+  :config
+  (setq-default markdown-mode-font-lock-keywords
+                (cl-remove-if
+                 (lambda (item) (equal item '(markdown-fontify-tables)))
+                 markdown-mode-font-lock-keywords))
+  )
 
 ;; ends
 
