@@ -22,7 +22,9 @@
   :config
   (setopt TeX-auto-save t
           TeX-parse-self t
-          TeX-show-compilation t)
+          TeX-show-compilation t
+          TeX-electric-math '("$" . "$")
+          TeX-electric-sub-and-superscript t)
   (setq-local TeX-output-view-style  '(("^pdf$" "." "xpdf %o %(outpage)"))
               reftex-plug-into-AUCTeX t
               LaTeX-command "latexmk -shell-escape -bibtex -pdf -g -f %f"
@@ -36,18 +38,7 @@
                 TeX-source-correlate-method '((dvi . source-specials)
                                               (pdf . synctex)))
   :custom
-  (defun TeX-auto-compile()
-    (let* ((master (TeX-master-file))
-           (process (and (stringp master) (TeX-process master))))
-      (when (and (processp process)
-                 (eq (process-status process) 'run))
-        (delete-process process))
-      (add-hook 'after-save-hook
-                (lambda()
-                  (let ((TeX-command-extra-options "-shell-escape -synctex=1 -interaction=nonstopmode"))
-                    (TeX-command-run-all nil))
-                  nil t))))
-  (add-hook 'LaTeX-mode-hook #'TeX-auto-compile)
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
   :hook
   (TeX-after-compilation-finished-functions . TeX-revert-document-buffer)
   ;; Font Setting
@@ -60,8 +51,8 @@
 
 (use-package preview-auto
   :ensure t
-  :after latex
-  :hook (latex-mode . preview-auto-setup)
+  :after LaTeX-mode
+  :init (preview-auto-setup)
   :config
   (setopt preview-protect-point t
           preview-locating-previews-message nil

@@ -13,7 +13,7 @@
   :mode
   ("\\.Rmd\\'" . poly-markdown-mode)
   ("\\.qmd\\'" . poly-markdown-mode)
-  :hook (poly-markdown-mode . (lambda()(set-input-method "pyim")))
+  :hook (poly-markdown-mode . (lambda()(set-input-method "rime")))
   :config
   (use-package poly-R
     :ensure t))
@@ -29,7 +29,7 @@
                  :override t
                  :feature 'delimiter
                  '([ "[" "]" "(" ")" ] @shadow)
-         
+
                  :language 'markdown
                  :feature 'paragraph
                  '([((setext_heading) @font-lock-function-name-face)
@@ -45,8 +45,8 @@
                     ((block_quote_marker) @font-lock-comment-face)
                     (block_quote (paragraph) @font-lock-comment-face)
                     (block_quote (block_quote_marker) @font-lock-comment-face)
-            ])
-                 
+                    ])
+
                  :language 'markdown-inline
                  :feature 'paragraph-inline
                  '([
@@ -60,34 +60,49 @@
                     (shortcut_link (link_text) @link)])))
   )
 
-(use-package pyim
-  :defer t
-  :init
-  (setq-default default-input-method "pyim")
-  (setq-local pyim-dicts
-              '((:name "tuna" :file "~/.config/emacs/elpa/31.0/pyim-greatdict/pyim-greatdict.pyim" :coding utf-8)
-                (:name "base" :file "~/.config/emacs/elpa/31.0/pyim-tsinghua-dict/pyim-tsinghua-dict.pyim" :coding utf-8)
-                (:name "tuna" :file "~/.config/emacs/elpa/31.0/pyim-basedict/pyim-basedict.pyim" :coding utf-8)
-          ))
+;; (use-package pyim
+;;   :defer t
+;;   :init
+;;   (setq-default default-input-method "pyim")
+;;   :config
+;;   (setq-local pyim-page-tooltip 'minibuffer
+;;               pyim-punctuation-translate-p '(auto))
+;;   :bind ("C-\\" . toggle-input-method)
+;;   :hook (text-mode . (lambda ()
+;;                        (pyim-greatdict-enable)
+;;                        (pyim-tsinghua-dict-enable)
+;;                        (pyim-basedict-enable)))
+;;   )
+
+(use-package rime
+  :ensure t
+  :init (setq default-input-method "rime")
   :config
-  (setq-local pyim-page-tooltip 'minibuffer)
-  (setq-default pyim-punctuation-translate-p '(auto))
-  :bind ("C-\\" . toggle-input-method))
-(use-package pyim-tsinghua-dict
-  :vc (pyim-tsinghua-dict :url "https://github.com/redguardtoo/pyim-tsinghua-dict.git"
-                          :rev :newest)
+  (setq rime-emacs-module-header-root "~/.local/include"
+        rime-show-candidate 'posframe
+        rime-user-data-dir "~/.config/rime")
+  (custom-set-variables
+   '(rime-disable-predicates
+     '(rime-predicate-after-alphabet-char-p
+       rime-predicate-current-uppercase-letter-p
+       rime-predicate-prog-in-code-p)))
   :custom
-  (pyim-tsinghua-dict-enable))
-(use-package pyim-basedict
-  :vc (pyim-basedict :url "https://github.com/tumashu/pyim-basedict.git"
-                     :rev :newest)
-  :custom
-  (pyim-basedict-enable))
-(use-package pyim-greatdict
-  :vc (pyim-greatdict :url "https://github.com/tumashu/pyim-greatdict.git"
-                      :rev :newest)
-  :custom
-  (pyim-greatdict-enable))
+  (rime-posframe-properties
+      (list :background-color "#333333"
+            :foreground-color "#dcdccc"
+            :font "LXGW Wenkai"
+            :internal-border-width 10)))
+
+;; (use-package pyim-tsinghua-dict
+;;   :vc (pyim-tsinghua-dict :url "https://github.com/redguardtoo/pyim-tsinghua-dict.git"
+;;                           :rev :newest))
+;; (use-package pyim-basedict
+;;   :vc (pyim-basedict :url "https://github.com/tumashu/pyim-basedict.git"
+;;                      :rev :newest))
+;; (use-package pyim-greatdict
+;;   :vc (pyim-greatdict :url "https://github.com/tumashu/pyim-greatdict.git"
+;;                       :rev :newest))
+
 (use-package chinese-conv
   :ensure t
   :defer t)

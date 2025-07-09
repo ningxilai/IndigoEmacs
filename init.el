@@ -12,7 +12,8 @@
   (use-package package
     :init
     (setq-default package-enable-at-startup nil)
-    (package-initialize)
+    :custom
+    (package-activate-all)
     :config
     (setq-default package-vc-allow-build-commands t
                   package-quickstart t
@@ -36,7 +37,6 @@
                    (format "elpa/%s.%s"
                            emacs-major-version emacs-minor-version)
                    user-emacs-directory))
-    (package-activate-all)
     (setq-default custom-file (expand-file-name "custom.el" user-emacs-directory))
     :hook
     ((text-mode) . (lambda () (setq-local auto-composition-mode nil
@@ -49,9 +49,13 @@
     (enable-recursive-minibuffers t)
     (read-extended-command-predicate #'command-completion-default-include-p)
     (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+    
+    (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
+    (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
 
     :config
     (use-package use-package
+      :init (package-initialize)
       :config
       (setq-default use-package-always-ensure t
                     use-package-always-defer t
@@ -100,6 +104,7 @@
           (set-char-table-range composition-function-table char
                                 `([,ligature-re 0 font-shape-gstring]))))
       )
+    
     (setq-default frame-title-format
                   '(:eval (concat
 	                   (if (and buffer-file-name (buffer-modified-p)) "•")
@@ -188,7 +193,6 @@
                   project-mode-line t)
     
     (setq-default c-set-style 'linux
-                  flymake-mode nil
                   warning-minimum-level :warning
                   kill-ring-max 200
                   tab-always-indent 'complete
@@ -251,9 +255,6 @@
           (error (save-buffers-kill-terminal))))
       
       (global-set-key (kbd "C-x C-c") 'nano-kill)
-      
-      (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
-      (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
       
       )
     
@@ -346,7 +347,7 @@
   :custom (set-face-attribute 'vundo-default nil :family "Unifont"))
 (use-package undohist
   :ensure t
-  :init (undohist-initialize))
+  :custom (undohist-initialize))
 
 (use-package treesit-auto
   :ensure t
@@ -404,7 +405,7 @@
   :bind (:map region-occurrences-highlighter-nav-mode-map
               ("M-n" . region-occurrences-highlighter-next)
               ("M-p" . region-occurrences-highlighter-prev))
-  :hook ((prog-mode org-mode text-mode) . region-occurrences-highlighter-mode))
+  :hook ((prog-mode text-mode) . region-occurrences-highlighter-mode))
 
 (use-package icomplete
   :config
@@ -429,10 +430,24 @@
                 completion-ignore-case t
                 completion-auto-help t))
 
-(use-package flycheck
-  :ensure t
-  :config (flycheck-mode t)
-  :hook (prog-mode . flycheck-mode))
+(use-package flymake
+  :ensure nil
+  :hook (prog-mode . flymake-mode)
+  :init
+  (flymake-mode t)
+  (setq-default flymake-no-changes-timeout nil
+                      flymake-fringe-indicator-position 'right-fringe
+                      flymake-show-diagnostics-at-end-of-line 'fancy)
+  :functions my-elisp-flymake-byte-compile
+  :config
+  ;; Check elisp with `load-path'
+  (defun my-elisp-flymake-byte-compile (fn &rest args)
+    "Wrapper for `elisp-flymake-byte-compile'."
+    (let ((elisp-flymake-byte-compile-load-path
+           (append elisp-flymake-byte-compile-load-path load-path)))
+      (apply fn args)))
+  (advice-add 'elisp-flymake-byte-compile :around #'my-elisp-flymake-byte-compile)
+  )
 
 (use-package exec-path-from-shell
   :ensure t
@@ -442,24 +457,31 @@
   :ensure nil
   :init (dired-async-mode t)
   :config
-  (setq-default dired-movement-style 'cycle
-                browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
-  (setopt dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
+  (setq-default dired-dwim-target t
+                dired-recursive-deletes 'always
+                dired-recursive-copies 'always)
+  :init
+  (setopt dired-movement-style 'cycle
+          browse-url-handlers '(("\\`file:" . browse-url-default-browser))
+          dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
   ;; this command is useful when you want to close the window of `dirvish-side'
   ;; automatically when opening a file
   (put 'dired-find-alternate-file 'disabled nil))
 
 (use-package dirvish
-  :ensure t
+  :vc (dirvish :url "https://github.com/alexluigit/dirvish/"
+               :rev :newest)
+  :config
+  (setopt dirvish-attributes
+          '(vc-state file-size git-msg subtree-state collapse file-time)
+          dirvish-side-attributes
+          '(vc-state nerd-icons collapse file-size)
+          dirvish-mode-line-format '(:left (sort symlink) :right (vc-info yank index))
+          dirvish-header-line-format '(:left (path) :right (free-space)))
   :init
   (dirvish-override-dired-mode)
-  :config
-  (dirvish-peek-mode)             ; Preview files in minibuffer
-  ;; (dirvish-side-follow-mode)      ; similar to `treemacs-follow-mode'
-  (setq dirvish-mode-line-format
-        '(:left (sort symlink) :right (omit yank index)))
-  ;; open large directory (over 20000 files) asynchronously with `fd' command
-  (setq dirvish-large-directory-threshold 20000)
+  (dirvish-peek-mode)
+  (dirvish-side-follow-mode)
   :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
   (("C-c f" . dirvish)
    :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
@@ -480,11 +502,7 @@
    ("M-f" . dirvish-history-go-forward)
    ("M-b" . dirvish-history-go-backward)
    ("M-e" . dirvish-emerge-menu))
-  :custom
-  (setq-local dirvish-attributes           ; The order *MATTERS* for some attributes
-              '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
-              dirvish-side-attributes
-              '(vc-state nerd-icons collapse file-size)))
+  )
 
 ;; ends
 
