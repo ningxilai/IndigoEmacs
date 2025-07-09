@@ -9,34 +9,12 @@
 (let ((gc-cons-threshold most-positive-fixnum)
       (file-name-handler-alist nil))
 
-  (use-package package
-    :init
-    (setq-default package-enable-at-startup nil)
-    :custom
-    (package-activate-all)
-    :config
-    (setq-default package-vc-allow-build-commands t
-                  package-quickstart t
-                  native-comp-jit-compilation t
-                  package-native-compile t
-                  version-control t
-                  package-enable-at-startup t
-                  delete-old-versions t
-                  package-archives '(("gnu"    . "https://mirrors.zju.edu.cn/elpa/gnu/")
-                                     ("nongnu" . "https://mirrors.zju.edu.cn/elpa/nongnu/")
-                                     ("melpa"  . "https://mirrors.zju.edu.cn/elpa/melpa/"))))
-  
   (use-package emacs
     :init
     (dolist (dir '("lisp"
 		   "site-lisp"
 		   ))
       (push (expand-file-name dir user-emacs-directory) load-path))
-    (setq-default package-user-dir
-                  (expand-file-name
-                   (format "elpa/%s.%s"
-                           emacs-major-version emacs-minor-version)
-                   user-emacs-directory))
     (setq-default custom-file (expand-file-name "custom.el" user-emacs-directory))
     :hook
     ((text-mode) . (lambda () (setq-local auto-composition-mode nil
@@ -54,6 +32,29 @@
     (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
 
     :config
+    
+    (use-package package
+      :init
+      (setopt package-enable-at-startup nil
+              package-user-dir
+              (expand-file-name
+               (format "elpa/%s.%s"
+                       emacs-major-version emacs-minor-version)
+               user-emacs-directory))
+      :custom
+      (package-activate-all)
+      :config
+      (setq-default package-vc-allow-build-commands t
+                    package-quickstart t
+                    native-comp-jit-compilation t
+                    package-native-compile t
+                    version-control t
+                    package-enable-at-startup t
+                    delete-old-versions t
+                    package-archives '(("gnu"    . "https://mirrors.zju.edu.cn/elpa/gnu/")
+                                       ("nongnu" . "https://mirrors.zju.edu.cn/elpa/nongnu/")
+                                       ("melpa"  . "https://mirrors.zju.edu.cn/elpa/melpa/"))))
+    
     (use-package use-package
       :init (package-initialize)
       :config
@@ -463,7 +464,7 @@
   :init
   (setopt dired-movement-style 'cycle
           browse-url-handlers '(("\\`file:" . browse-url-default-browser))
-          dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
+          dired-listing-switches "-alh --group-directories-first --no-group")
   ;; this command is useful when you want to close the window of `dirvish-side'
   ;; automatically when opening a file
   (put 'dired-find-alternate-file 'disabled nil))
