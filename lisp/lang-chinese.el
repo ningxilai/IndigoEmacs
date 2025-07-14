@@ -76,22 +76,26 @@
 
 (use-package rime
   :ensure t
-  :init (setq default-input-method "rime")
+  :init (setq default-input-method "rime"
+              rime-librime-root "/home/iris/Desktop/librime/build/")
   :config
-  (setq rime-emacs-module-header-root "~/.local/include"
-        rime-show-candidate 'posframe
-        rime-user-data-dir "~/.config/rime")
-  (custom-set-variables
-   '(rime-disable-predicates
-     '(rime-predicate-after-alphabet-char-p
-       rime-predicate-current-uppercase-letter-p
-       rime-predicate-prog-in-code-p)))
+  (setq-default rime-disable-predicates
+                '(rime-predicate-after-alphabet-char-p
+                  rime-predicate-current-uppercase-letter-p
+                  rime-predicate-prog-in-code-p))
+  (setq-default rime-inline-predicates '(rime-predicate-space-after-cc-p
+                                         rime-predicate-current-uppercase-letter-p))
+
+  :hook (elpaca-after-init . (lambda()(setq-default rime-emacs-module-header-root "~/.local/include"
+                                               rime-show-candidate 'posframe
+                                               rime-user-data-dir "~/.config/rime")))
   :custom
   (rime-posframe-properties
       (list :background-color "#333333"
             :foreground-color "#dcdccc"
             :font "LXGW Wenkai"
-            :internal-border-width 10)))
+            :internal-border-width 10))
+  :bind (:map rime-active-mode-map ("<tab>" . rime-inline-ascii)))
 
 ;; (use-package pyim-tsinghua-dict
 ;;   :vc (pyim-tsinghua-dict :url "https://github.com/redguardtoo/pyim-tsinghua-dict.git"
@@ -107,7 +111,6 @@
   :ensure t
   :defer t)
 (use-package pangu-spacing
-  :defer t
   :ensure t
   :init
   (global-pangu-spacing-mode t)
@@ -115,16 +118,31 @@
   (org-mode . (lambda () (setq-local pangu-spacing-real-insert-separtor t))))
 
 (use-package cns
-  :vc (cns :url "https://github.com/kanglmf/emacs-chinese-word-segmentation.git"
-           :rev :newest)
+  :ensure (:host github :repo "kanglmf/emacs-chinese-word-segmentation")
   :init
   (setq-default cns-prog "cnws"
-              cns-dict-directory "var/cns-dict/"
-              cns-recent-segmentation-limit 20
-              cns-debug nil)
+                cns-dict-directory "var/cns-dict/"
+                cns-recent-segmentation-limit 20
+                cns-debug nil)
   :hook (find-file))
 
 ;; (use-package markdown-toc :ensure t :defer markdown-mode)
+
+;; Default, comment out the providers you don't need.
+(use-package fanyi
+  :ensure t
+  :custom
+  (fanyi-providers '(;; 海词
+                     fanyi-haici-provider
+                     ;; 有道同义词词典
+                     fanyi-youdao-thesaurus-provider
+                     ;; Etymonline
+                     fanyi-etymon-provider
+                     ;; Longman
+                     fanyi-longman-provider
+                     ;; English-English dictionary
+                     fanyi-etymon-provider
+                     fanyi-longman-provider)))
 
 (provide 'lang-chinese)
 ;;; lang-chinese.el ends here

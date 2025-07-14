@@ -2,14 +2,14 @@
 
 ;;; Code:
 
-;; (require 'xdg)
-
-;; (startup-redirect-eln-cache
-;;  (expand-file-name  "emacs/eln-cache/" (xdg-cache-home)))
+(require 'xdg)
 
 (startup-redirect-eln-cache
- (convert-standard-filename
-  (expand-file-name  "var/eln-cache/" user-emacs-directory)))
+ (expand-file-name  "emacs/eln-cache/" (xdg-cache-home)))
+
+;; (startup-redirect-eln-cache
+;;  (convert-standard-filename
+;;   (expand-file-name  "var/eln-cache/" user-emacs-directory)))
 
 ;; --- Frame / windows layout & behavior --------------------------------------
 (setq-default default-frame-alist
@@ -40,12 +40,13 @@
 (setq default-process-coding-system '(utf-8 . utf-8)
       locale-coding-system 'utf-8
       file-name-coding-system 'utf-8)
-
-(setq word-wrap-by-category t)
   
 (setenv "LC_CTYPE" "UTF-8")
 (setenv "LC_ALL" "en_US.UTF-8")
 (setenv "LANG" "en_US.UTF-8")
+
+(setq word-wrap-by-category t
+      system-time-locale "C")
 
 ;; (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
 
@@ -53,5 +54,7 @@
 
 
 ;; (setq-default header-line-format '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
+
+(setq package-enable-at-startup nil)
 
 ;;; early-init.el ends here

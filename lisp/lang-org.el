@@ -3,7 +3,7 @@
 ;; Org
 
 (use-package org
-  :ensure t
+  :ensure nil
   :config
   (setq
            ;; Edit settings

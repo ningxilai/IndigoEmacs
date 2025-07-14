@@ -8,62 +8,72 @@
 
 (let ((gc-cons-threshold most-positive-fixnum)
       (file-name-handler-alist nil))
+  
+  (eval-and-compile
+    
+    (defvar elpaca-installer-version 0.11)
+    (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+    (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+    (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+    (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                                  :ref nil :depth 1 :inherit ignore
+                                  :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                                  :build (:not elpaca--activate-package)))
+    (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+           (build (expand-file-name "elpaca/" elpaca-builds-directory))
+           (order (cdr elpaca-order))
+           (default-directory repo))
+      (add-to-list 'load-path (if (file-exists-p build) build repo))
+      (unless (file-exists-p repo)
+        (make-directory repo t)
+        (when (<= emacs-major-version 28) (require 'subr-x))
+        (condition-case-unless-debug err
+            (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                      ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                      ,@(when-let* ((depth (plist-get order :depth)))
+                                                          (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                      ,(plist-get order :repo) ,repo))))
+                      ((zerop (call-process "git" nil buffer t "checkout"
+                                            (or (plist-get order :ref) "--"))))
+                      (emacs (concat invocation-directory invocation-name))
+                      ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                            "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                      ((require 'elpaca))
+                      ((elpaca-generate-autoloads "elpaca" repo)))
+                (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+              (error "%s" (with-current-buffer buffer (buffer-string))))
+          ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+      (unless (require 'elpaca-autoloads nil t)
+        (require 'elpaca)
+        (elpaca-generate-autoloads "elpaca" repo)
+        (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
+    (add-hook 'after-init-hook #'elpaca-process-queues)
+    (elpaca `(,@elpaca-order))
+    
+    )
+
+  (elpaca elpaca-use-package
+	  ;; Enable Elpaca support for use-package's :ensure keyword.
+	  (elpaca-use-package-mode))
+  
+  )
 
   (use-package emacs
     :init
-    (dolist (dir '("lisp"
-		   "site-lisp"
-		   ))
+    (dolist (dir '("lisp" "site-lisp"))
       (push (expand-file-name dir user-emacs-directory) load-path))
     (setq-default custom-file (expand-file-name "custom.el" user-emacs-directory))
     :hook
+    (elpaca-after-init . (lambda () (load custom-file 'noerror)))
     ((text-mode) . (lambda () (setq-local auto-composition-mode nil
                                      buffer-face-mode-face '(:family "IBM Plex Mono"))))
-    (prog-mode . completion-preview-mode)
-    
-    :custom
-    (setq-local initial-scratch-echo-area-message "iris")
-    (context-menu-mode t)
-    (enable-recursive-minibuffers t)
-    (read-extended-command-predicate #'command-completion-default-include-p)
-    (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
-    
-    (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
-    (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
 
     :config
     
-    (use-package package
-      :init
-      (setopt package-enable-at-startup nil
-              package-user-dir
-              (expand-file-name
-               (format "elpa/%s.%s"
-                       emacs-major-version emacs-minor-version)
-               user-emacs-directory))
-      :custom
-      (package-activate-all)
-      :config
-      (setq-default package-vc-allow-build-commands t
-                    package-quickstart t
-                    native-comp-jit-compilation t
-                    package-native-compile t
-                    version-control t
-                    package-enable-at-startup t
-                    delete-old-versions t
-                    package-archives '(("gnu"    . "https://mirrors.zju.edu.cn/elpa/gnu/")
-                                       ("nongnu" . "https://mirrors.zju.edu.cn/elpa/nongnu/")
-                                       ("melpa"  . "https://mirrors.zju.edu.cn/elpa/melpa/"))))
-    
-    (use-package use-package
-      :init (package-initialize)
-      :config
-      (setq-default use-package-always-ensure t
-                    use-package-always-defer t
-                    use-package-expand-minimally t
-                    use-package-vc-prefer-newest t))
-    
     (use-package fontset
+      :init
+      (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
+      (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
       :config
       (set-face-attribute 'default (selected-frame)
                           :height 120 :weight 'light :family "Lilex Nerd Font") ;; IBM Plex Mono
@@ -112,15 +122,8 @@
 	                   (buffer-name)
 	                   (if buffer-file-name
 		               (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")")) " - Emacs")))
-    
-    (tool-bar-mode -1)
-    (menu-bar-mode -1)
-    (blink-cursor-mode -1)
-    (pixel-scroll-precision-mode 1)
-    (scroll-bar-mode -1)
-    (horizontal-scroll-bar-mode -1)
-    
-    (eval-when-compile
+
+    (eval-and-compile
       
       ;; copy by nano
       
@@ -182,6 +185,14 @@
     (display-time-mode t)
     (which-key-mode t)
     
+    (context-menu-mode t)
+    (tool-bar-mode -1)
+    (menu-bar-mode -1)
+    (blink-cursor-mode -1)
+    (pixel-scroll-precision-mode 1)
+    (scroll-bar-mode -1)
+    (horizontal-scroll-bar-mode -1)
+    
     (setq-default text-mode-ispell-word-completion nil
                   make-backup-files nil
                   create-lockfiles nil
@@ -191,7 +202,7 @@
                   truncate-lines nil
                   save-interprogram-paste-before-kill t
                   find-file-suppress-same-file-warnings t
-                  project-mode-line t)
+                  project-mode-line nil)
     
     (setq-default c-set-style 'linux
                   warning-minimum-level :warning
@@ -201,7 +212,10 @@
                   indent-tabs-mode nil
                   ring-bell-function 'ignore
                   select-enable-clipboard t
-                  system-time-locale "C")
+                  x-select-enable-clipboard t
+                  x-select-enable-primary nil
+                  interprogram-cut-function #'gui-select-text
+                  initial-scratch-echo-area-message "iris")
     
     (setopt
      ;; nice scroll
@@ -213,11 +227,6 @@
      scroll-up-aggressively 0.0
      scroll-down-aggressively 0.0
      pixel-scroll-precision-interpolate-page t)
-    
-    (setopt
-     x-select-enable-clipboard t
-     x-select-enable-primary nil
-     interprogram-cut-function #'gui-select-text)
     
     (eval-and-compile
       
@@ -258,15 +267,18 @@
       (global-set-key (kbd "C-x C-c") 'nano-kill)
       
       )
-    
+
     (require 'lang-org)
     (require 'lang-chinese)
+    
+    :custom 
+    (read-extended-command-predicate #'command-completion-default-include-p)
+    (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
     
     :bind (("C-x k" . kill-current-buffer)
            ("C-x C-r" .  recentf-open)
            ("M-n" . make-frame))
     )
-  )
 
 ;; ends
 
@@ -282,14 +294,13 @@
 
 (use-package no-littering
   :ensure t
-  :init (require 'no-littering)
-  :custom
+  :demand t
+  :init
   (let ((dir (no-littering-expand-var-file-name "lock-files/")))
     (make-directory dir t)
     (setq lock-file-name-transforms `((".*" ,dir t))))
   :config
   (use-package recentf
-    :defer t
     :commands (recentf-save-list)
     :config (recentf-mode t)
     :custom
@@ -299,7 +310,7 @@
                  (recentf-expand-file-name no-littering-etc-directory)))
   
   (use-package savehist
-    :custom
+    :config
     ;; Minibuffer history
     (setq-default enable-recursive-minibuffers t ; Allow commands in minibuffers
                   history-length 1000
@@ -322,6 +333,7 @@
     (setq-default
      auto-save-list-file-prefix t
      auto-save-visited-mode t
+     delete-auto-save-files t
      auto-save-default t))
   )
 
@@ -330,10 +342,11 @@
 (use-package async
   :ensure t
   :config
-  (async-bytecomp-package-mode t))
+  (async-bytecomp-package-mode t)
+  :custom
+  (dired-async-mode t))
 
 (use-package hl-line
-  ;; :init (global-hl-line-mode t)
   :config
   (setq hl-line-sticky-flag nil)
   ;; Highlight starts from EOL, to avoid conflicts with other overlays
@@ -350,18 +363,13 @@
   :ensure t
   :custom (undohist-initialize))
 
-(use-package treesit-auto
-  :ensure t
-  :config (setq treesit--install-language-grammar-out-dir-history "tree-sitter"))
-
 (use-package paren
   :config
   (setq-default show-paren-delay 0.1
                 show-paren-when-point-in-periphery t))
 
 (use-package fingertip
-  :vc (fingertip :url "https://github.com/manateelazycat/fingertip"
-                 :rev :newest)
+  :ensure (:host github :repo "manateelazycat/fingertip")
   :hook (lisp-mode emacs-lisp-mode scheme-mode markdown-mode)
   :bind
   (:map fingertip-mode-map
@@ -426,21 +434,45 @@
   )
 
 (use-package completion
-  :custom
+  :hook
+  (prog-mode . completion-preview-mode)
+  :config
   (setq-default completion-preview-ignore-case t
                 completion-ignore-case t
-                completion-auto-help t))
+                completion-auto-help t)
+  :custom
+  (add-to-list 'completion-ignored-extensions ".hi"))
 
 (use-package flymake
-  :ensure nil
-  :hook (prog-mode . flymake-mode)
+  :hook
+  (flymake-mode . prog-mode)
+  (flymake-mode . flymake-flycheck-auto)
   :init
   (flymake-mode t)
   (setq-default flymake-no-changes-timeout nil
-                      flymake-fringe-indicator-position 'right-fringe
-                      flymake-show-diagnostics-at-end-of-line 'fancy)
+                flymake-fringe-indicator-position 'right-fringe
+                flymake-show-diagnostics-at-end-of-line 'fancy
+                eldoc-documentation-function 'eldoc-documentation-compose)
   :functions my-elisp-flymake-byte-compile
   :config
+  
+  (use-package flymake-flycheck
+    :ensure t
+  ;; Disable flycheck checkers for which we have flymake equivalents
+    :config
+    (use-package flycheck
+      :ensure t
+      :config
+      (setq-default flycheck-disabled-checkers
+                    (append (default-value 'flycheck-disabled-checkers)
+                            '(emacs-lisp emacs-lisp-checkdoc emacs-lisp-package sh-shellcheck)))))
+  
+  ;; (use-package flycheck-eglot
+  ;;   :ensure t
+  ;;   :after eglot
+  ;;   :config
+  ;;   (global-flycheck-eglot-mode))
+  
   ;; Check elisp with `load-path'
   (defun my-elisp-flymake-byte-compile (fn &rest args)
     "Wrapper for `elisp-flymake-byte-compile'."
@@ -454,24 +486,27 @@
   :ensure t
   :init (exec-path-from-shell-initialize))
 
+(use-package whitespace-cleanup-mode
+  :ensure t
+  :hook (elpaca-after-init . global-whitespace-cleanup-mode)
+  :diminish t
+  :init (setq-local show-trailing-whitespace t))
+
 (use-package dired
   :ensure nil
-  :init (dired-async-mode t)
   :config
   (setq-default dired-dwim-target t
                 dired-recursive-deletes 'always
                 dired-recursive-copies 'always)
   :init
   (setopt dired-movement-style 'cycle
-          browse-url-handlers '(("\\`file:" . browse-url-default-browser))
           dired-listing-switches "-alh --group-directories-first --no-group")
   ;; this command is useful when you want to close the window of `dirvish-side'
   ;; automatically when opening a file
   (put 'dired-find-alternate-file 'disabled nil))
 
 (use-package dirvish
-  :vc (dirvish :url "https://github.com/alexluigit/dirvish/"
-               :rev :newest)
+  :ensure t
   :config
   (setopt dirvish-attributes
           '(vc-state file-size git-msg subtree-state collapse file-time)
@@ -511,8 +546,9 @@
 
 (use-package enlight
   :ensure t
-  :hook (enlight . (lambda () (hl-line-mode nil)))
-  :init (setopt initial-buffer-choice #'enlight)
+  :hook
+  (enlight . (lambda () (hl-line-mode nil)))
+  (elpaca-after-init . (lambda () (setopt initial-buffer-choice #'enlight)))
   :custom
   (enlight-content
    (concat
@@ -537,7 +573,6 @@
 (use-package nord-theme
   :ensure t
   :init (load-theme 'nord t nil))
-
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode t))
@@ -737,49 +772,62 @@
   :ensure t
   :after magit)
 
-(use-package project
-  ;; https://emacs.liujiacai.net/post/010/
-  ;; https://christiantietze.de/posts/2022/03/mark-local-project.el-directories/
-  :custom
-  (defgroup project-local nil
-    "Local, non-VC-backed project.el root directories."
-    :group 'project)
-  
-  (defcustom project-local-identifier ".project"
-    "You can specify a single filename or a list of names."
-    :type '(choice (string :tag "Single file")
-                   (repeat (string :tag "Filename")))
-    :group 'project-local)
+(use-package projectile
+  :ensure t
+  :init
+  (projectile-mode +1)
+  :config (add-to-list 'projectile-project-root-files "stack.yaml")
+  :bind (:map projectile-mode-map
+              ("C-c p" . projectile-command-map)))
 
-  (cl-defmethod project-root ((project (head local)))
-    "Return root directory of current PROJECT."
-    (cdr project))
+(use-package counsel-projectile
+  :ensure t
+  :after projectile
+  :init (counsel-projectile-mode))
   
-  (defun project-local-try-local (dir)
-    "Determine if DIR is a non-VC project DIR must include a file with the name determined by the variable `project-local-identifier' to be considered a project."
-    (if-let* ((root (if (listp project-local-identifier)
-                        (seq-some (lambda (n)
-                                    (locate-dominating-file dir n))
-                                  project-local-identifier)
-                      (locate-dominating-file dir project-local-identifier))))
-        (cons 'local root)))
+;; (use-package project
+;;   ;; https://emacs.liujiacai.net/post/010/
+;;   ;; https://christiantietze.de/posts/2022/03/mark-local-project.el-directories/
+;;   :custom
+;;   (defgroup project-local nil
+;;     "Local, non-VC-backed project.el root directories."
+;;     :group 'project)
   
-  (setq-local project-find-functions '(project-local-try-local project-try-vc))
+;;   (defcustom project-local-identifier ".project"
+;;     "You can specify a single filename or a list of names."
+;;     :type '(choice (string :tag "Single file")
+;;                    (repeat (string :tag "Filename")))
+;;     :group 'project-local)
+
+;;   (cl-defmethod project-root ((project (head local)))
+;;     "Return root directory of current PROJECT."
+;;     (cdr project))
   
-  (defun my/project-files-in-directory (dir)
-    "Use `fd' to list files in DIR."
-    (let* ((default-directory dir)
-           (localdir (file-local-name (expand-file-name dir)))
-           (command (format "fd -H -t f -0 . %s" localdir)))
-      (project--remote-file-names
-       (sort (split-string (shell-command-to-string command) "\0" t)
-             #'string<))))
+;;   (defun project-local-try-local (dir)
+;;     "Determine if DIR is a non-VC project DIR must include a file with the name determined by the variable `project-local-identifier' to be considered a project."
+;;     (if-let* ((root (if (listp project-local-identifier)
+;;                         (seq-some (lambda (n)
+;;                                     (locate-dominating-file dir n))
+;;                                   project-local-identifier)
+;;                       (locate-dominating-file dir project-local-identifier))))
+;;         (cons 'local root)))
   
-  (cl-defmethod project-files ((project (head local)) &optional dirs)
-    "Override `project-files' to use `fd' in local projects."
-    (mapcan #'my/project-files-in-directory
-            (or dirs (list (project-root project)))))
-  )
+;;   (setq-local project-find-functions '(project-local-try-local project-try-vc))
+  
+;;   (defun my/project-files-in-directory (dir)
+;;     "Use `fd' to list files in DIR."
+;;     (let* ((default-directory dir)
+;;            (localdir (file-local-name (expand-file-name dir)))
+;;            (command (format "fd -H -t f -0 . %s" localdir)))
+;;       (project--remote-file-names
+;;        (sort (split-string (shell-command-to-string command) "\0" t)
+;;              #'string<))))
+  
+;;   (cl-defmethod project-files ((project (head local)) &optional dirs)
+;;     "Override `project-files' to use `fd' in local projects."
+;;     (mapcan #'my/project-files-in-directory
+;;             (or dirs (list (project-root project)))))
+;;   )
 
 ;; ends
 
@@ -815,16 +863,16 @@
   :init (setq-default colorful-use-prefix t)
   :config (dolist (mode '(html-mode php-mode help-mode helpful-mode))
             (add-to-list 'global-colorful-modes mode))
-  :hook (after-init . global-colorful-mode))
+  :hook (prog-mode . global-colorful-mode))
 
 ;; ends
 
 ;; Term
 
 (use-package eshell
-  :ensure t
+  :ensure nil
   :hook (eshell-mode . completion-preview-mode)
-  :custom
+  :config
   (setq-local eshell-prompt-regexp "^[^αλ\n]*[αλ] ")
   (setq-default eshell-prompt-function
                 (lambda nil
@@ -898,46 +946,192 @@
 
 ;; ends
 
-(use-package geiser
+;; lsp
+
+(use-package lsp-mode
   :ensure t
-  :config (use-package geiser-mit
-            :ensure t
-	    :hook scheme-mode
-            )
-  )
+  :diminish
+  :defines (lsp-diagnostics-disabled-modes lsp-clients-python-library-directories)
+  :autoload lsp-enable-which-key-integration
+  :commands (lsp-format-buffer lsp-organize-imports)
+  :preface
+  (setq lsp-warn-no-matched-clients nil)
+  ;; Performace tuning
+  ;; @see https://emacs-lsp.github.io/lsp-mode/page/performance/
+  (setq read-process-output-max (* 1024 1024)) ; 1MB
+  (setenv "LSP_USE_PLISTS" "true")
+  :hook ((prog-mode . (lambda ()
+                        (unless (derived-mode-p
+                                 'emacs-lisp-mode 'lisp-mode
+                                 'makefile-mode 'snippet-mode
+                                 'ron-mode)
+                          (lsp-deferred))))
+         ((markdown-mode yaml-mode yaml-ts-mode haskell-mode) . lsp-deferred)
+         (lsp-mode . (lambda ()
+                       ;; Integrate `which-key'
+                       (lsp-enable-which-key-integration)
+                       (add-hook 'before-save-hook #'lsp-format-buffer t t)
+                       (add-hook 'before-save-hook #'lsp-organize-imports t t))))
+  :bind (:map lsp-mode-map
+              ("C-c C-d" . lsp-describe-thing-at-point)
+              ([remap xref-find-definitions] . lsp-find-definition)
+              ([remap xref-find-references] . lsp-find-references))
+  :init (setq lsp-use-plists t
+              
+              lsp-keymap-prefix "C-c l"
+              lsp-keep-workspace-alive nil
+              lsp-signature-auto-activate nil
+              lsp-modeline-code-actions-enable nil
+              lsp-modeline-diagnostics-enable nil
+              lsp-modeline-workspace-status-enable nil
+              
+              lsp-semantic-tokens-enable t
+              lsp-progress-spinner-type 'progress-bar-filled
+              
+              lsp-enable-file-watchers nil
+              lsp-enable-folding nil
+              lsp-enable-symbol-highlighting nil
+              lsp-enable-text-document-color nil
+              
+              lsp-enable-indentation nil
+              lsp-enable-on-type-formatting nil
 
-;; eglot
+              ;; For diagnostics
+              lsp-diagnostics-disabled-modes '(markdown-mode gfm-mode)
+              
+              ;; For clients
+              lsp-clients-python-library-directories '("~/uv/"))
+     :config
+     
+     (with-no-warnings
+       ;; Emacs LSP booster
+       ;; @see https://github.com/blahgeek/emacs-lsp-booster
+       (when (executable-find "emacs-lsp-booster")
+         (defun lsp-booster--advice-json-parse (old-fn &rest args)
+           "Try to parse bytecode instead of json."
+           (or
+            (when (equal (following-char) ?#)
+              (let ((bytecode (read (current-buffer))))
+                (when (byte-code-function-p bytecode)
+                  (funcall bytecode))))
+            (apply old-fn args)))
+         (advice-add (if (progn (require 'json)
+                                (fboundp 'json-parse-buffer))
+                         'json-parse-buffer
+                       'json-read)
+                     :around
+                     #'lsp-booster--advice-json-parse)
 
-(use-package eglot-booster
-  :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
-  :after eglot
-  :config
-  (eglot-booster-mode)
-  (setq-local eglot-booster-io-only t))
+         (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+           "Prepend emacs-lsp-booster command to lsp CMD."
+           (let ((orig-result (funcall old-fn cmd test?)))
+             (if (and (not test?)                             ;; for check lsp-server-present?
+                      (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+                      lsp-use-plists
+                      (not (functionp 'json-rpc-connection))  ;; native json-rpc
+                      (executable-find "emacs-lsp-booster"))
+                 (progn
+                   (message "Using emacs-lsp-booster for %s!" orig-result)
+                   (cons "emacs-lsp-booster" orig-result))
+               orig-result)))
+         (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+         )
 
-(use-package eglot
+         (setq lsp-headerline-arrow (nerd-icons-octicon "nf-oct-chevron_right"
+                                                        :face 'lsp-headerline-breadcrumb-separator-face))
+         )
+     :custom
+     (setq-default lsp-headerline-breadcrumb-enable nil)
+     )
+
+   (use-package lsp-ui
+     :ensure t
+     :custom-face
+     (lsp-ui-sideline-code-action ((t (:inherit warning))))
+     :bind (("C-c u" . lsp-ui-imenu)
+            :map lsp-ui-mode-map
+            ("C-c s-<return>" . lsp-ui-sideline-apply-code-actions)
+            ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+            ([remap xref-find-references] . lsp-ui-peek-find-references))
+     :hook (lsp-mode . lsp-ui-mode)
+     :init
+     (setq lsp-ui-doc-position 'top
+           lsp-ui-sideline-show-diagnostics nil
+           lsp-ui-sideline-ignore-duplicate t
+           lsp-ui-doc-delay 0.1
+           lsp-ui-doc-show-with-cursor (not (display-graphic-p))
+           lsp-ui-imenu-auto-refresh 'after-save
+           lsp-ui-imenu-colors `(,(face-foreground 'font-lock-keyword-face)
+                                 ,(face-foreground 'font-lock-string-face)
+                                 ,(face-foreground 'font-lock-constant-face)
+                                 ,(face-foreground 'font-lock-variable-name-face)))
+     
+     :config
+     (with-no-warnings
+       ;; Display peek in child frame if possible
+       ;; @see https://github.com/emacs-lsp/lsp-ui/issues/441
+       (defvar lsp-ui-peek--buffer nil)
+       (defun lsp-ui-peek--peek-display (fn src1 src2)
+         (if (childframe-workable-p)
+             (-let* ((win-width (frame-width))
+                     (lsp-ui-peek-list-width (/ (frame-width) 2))
+                     (string (-some--> (-zip-fill "" src1 src2)
+                               (--map (lsp-ui-peek--adjust win-width it) it)
+                               (-map-indexed 'lsp-ui-peek--make-line it)
+                               (-concat it (lsp-ui-peek--make-footer)))))
+               (setq lsp-ui-peek--buffer (get-buffer-create " *lsp-peek--buffer*"))
+               (posframe-show lsp-ui-peek--buffer
+                              :string (mapconcat 'identity string "")
+                              :min-width (frame-width)
+                              :internal-border-color (face-background 'posframe-border nil t)
+                              :internal-border-width 1
+                              :poshandler #'posframe-poshandler-frame-center))
+           (funcall fn src1 src2)))
+       (defun lsp-ui-peek--peek-destroy (fn)
+         (if (childframe-workable-p)
+             (progn
+               (when (bufferp lsp-ui-peek--buffer)
+                 (posframe-hide lsp-ui-peek--buffer))
+               (setq lsp-ui-peek--last-xref nil))
+           (funcall fn)))
+       (advice-add #'lsp-ui-peek--peek-new :around #'lsp-ui-peek--peek-display)
+       (advice-add #'lsp-ui-peek--peek-hide :around #'lsp-ui-peek--peek-destroy)))
+
+(use-package lsp-scheme
   :ensure t
+  :hook (scheme-mode . lsp-scheme)
+  :custom (setq lsp-scheme-implementation "guile"))
+
+(use-package lsp-haskell
+  :ensure (:host github :repo "emacs-lsp/lsp-haskell" :autoloads nil)
+  :init (setq-local lsp-haskell-server-path "~/.ghcup/bin/haskell-language-server-wrapper"))
+
+(use-package dape
   :defer t
-  :custom
-  (eglot-autoshutdown t)  ;; shutdown language server after closing last file
-  (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
-  :custom-face
-  (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
-  :hook
-  ((typst-ts-mode) . eglot-ensure)
-  ((markdown-mode) . eglot-ensure)
-  ((LaTeX-mode) . eglot-ensure)
-  ((python-ts-mode) . eglot-ensure)
-  ((c-ts-mode) . eglot-ensure)
+  :ensure t
+  :init
+  (setq dape-adapter-dir "var/debug-adapters/")
   :config
-  (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
-  (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
-  (add-to-list 'eglot-server-programs '(LaTeX-mode . ("texlab")))
+  (setq dape-buffer-window-arrangement 'right
+        dape-inlay-hints t
+        dape-cwd-function #'projectile-project-root)
+
+  (add-hook 'dape-on-start-hooks
+            (defun dape--save-on-start ()
+              (save-some-buffers t t)))
+  :custom
+  ;; Persist breakpoints after closing DAPE.
+  (dape-breakpoint-global-mode +1)
+  (dape-buffer-window-arrangment 'right)
   )
+
+(use-package consult-lsp
+  :ensure t
+  :bind (:map lsp-mode-map
+              ("C-M-." . consult-lsp-symbols)))
 
 (use-package citre
-  :vc (citre :url "https://github.com/universal-ctags/citre"
-             :rev :newest)
+  :ensure (:host github :repo "universal-ctags/citre")
   :config
   (require 'citre)
   (require 'citre-config)
@@ -960,26 +1154,6 @@
          ("C-x c p" . citre-ace-peek)
          ("C-x c u". citre-update-this-tags-file)))
 
-;; (use-package yasnippet
-;;   :ensure t
-;;   :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
-;;   :init (yas-global-mode t))
-
-;; (use-package lsp-bridge
-;;   :vc t
-;;   :autoload global-lsp-bridge-mode
-;;   :load-path "site-lisp/lsp-bridge/"
-;;   :init
-;;   (global-lsp-bridge-mode)
-;;   :config
-;;   (setq lsp-bridge-python-command "site-lisp/lsp-bridge/.venv/bin/python3")
-;;   (setq lsp-bridge-markdown-lsp-server 'marksman)
-;;   (setq acm-enable-yas t)
-;;   (setq acm-enable-citre t)
-;;   (setq acm-candidate-match-function 'orderless-flex)
-;;   :custom
-;;   (acm-enable-capf t))
-
 (use-package markdown-mode
   :defer t
   :ensure t
@@ -1000,6 +1174,11 @@
                  (lambda (item) (equal item '(markdown-fontify-tables)))
                  markdown-mode-font-lock-keywords))
   )
+
+(use-package yasnippet
+  :ensure t
+  :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
+  :init (yas-global-mode t))
 
 ;; ends
 

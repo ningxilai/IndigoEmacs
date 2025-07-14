@@ -13,9 +13,7 @@
   (gnu-apl-interactive-mode . (lambda ()
                                 (set-input-method "APL-Z")
                                 (setq-local buffer-face-mode-face '(:family "BQN386 Unicode")) (buffer-face-mode)
-                                ;; (require 'apl)
-                                ;; (set-input-method "apl-ascii")
-                                ;; https://www.metalevel.at/unicapl/
+                                (electric-pair-mode -1)
                                 )
                             )
   )

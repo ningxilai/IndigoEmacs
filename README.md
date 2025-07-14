@@ -91,33 +91,47 @@ cargo install emacs-lsp-booster
 
 ``` emacs-lisp
 (use-package eglot-booster
-    :vc (eglot-booster :url "https://github.com/jdtsmith/eglot-booster")
-    :after eglot
-    :config (eglot-booster-mode))
-
-(use-package eglot
-  :ensure t
-  :defer t
-  :custom
-  (eglot-autoshutdown t)  ;; shutdown language server after closing last file
-  (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
-  :custom-face
-  (eglot-highlight-symbol-face ((t (:inherit nil :weight bold :foreground "yellow3"))))
+  :ensure (:host github :repo "jdtsmith/eglot-booster")
+  :after eglot
+  :init
+  (setq-default eglot-booster-io-only t)
   :hook
-  ((typst-ts-mode) . eglot-ensure)
-  ((markdown-mode) . eglot-ensure)
-  ((LaTeX-mode) . eglot-ensure)
-  ((python-ts-mode) . eglot-ensure)
-  ((c-ts-mode) . eglot-ensure)
+  (eglot-ensure . (lambda()(eglot-booster-mode))))
+
+ (use-package eglot
+   :ensure (:host github :repo "joaotavora/eglot")
+   :defer t
+   :custom
+   (eglot-autoshutdown t)  ;; shutdown language server after closing last file
+   (eldoc-echo-area-use-multiline-p t) ;; eldoc-documentation-function should only return a single line
+   :hook ((prog-mode . (lambda () (unless (derived-mode-p
+                                      'emacs-lisp-mode 'lisp-mode
+                                      'makefile-mode 'snippet-mode)
+                               (eglot-ensure))))
+          ((markdown-mode typst-ts-mode LaTeX-mode python-ts-mode c-ts-mode) . eglot-ensure))
+   :config
+   (add-to-list 'eglot-server-programs '(markdown-mode . ("vscode-markdown-language-server")))
+   (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
+   (add-to-list 'eglot-server-programs '(LaTeX-mode . ("texlab")))
+   :init
+   (setq read-process-output-max (* 1024 1024)) ; 1MB
+   (setq eglot-autoshutdown t
+         eglot-events-buffer-size 0
+         eglot-send-changes-idle-time 0.5))
+         
+(use-package flycheck-eglot
+  :after eglot
   :config
-  (add-to-list 'eglot-server-programs '(markdown-mode . ("marksman")))
-  (add-to-list 'eglot-server-programs '(typst-ts-mode . ("tinymist")))
-  (add-to-list 'eglot-server-programs '(LaTeX-mode . ("texlab")))
-  )
+  (global-flycheck-eglot-mode))
+
+(use-package consult-eglot
+  :ensure t
+  :after consult eglot
+  :bind (:map eglot-mode-map
+      ("C-M-." . consult-eglot-symbols)))
 
 (use-package citre
-  :vc (citre :url "https://github.com/universal-ctags/citre"
-             :rev :newest)
+  :ensure (:host github :repo "universal-ctags/citre")
   :config
   (require 'citre)
   (require 'citre-config)
