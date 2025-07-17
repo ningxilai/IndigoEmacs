@@ -42,7 +42,7 @@
   )
 
 (use-package org-contrib
-  :ensure t)
+  :ensure (:host github :repo "emacsmirror/org-contrib"))
 
 (use-package org-appear
   :ensure t

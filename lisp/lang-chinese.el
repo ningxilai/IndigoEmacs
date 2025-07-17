@@ -18,6 +18,12 @@
   (use-package poly-R
     :ensure t))
 
+(use-package grip-mode
+  :ensure t
+  :config (setq grip-command 'auto) ;; auto, grip, go-grip or mdopen // uv tool install grip
+  :bind (:map markdown-mode-command-map
+              ("C-c m g" . grip-mode)))
+
 (use-package markdown-ts-mode
   :ensure nil
   :mode "\\.md\\'"
@@ -74,10 +80,21 @@
 ;;                        (pyim-basedict-enable)))
 ;;   )
 
+;; (use-package pyim-tsinghua-dict
+;;   :vc (pyim-tsinghua-dict :url "https://github.com/redguardtoo/pyim-tsinghua-dict.git"
+;;                           :rev :newest))
+;; (use-package pyim-basedict
+;;   :vc (pyim-basedict :url "https://github.com/tumashu/pyim-basedict.git"
+;;                      :rev :newest))
+;; (use-package pyim-greatdict
+;;   :vc (pyim-greatdict :url "https://github.com/tumashu/pyim-greatdict.git"
+;;                       :rev :newest))
+
 (use-package rime
   :ensure t
   :init (setq default-input-method "rime"
-              rime-librime-root "/home/iris/Desktop/librime/build/")
+              rime-librime-root "~/Desktop/librime/build/"
+              )
   :config
   (setq-default rime-disable-predicates
                 '(rime-predicate-after-alphabet-char-p
@@ -97,16 +114,6 @@
             :internal-border-width 10))
   :bind (:map rime-active-mode-map ("<tab>" . rime-inline-ascii)))
 
-;; (use-package pyim-tsinghua-dict
-;;   :vc (pyim-tsinghua-dict :url "https://github.com/redguardtoo/pyim-tsinghua-dict.git"
-;;                           :rev :newest))
-;; (use-package pyim-basedict
-;;   :vc (pyim-basedict :url "https://github.com/tumashu/pyim-basedict.git"
-;;                      :rev :newest))
-;; (use-package pyim-greatdict
-;;   :vc (pyim-greatdict :url "https://github.com/tumashu/pyim-greatdict.git"
-;;                       :rev :newest))
-
 (use-package chinese-conv
   :ensure t
   :defer t)
@@ -125,8 +132,6 @@
                 cns-recent-segmentation-limit 20
                 cns-debug nil)
   :hook (find-file))
-
-;; (use-package markdown-toc :ensure t :defer markdown-mode)
 
 ;; Default, comment out the providers you don't need.
 (use-package fanyi

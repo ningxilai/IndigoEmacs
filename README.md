@@ -16,21 +16,6 @@
     - [using](#using)
 <!--toc:end-->
 
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
-**Table of Contents**
-
-- [Indigo Emacs](#indigo-emacs)
-  - [Fonts](#fonts)
-  - [LSP](#lsp)
-    - [LSP-Bridge](#lsp-bridge)
-  - [Terminal](#terminal)
-    - [VTerm](#vterm)
-    - [EAT](#eat)
-  - [Reader](#reader)
-    - [using](#using)
-
-<!-- markdown-toc end -->
-
 ## Acknowledge:
 
 - [IsaacGu](https://gujiaxi.github.io) [.emacs.d](https://github.com/gujiaxi/.emacs.d)

@@ -11,9 +11,11 @@
   
   (eval-and-compile
     
+    (require 'xdg)
+    
     (defvar elpaca-installer-version 0.11)
     (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
-    (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+    (defvar elpaca-builds-directory (expand-file-name "emacs/elpaca/builds/" (xdg-cache-home)))
     (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
     (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
                                   :ref nil :depth 1 :inherit ignore
@@ -270,7 +272,7 @@
 
     (require 'lang-org)
     (require 'lang-chinese)
-    
+
     :custom 
     (read-extended-command-predicate #'command-completion-default-include-p)
     (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
@@ -631,7 +633,7 @@
   :custom
   (corfu-auto t)
   (corfu-auto-prefix 2)
-  (corfu-preview-current nil)
+  (corfu-preview-current t)
   (corfu-auto-delay 0.2)
   (corfu-popupinfo-delay '(0.4 . 0.2))
   :custom-face
@@ -639,8 +641,8 @@
   :config
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
   :bind ("M-/" . completion-at-point)
-  :hook ((after-init . global-corfu-mode)
-         (global-corfu-mode . corfu-popupinfo-mode)))
+  :hook ((prog-mode . corfu-mode)
+         (corfu-mode . corfu-popupinfo-mode)))
 
 (use-package consult
   :ensure t
@@ -949,7 +951,8 @@
 ;; lsp
 
 (use-package lsp-mode
-  :ensure t
+  :ensure (:host github :repo "emacs-lsp/lsp-mode"
+                 :files (:defaults "clients/*.*" "*.el"))
   :diminish
   :defines (lsp-diagnostics-disabled-modes lsp-clients-python-library-directories)
   :autoload lsp-enable-which-key-integration
@@ -966,7 +969,7 @@
                                  'makefile-mode 'snippet-mode
                                  'ron-mode)
                           (lsp-deferred))))
-         ((markdown-mode yaml-mode yaml-ts-mode haskell-mode) . lsp-deferred)
+         ((markdown-mode yaml-mode yaml-ts-mode haskell-mode sh-mode) . lsp-deferred)
          (lsp-mode . (lambda ()
                        ;; Integrate `which-key'
                        (lsp-enable-which-key-integration)
@@ -1002,7 +1005,6 @@
               ;; For clients
               lsp-clients-python-library-directories '("~/uv/"))
      :config
-     
      (with-no-warnings
        ;; Emacs LSP booster
        ;; @see https://github.com/blahgeek/emacs-lsp-booster
@@ -1053,7 +1055,8 @@
             ("C-c s-<return>" . lsp-ui-sideline-apply-code-actions)
             ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
             ([remap xref-find-references] . lsp-ui-peek-find-references))
-     :hook (lsp-mode . lsp-ui-mode)
+     :hook 
+     (lsp-mode . lsp-ui-mode)
      :init
      (setq lsp-ui-doc-position 'top
            lsp-ui-sideline-show-diagnostics nil
@@ -1175,6 +1178,8 @@
                  markdown-mode-font-lock-keywords))
   )
 
+;; (use-package markdown-toc :ensure t :defer markdown-mode)
+
 (use-package yasnippet
   :ensure t
   :commands (yas-global-mode yas-minor-mode yas-activate-extra-mode)
@@ -1182,9 +1187,20 @@
 
 ;; ends
 
-(use-package reader
-  :vc t
-  :autoload reader-autoloads
-  :load-path "./site-lisp/reader/")
+(use-package nov
+  :ensure t
+  :mode ("\\.epub\\'" . nov-mode))
+
+(use-package djvu
+  :ensure t
+  :mode ("\\.djvu\\'" . djvu-read-mode))
+
+(use-package djvu3
+  :after djvu
+  :ensure (:host github :repo "dalanicolai/djvu3")
+  :commands djvu-read-mode djvu-outline-mode djvu-occur-mode
+  :bind 
+  (:map djvu-image-mode-map
+        ("C-c d s" . image-save)))
 
 ;;; init.el ends here
