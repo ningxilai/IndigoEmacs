@@ -7,6 +7,8 @@
 ;; (startup-redirect-eln-cache
 ;;  (expand-file-name  "emacs/eln-cache/" (xdg-cache-home)))
 
+(setq-default gc-cons-threshold most-positive-fixnum)
+
 (startup-redirect-eln-cache
  (convert-standard-filename
   (expand-file-name  "var/eln-cache/" user-emacs-directory)))
@@ -15,6 +17,7 @@
 (setq-default default-frame-alist
               '((height . 50)
                 (width  . 80)
+                (alpha-background . 90)
                 (left-fringe . 0)
                 (right-fringe . 0)
                 (internal-border-width . 32)
@@ -23,7 +26,19 @@
                 (right-divider-width . 0)
                 (undecorated-round . t)))
 (modify-frame-parameters nil default-frame-alist)
-(setq-default pop-up-windows nil)
+
+(when (display-graphic-p)
+  (context-menu-mode))
+
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(blink-cursor-mode -1)
+(pixel-scroll-precision-mode 1)
+(scroll-bar-mode -1)
+(horizontal-scroll-bar-mode -1)
+
+(setq load-prefer-newer t
+      frame-inhibit-implied-resize t)
 
 ;; --- Sane settings ------ CJK && UTF-8 ---------------------------------------
 (set-language-environment "utf-8")
@@ -40,13 +55,12 @@
 (setq default-process-coding-system '(utf-8 . utf-8)
       locale-coding-system 'utf-8
       file-name-coding-system 'utf-8)
-  
+
+(setq-default system-time-locale "C")
+
 (setenv "LC_CTYPE" "UTF-8")
 (setenv "LC_ALL" "en_US.UTF-8")
 (setenv "LANG" "en_US.UTF-8")
-
-(setq word-wrap-by-category t
-      system-time-locale "C")
 
 ;; (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (if (buffer-modified-p) " ●" " ○"))))
 
@@ -55,6 +69,6 @@
 
 ;; (setq-default header-line-format '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
 
-(setq package-enable-at-startup nil)
+(setq-default package-enable-at-startup nil)
 
 ;;; early-init.el ends here
