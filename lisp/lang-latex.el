@@ -1,4 +1,4 @@
-;; Lang-LaTeX --- Summary -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 
@@ -138,7 +138,7 @@
   ;; Uncomment the following only if you have followed the above
   ;; instructions concerning, e.g., hyperref:
 
-  ;; (preview-LaTeX-command-replacements
+  ;; (preview-LaTeX-command-replacements625. inv(0)625. inv(0)625. inv(0)
   ;;  '(preview-LaTeX-disable-pdfoutput))
   )
 
@@ -146,6 +146,16 @@
   :ensure t
   :hook
   (LaTeX-mode . turn-on-cdlatex))
+
+(use-package parsec
+  :ensure (:host github :repo "cute-jumper/parsec.el"))
+(use-package latex-math-preview
+  :ensure (:host github :repo "emacsmirror/latex-math-preview"))
+
+(use-package calc-textrail
+  :ensure (:host github
+                 :repo "bohonghuang/calc-textrail")
+  :hook (calc-mode . calc-textrail-mode))
 
 (use-package laas
   :ensure t
@@ -247,18 +257,6 @@
          ("C-s" . isearch-forward))
   :config
   (pdf-tools-install :no-query))
-
-;; (use-package pdf-drop-mode
-;;   :ensure (pdf-drop-mode
-;;            :host github
-;;            :repo "rougier/pdf-drop-mode")
-;;   :config
-;;   (defun my/pdf-process (file doi)
-;;   (message "%s : %s" file doi))
-;;   (setq tramp-default-method "ssh")
-;;   (setq pdf-drop-search-hook #'my/pdf-process)
-;;   :custom
-;;   (pdf-drop-mode))
 
 (use-package bibtex
   :ensure nil

@@ -14,31 +14,33 @@
   (expand-file-name  "var/eln-cache/" user-emacs-directory)))
 
 ;; --- Frame / windows layout & behavior --------------------------------------
-(setq-default default-frame-alist
-              '((height . 50)
-                (width  . 80)
-                (alpha-background . 90)
-                (left-fringe . 0)
-                (right-fringe . 0)
-                (internal-border-width . 32)
-                (vertical-scroll-bars . nil)
-                (bottom-divider-width . 0)
-                (right-divider-width . 0)
-                (undecorated-round . t)))
-(modify-frame-parameters nil default-frame-alist)
+(setopt default-frame-alist
+        '((height . 50)
+          (width  . 80)
+          (alpha-background . 90)
+          (left-fringe . 0)
+          (right-fringe . 0)
+          (internal-border-width . 32)
+          (horizontal-scroll-bars . nil)
+          (vertical-scroll-bars . nil)
+          (undecorated-round . t)
+          (frame-inhibit-implied-resize . t))
+        bottom-divider-width nil
+        right-divider-width nil)
+
+(modify-frame-parameters (selected-frame) default-frame-alist)
 
 (when (display-graphic-p)
-  (context-menu-mode))
+  (context-menu-mode -1))
+
+(if (fboundp 'set-scroll-bar-mode)
+    (set-scroll-bar-mode -1))
 
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (blink-cursor-mode -1)
-(pixel-scroll-precision-mode 1)
 (scroll-bar-mode -1)
 (horizontal-scroll-bar-mode -1)
-
-(setq load-prefer-newer t
-      frame-inhibit-implied-resize t)
 
 ;; --- Sane settings ------ CJK && UTF-8 ---------------------------------------
 (set-language-environment "utf-8")
@@ -69,6 +71,8 @@
 
 ;; (setq-default header-line-format '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
 
-(setq-default package-enable-at-startup nil)
+(setq-default package-enable-at-startup nil
+              native-comp-async-report-warnings-errors t ;; 'silent
+              debug-on-error t)
 
 ;;; early-init.el ends here

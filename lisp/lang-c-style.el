@@ -12,15 +12,6 @@
   (setq-default c-ts-mode-indent-style 'linux
                 c-ts-mode-enable-doxygen nil))
 
-(use-package rust-ts-mode
-  :ensure nil
-  :config
-  (setq-local tab-width 4)
-  :hook
-  (rust-ts-mode . (lambda () (setq-local tab-width 4)))
-  :custom
-  (rust-ts-mode-indent-offset 4))
-
 (use-package sh-mode
   :ensure nil
   :config

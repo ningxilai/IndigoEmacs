@@ -89,18 +89,14 @@
       (use-package-enable-imenu-support t)
       (use-package-expand-minimally nil)
       (use-package-compute-statistics t)
-      (native-comp-async-report-warnings-errors t) ;; 'silent
-      (debug-on-error t)
       (use-package-verbose nil))
 
     (use-package text-mode
       :ensure nil
       :hook
-      ((text-mode) . (lambda () (progn
-                             (abbrev-mode)
-                             (visual-line-mode)
-                             (setq-default auto-composition-mode nil
-                                           truncate-lines nil))))
+      ((text-mode) . (lambda () (progn (abbrev-mode)
+                                  (visual-line-mode)
+                                  (setq-default auto-composition-mode nil truncate-lines nil))))
       :init
       (delete-selection-mode t)
       (toggle-truncate-lines t)
@@ -125,9 +121,9 @@
      maximum-scroll-margin 0.3
      scroll-up-aggressively 0.0
      scroll-down-aggressively 0.0)
-     ;; pixel-scroll-precision-interpolate-page t
 
     (setopt pop-up-windows nil
+            resize-mini-windows 'grow-only
             text-mode-ispell-word-completion nil
             vc-follow-symlinks t
             save-interprogram-paste-before-kill t
@@ -135,6 +131,7 @@
             indent-tabs-mode nil
             select-enable-clipboard t
             select-enable-primary nil
+            interprogram-cut-function #'gui-select-text
             Man-notify-method 'pushy
             ;; x-select-enable-clipboard t
             ;; x-select-enable-primary nil
@@ -146,10 +143,8 @@
                   find-file-suppress-same-file-warnings t
                   ;; line-spacing 0
                   warning-minimum-level :warning
-                  tab-always-indent 'complete
-                  resize-mini-windows 'grow-only
+                  load-prefer-newer t
                   ring-bell-function 'ignore
-                  interprogram-cut-function #'gui-select-text
                   dabbrev-check-all-buffers nil
 	          dabbrev-ignored-buffer-regexps '("\\`[ *]")
                   hide-ifdef-shadow t
@@ -315,6 +310,9 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
     (require 'lang-org)
     (require 'lang-chinese)
     (require 'lang-latex)
+    (require 'lang-apl)
+    (require 'lang-rust)
+    (require 'lang-typst)
     (require 'lang-c-style)
 
     :custom
@@ -326,15 +324,14 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 
     ;; (initial-scratch-echo-area-message "iris")
     ;; (initial-major-mode 'org-mode)
-    ;; (initial-scratch-message (concat "#+title: Emacs Writing Studio\n"
+    ;; (initial-scratch-message (concat "#+title: foo bar\n"
     ;;     			     "#+subtitle: Scratch Buffer\n\n"
     ;;     			     "The text in this buffer is not saved "
     ;;     			     "when exiting Emacs!\n\n"))
     ;; (inhibit-startup-message nil)
 
     :bind (("C-x k" . kill-current-buffer)
-           ("C-x C-r" .  recentf-open)
-           ("M-n" . make-frame))
+           ("C-x C-r" .  recentf-open))
     )
 
 
@@ -439,11 +436,14 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
     (display-time-day-and-date t)
     (display-time-24hr-format t))
 
-(use-package pixel-scroll-mode
+(use-package pixel-scroll
   :ensure nil
-  :init
+  :custom
   (pixel-scroll-precision-mode t)
-  :config
+  (pixel-scroll-precision-scroll-down t)
+  (pixel-scroll-precision-scroll-up t)
+  (pixel-scroll-precision-interpolate-page t)
+  :init
   (defun +pixel-scroll-interpolate-down (&optional lines)
     (interactive)
     (if lines
@@ -453,25 +453,26 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   (defun +pixel-scroll-interpolate-up (&optional lines)
     (interactive)
     (if lines
-        (pixel-scroll-precision-interpolate (* lines (pixel-line-height))))
-    (pixel-scroll-interpolate-up))
+        (pixel-scroll-precision-interpolate (* lines (pixel-line-height)))
+    (pixel-scroll-interpolate-up)))
 
-  (defalias 'scroll-up-command '+pixel-scroll-interpolate-down)
-  (defalias 'scroll-down-command '+pixel-scroll-interpolate-up)
-  :custom
-  (pixel-scroll-precision-interpolate-page t))
+  (defalias 'scroll-up-command #'+pixel-scroll-interpolate-down)
+  (defalias 'scroll-down-command #'+pixel-scroll-interpolate-up))
 
 (use-package whitespace
   :ensure nil
   :init
-  (setq-default which-func-update-delay 0.2)
+  (setq-default which-func-update-delay 0.2
+                show-trailing-whitespace nil)
   :config
   (setq whitespace-style '(faces tab-mark missing-newline-at-eof)
 	whitespace-display-mappings `((tab-mark ?\t [,(make-glyph-code ?» 'whitespace-tab) ?\t] )))
+
   :custom
   (whitespace-mode -1)
-  (show-trailing-whitespace nil)
-  (indicate-empty-lines nil))
+  (indicate-empty-lines nil)
+  :hook
+  (prog-mode . (lambda () (progn (setq show-trailing-whitespace t) (add-hook 'before-save-hook #'delete-trailing-whitespace nil t)))))
 
 
 
@@ -485,6 +486,37 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 (use-package undohist
   :ensure t
   :config (undohist-initialize))
+
+(use-package dogears
+  :ensure t
+  :hook
+  (prog-mode . dogears-mode)
+  (text-mode . dogears-mode)
+  :bind (:map global-map
+              ("M-g d" . dogears-go)
+              ("M-g M-b" . dogears-back)
+              ("M-g M-f" . dogears-forward)
+              ("M-g M-d" . dogears-list)
+              ("M-g M-D" . dogears-sidebar))
+  :config
+  (setq dogears-idle 1
+        dogears-limit 200
+        dogears-position-delta 20)
+  (setq dogears-functions '(find-file
+                            recenter-top-bottom
+                            other-window
+                            switch-to-buffer
+                            toggle-window-split
+                            windmove-do-window-select
+                            pager-page-down
+                            pager-page-up
+                            tab-bar-select-tab
+                            pop-to-mark-command
+                            pop-global-mark
+                            goto-last-change
+                            xref-go-back
+                            xref-find-definitions
+                            xref-find-references)))
 
 
 
@@ -504,9 +536,8 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   (electric-pair-mode t)
   (electric-indent-mode t)
   (electric-layout-mode t)
-  :config
-  (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
   :custom
+  (electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
   (electric-pair-text-pairs '((34 . 34)
                               (8216 . 8217)
                               (8220 . 8221)
@@ -521,8 +552,8 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 
 (use-package which-key
   :ensure nil
-  :config
-  (which-key-mode)
+  :init
+  (which-key-mode t)
   :custom
   (which-key-add-key-based-replacements
     "C-x a" "abbrev"
@@ -556,6 +587,13 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
    ("C-h x" . helpful-command)
    ("C-h k" . helpful-key)
    ("C-h v" . helpful-variable)))
+
+(use-package centered-cursor-mode
+  :ensure t
+  :diminish
+  :custom
+  (ccm-vpos-init '(round (* 239 (ccm-visible-text-lines)) 408))
+  :hook (help-mode))
 
 (use-package eldoc
   :ensure nil
@@ -655,6 +693,8 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   (global-font-lock-mode t)
   :hook ((emacs-lisp-mode lisp-mode) . (lambda () (progn
                                                (lisp-extra-font-lock-global-mode 1)
+                                               (require 'sly-el-indent)
+                                               (sly-el-indent-setup)
                                                )))
   :custom-face
   (lisp-extra-font-lock-quoted ((t :foreground "grey50"))))
@@ -662,8 +702,12 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 (use-package sly-el-indent
   :ensure (:host github
                  :repo "cireu/sly-el-indent"
-                 :files ("*.el" "lib/sly-cl-indent.el"))
-  :config (sly-el-indent-setup))
+                 :files ("*.el" "lib/sly-cl-indent.el")))
+
+(use-package aggressive-indent
+  :ensure (:host github
+                 :repo "Malabarba/aggressive-indent-mode")
+  :config (add-hook 'emacs-lisp-mode-hook #'aggressive-indent-mode))
 
 (use-package macrostep
   :ensure (:host github
@@ -674,27 +718,41 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 
 (use-package icomplete
   :ensure nil
-  :config
-  (setq-default icomplete-vertical-mode t
-                icomplete-matches-format nil
-                icomplete-scroll t
-                icomplete-in-buffer t)
-
-  (setopt icomplete-delay-completions-threshold 0
-          icomplete-compute-delay 0
-          icomplete-show-matches-on-no-input t
-          icomplete-hide-common-prefix nil
-          icomplete-prospects-height 9
-          icomplete-separator " . "
-          icomplete-with-completion-tables t
-          icomplete-max-delay-chars 0))
+  :preface
+  (advice-add 'completion-at-point
+              :after #'minibuffer-hide-completions)
+  :init
+  (setq tab-always-indent 'complete)  ;; Starts completion with TAB
+  :custom
+  (icomplete-delay-completions-threshold 0)
+  (icomplete-compute-delay 0)
+  (icomplete-show-matches-on-no-input t)
+  (icomplete-hide-common-prefix nil)
+  (icomplete-prospects-height 10)
+  (icomplete-separator " . ")
+  (icomplete-with-completion-tables t)
+  (icomplete-in-buffer t)
+  (icomplete-max-delay-chars 0)
+  (icomplete-scroll t)
+  :bind (:map icomplete-minibuffer-map
+              ("C-n" . icomplete-forward-completions)
+              ("C-p" . icomplete-backward-completions)
+              ("C-v" . icomplete-vertical-toggle)
+              ("RET" . icomplete-force-complete-and-exit))
+  :hook
+  (elpaca-after-init . (lambda ()
+                         (fido-mode 1)
+                         (icomplete-mode -1)
+                         (icomplete-vertical-mode -1)
+                         )))
 
 (use-package uniquify
   :ensure nil
   :custom
   (uniquify-buffer-name-style 'forward)
   (uniquify-strip-common-suffix t)
-  (uniquify-after-kill-buffer-p t))
+  (uniquify-after-kill-buffer-p t)
+  (uniquify-separator "/"))
 
 
 
@@ -705,7 +763,7 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 (use-package yasnippet-snippets
   :ensure  t
   :after yasnippet
-  :hook yas-minor-mode)
+  :config (add-hook 'yas-global-mode  #'yasnippet-snippets-initialize))
 
 
 
@@ -718,14 +776,13 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   (add-to-list 'auto-mode-alist '("\\.html\\'" . html-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
   (add-to-list 'auto-mode-alist '("/go\\.mod\\'" . go-mod-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.typ\\'" . typst-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(ba\\)?sh\\'" . bash-ts-mode))
-  (add-to-list 'auto-mode-alist
-               '("\\(?:Dockerfile\\(?:\\..*\\)?\\|\\.[Dd]ockerfile\\)\\'"
-                 . dockerfile-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\(?:Dockerfile\\(?:\\..*\\)?\\|\\.[Dd]ockerfile\\)\\'" . dockerfile-ts-mode))
 
   (setq treesit-language-source-alist
         '((bash       . ("https://github.com/tree-sitter/tree-sitter-bash.git"))
@@ -748,6 +805,7 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
           (rust       . ("https://github.com/tree-sitter/tree-sitter-rust.git"))
           (toml       . ("https://github.com/tree-sitter/tree-sitter-toml.git"))
           (tsx        . ("https://github.com/tree-sitter/tree-sitter-typescript.git" nil "tsx/src"))
+          (typst      . ("https://github.com/uben0/tree-sitter-typst.git"))
           (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript.git" nil "typescript/src"))
           (yaml       . ("https://github.com/ikatyang/tree-sitter-yaml.git"))))
   :custom
@@ -762,18 +820,17 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   (major-mode-remap-alist
    '((c-mode          . c-ts-mode)
      (c++-mode        . c++-ts-mode)
-     (c-or-c++-mode . c-or-c++-ts-mode)
+     (c-or-c++-mode   . c-or-c++-ts-mode)
      (cmake-mode      . cmake-ts-mode)
      (conf-toml-mode  . toml-ts-mode)
-     (csharp-mode . csharp-ts-mode)
+     (csharp-mode     . csharp-ts-mode)
      (css-mode        . css-ts-mode)
-     (java-mode . java-ts-mode)
+     (java-mode       . java-ts-mode)
      (js-mode         . js-ts-mode)
      (js-json-mode    . json-ts-mode)
      (python-mode     . python-ts-mode)
      (sh-mode         . bash-ts-mode)
-     (typescript-mode . typescript-ts-mode)))
-  )
+     (typescript-mode . typescript-ts-mode))))
 
 (use-package fingertip
   :ensure (:host github :repo "manateelazycat/fingertip")
@@ -839,7 +896,7 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 ;;   (org-fold-core-style 'overlays) ;; Fix Org mode bug
 
 ;;   :hook
-;;   (prog-mode . flyspell-prog-mode)
+;;   (prog-mode . flyspell-prog-mode)p
 ;;   (text-mode . turn-on-flyspell)
 ;;   :bind (:map flyspell-mode-map
 ;;               ("C-;" . flyspell-correct-wrapper) ;; flyspell-auto-correct-previous-word
@@ -881,11 +938,10 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
            (append elisp-flymake-byte-compile-load-path load-path)))
       (apply fn args)))
   (advice-add 'elisp-flymake-byte-compile :around #'my-elisp-flymake-byte-compile)
-  :bind (:map flymake-repeat-map
-              ("C-c k d" . flymake-show-diagnostic)
-              ("C-c k b" . flymake-show-buffer-diagnostics)
-              ("C-c k l" . flymake-switch-to-log-buffer))
-  )
+  :bind
+  ("C-c k d" . flymake-show-diagnostic)
+  ("C-c k b" . flymake-show-buffer-diagnostics)
+  ("C-c k l" . flymake-switch-to-log-buffer))
 
 (use-package flymake-flycheck
   :ensure t)
@@ -913,6 +969,9 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 
   (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?…))
   (set-display-table-slot standard-display-table 'wrap (make-glyph-code ?–))
+
+  (set-char-table-range composition-function-table ?f '(["\\(?:ff?[fijlt]\\)" 0 font-shape-gstring]))
+  (set-char-table-range composition-function-table ?T '(["\\(?:Th\\)" 0 font-shape-gstring]))
 
   (set-fontset-font t 'unicode (font-spec :family "Unifont" :weight 'normal :slant 'normal))
   (set-fontset-font t 'latin (font-spec :family "IBM Plex Mono" :weight 'light :slant 'normal))
@@ -994,39 +1053,37 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   )
 
 (use-package fontaine
-    :ensure t
-    :when (display-graphic-p)
-    :hook (kill-emacs . fontaine-store-latest-preset)
-    :config
-    (require 'xdg)
-    (setq fontaine-presets
-      '((regular
-         :default-height 140
-         :default-weight regular
-         :fixed-pitch-height 1.0
-         :variable-pitch-height 1.0
-         )
-        (large
-         :default-height 180
-         :default-weight normal
-         :fixed-pitch-height 1.0
-         :variable-pitch-height 1.05
-         )
-        (t
-         :default-family "Lilex Nerd Font Mono" ;; CaskaydiaCove Nerd Font Mono
-         :fixed-pitch-family "Lilex Nerd Font Mono" ;; CaskaydiaCove Nerd Font Mono
-         :variable-pitch-family "Lilex Nerd Font Mono" ;; CaskaydiaCove Nerd Font Mono
-         :italic-family "IBM Plex Mono" ;; CaskaydiaCove Nerd Font Mono Italic
-         :blod-family "IBM Plex Serif" ;; CaskaydiaCove Nerd Font Mono Bold
-         :variable-pitch-weight normal
-         :bold-weight bold
-         :italic-slant italic
-         :line-spacing 0.1)
-        ))
-    ;; (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
-    (fontaine-set-preset 'regular)
-    :custom
-    (fontaine-latest-state-file (expand-file-name "emacs/fontaine-latest-state.eld" (xdg-cache-home))))
+  :ensure t
+  :when (display-graphic-p)
+  :hook (kill-emacs . fontaine-store-latest-preset)
+  :init
+  (setq fontaine-presets
+        '((regular
+           :default-height 120
+           :default-weight regular
+           :fixed-pitch-height 1.0
+           :variable-pitch-height 1.0)
+          (large
+           :default-height 140
+           :default-weight normal
+           :fixed-pitch-height 1.0
+           :variable-pitch-height 1.05)
+          (t
+           :default-family "Lilex Nerd Font Mono" ;; CaskaydiaCove Nerd Font Mono
+           :fixed-pitch-family "Lilex Nerd Font Mono" ;; CaskaydiaCove Nerd Font Mono
+           :variable-pitch-family "Lilex Nerd Font Mono" ;; CaskaydiaCove Nerd Font Mono
+           :italic-family "IBM Plex Mono" ;; CaskaydiaCove Nerd Font Mono Italic
+           :blod-family "IBM Plex Serif" ;; CaskaydiaCove Nerd Font Mono Bold
+           :variable-pitch-weight normal
+           :bold-weight bold
+           :italic-slant italic
+           :line-spacing 0.1)))
+  :config
+  (require 'xdg)
+  (setq fontaine-latest-state-file (expand-file-name "emacs/fontaine-latest-state.eld" (xdg-cache-home)))
+  :custom
+  ;; (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
+  (fontaine-set-preset 'regular))
 
 
 
@@ -1046,7 +1103,7 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 	 (dired-mode . dired-hide-details-mode))
   :custom
   (dired-async-mode t)
-  (dired-dwim-target t)
+  (dired-dwim-target nil)
   (dired-recursive-deletes 'top)
   (dired-recursive-copies 'top)
   (dired-dwim-target 'dired-dwim-target-recent)
@@ -1121,7 +1178,7 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   :ensure t
   :hook
   (enlight . (lambda () (hl-line-mode nil)))
-  (elpaca-after-init . (lambda () (setopt initial-buffer-choice #'enlight)))
+  (doom-modeline-mode . (lambda () (setopt initial-buffer-choice #'enlight)))
   :config
 
   ;; copy by ldbeth
@@ -1148,13 +1205,12 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
      '(("\nOrg Mode"
 	("Org-Agenda (current day)" (org-agenda nil "a") "a"))
        ("\nFolder"
-	("Desktop folder" (dired "~/Desktop") "s")
+	("dotfile folder" (dired "~/.config/hypr/") "h")
 	("Downloads folder" (dired "~/Downloads") "d"))
        ("\nInit"
 	("init.el" (dired "~/.config/emacs/") "i"))
        ("\nOther"
-	("Projects" project-switch-project "p"))))))
-  )
+	("Projects" project-switch-project "p")))))))
 
 (use-package doom-themes
   :ensure t
@@ -1216,27 +1272,86 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
         doom-modeline-default-eol-type (if (featurep :system 'windows) 1 0)))
 
 (use-package centaur-tabs
-  :init
-  (centaur-tabs-mode t)
-  :custom
-   (centaur-tabs-style "bar")
-   (centaur-tabs-height 32)
-   (centaur-tabs-set-icons t)
-   (centaur-tabs-show-new-tab-button t)
-   (centaur-tabs-set-modified-marker t)
-   (centaur-tabs-show-navigation-buttons t)
-   (centaur-tabs-set-bar 'under)
-   (centaur-tabs-show-count nil)
-   (x-underline-at-descent-line t)
-   (centaur-tabs-left-edge-margin nil)
-  :bind
-  ("C-<prior>" . centaur-tabs-backward)
-  ("C-<next>" . centaur-tabs-forward))
+    :defer nil
+    :ensure t
+    :init
+    (centaur-tabs-mode t)
+    (centaur-tabs-change-fonts (face-attribute 'default :font) 110)
+    (centaur-tabs-headline-match)
+    :preface
+    (setq centaur-tabs-enable-key-bindings t)
+    :config
+    (setq centaur-tabs-style "bar"
+          centaur-tabs-height 32
+          centaur-tabs-set-icons t
+          centaur-tabs-show-new-tab-button t
+          centaur-tabs-set-modified-marker t
+          centaur-tabs-show-navigation-buttons t
+          centaur-tabs-set-bar 'under
+          centaur-tabs-show-count nil
+          ;; centaur-tabs-label-fixed-length 15
+          ;; centaur-tabs-gray-out-icons 'buffer
+          ;; centaur-tabs-plain-icons t
+          x-underline-at-descent-line t
+          centaur-tabs-left-edge-margin nil)
+    ;; (centaur-tabs-enable-buffer-alphabetical-reordering)
+    ;; (setq centaur-tabs-adjust-buffer-order t)
+    (defun centaur-tabs-buffer-groups ()
+      "`centaur-tabs-buffer-groups' control buffers' group rules.
+
+Group centaur-tabs with mode if buffer is derived from `eshell-mode' `emacs-lisp-mode' `dired-mode' `org-mode' `magit-mode'.
+All buffer name start with * will group to \"Emacs\".
+Other buffer group by `centaur-tabs-get-group-name' with project name."
+      (list
+       (cond
+         ;; ((not (eq (file-remote-p (buffer-file-name)) nil))
+         ;; "Remote")
+         ((or (string-equal "*" (substring (buffer-name) 0 1))
+              (memq major-mode '(magit-process-mode
+                                 magit-status-mode
+                                 magit-diff-mode
+                                 magit-log-mode
+                                 magit-file-mode
+                                 magit-blob-mode
+                                 magit-blame-mode
+                                 )))
+          "Emacs")
+         ((derived-mode-p 'prog-mode)
+          "Editing")
+         ((derived-mode-p 'dired-mode)
+          "Dired")
+         ((memq major-mode '(helpful-mode
+                             help-mode))
+          "Help")
+         ((memq major-mode '(org-mode
+                             org-agenda-clockreport-mode
+                             org-src-mode
+                             org-agenda-mode
+                             org-beamer-mode
+                             org-indent-mode
+                             org-bullets-mode
+                             org-cdlatex-mode
+                             org-agenda-log-mode
+                             diary-mode))
+          "OrgMode")
+         (t
+          (centaur-tabs-get-group-name (current-buffer))))))
+    :hook
+    (enlight-mode . centaur-tabs-local-mode)
+    (term-mode . centaur-tabs-local-mode)
+    (calendar-mode . centaur-tabs-local-mode)
+    (org-agenda-mode . centaur-tabs-local-mode)
+    (elpaca-after-init . centaur-tabs-buffer-groups)
+    :bind
+    ("C-<prior>" . centaur-tabs-backward)
+    ("C-<next>" . centaur-tabs-forward)
+    ("C-S-<prior>" . centaur-tabs-move-current-tab-to-left)
+    ("C-S-<next>" . centaur-tabs-move-current-tab-to-right))
 
 
 
 (use-package nerd-icons
-  :ensure t)
+    :ensure t)
 
 (use-package nerd-icons-dired
   :ensure t
@@ -1422,11 +1537,11 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
 			           cape-dabbrev-check-other-buffers t
 			           ))))
 
-(use-package cape-yasnippet
-  :ensure (yasnippet-capf
-           :host github
-           :repo "elken/cape-yasnippet")
-  :config (add-to-list 'completion-at-point-functions #'yasnippet-capf))
+(use-package yasnippet-capf
+  :after cape
+  :ensure (:host github
+           :repo "elken/yasnippet-capf")
+  :init (add-to-list 'completion-at-point-functions #'yasnippet-capf))
 
 (use-package consult
   :ensure t
@@ -1612,11 +1727,11 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
 	     '("\\.\\(ipe\\|qrc\\|svn\\)\\'" . xml-mode))
   :custom
   (project-mode-line t)
-  (project-vc-include-untracked nil)
-  )
+  (project-vc-include-untracked nil))
 
 (use-package projection
   :ensure t
+  :defer nil
   ;; Enable the `projection-hook' feature.
   :hook (elpaca-after-init . global-projection-hook-mode)
 
@@ -1736,6 +1851,7 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
 
 (use-package lsp-mode
   :ensure t
+  :defer nil
   :commands (lsp lsp-deferred)
   :preface
   (setq lsp-warn-no-matched-clients nil)
@@ -1761,7 +1877,7 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
                            'snippet-mode
                            'ron-mode)
                     (lsp-deferred))))
-   ((markdown-mode yaml-mode yaml-ts-mode haskell-mode shell-script-mode) . lsp-deferred)
+   ((typst-ts-mode cmake-ts-mode markdown-mode yaml-mode yaml-ts-mode haskell-mode shell-script-mode) . lsp-deferred)
    (lsp-mode . (lambda ()
                  ;; Integrate `which-key'
                  (lsp-enable-which-key-integration)
@@ -1948,6 +2064,140 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
 
 
 
+(use-package shr-tag-pre-highlight
+  :ensure t
+  :after shr
+  :config
+  (add-to-list 'shr-external-rendering-functions
+               '(pre . shr-tag-pre-highlight))
+  (when (version< emacs-version "26")
+    (with-eval-after-load 'eww
+      (advice-add 'eww-display-html :around
+                  'eww-display-html--override-shr-external-rendering-functions)))
+
+  (setq shr-tag-pre-highlight-lang-modes
+        '(("ocaml" . tuareg) ("elisp" . emacs-lisp) ("ditaa" . artist)
+          ("asymptote" . asy) ("dot" . fundamental) ("sqlite" . sql)
+          ("calc" . fundamental) ("C" . c) ("cpp" . c++) ("C++" . c++)
+          ("screen" . shell-script) ("shell" . sh) ("bash" . sh)
+          ("rust" . rustic)
+          ("awk" . bash)
+          ("json" . "js")
+          ;; Used by language-detection.el
+          ("emacslisp" . emacs-lisp)
+          ;; Used by Google Code Prettify
+          ("el" . emacs-lisp))))
+
+(use-package shrface
+  :ensure t
+  :init
+  (setopt shr-cookie-policy nil
+          shr-sliced-image-height 0.1)
+  :config
+  (defvar shrface-general-rendering-functions
+    (append '((title . eww-tag-title)
+              (form . eww-tag-form)
+              (input . eww-tag-input)
+              (button . eww-form-submit)
+              (textarea . eww-tag-textarea)
+              (select . eww-tag-select)
+              (link . eww-tag-link)
+              (meta . eww-tag-meta)
+              (code . shrface-tag-code)
+              (pre . shrface-shr-tag-pre-highlight))
+            shrface-supported-faces-alist))
+
+  (defvar shrface-nov-rendering-functions
+    (append '((img . nov-render-img)
+              (svg . nov-render-svg)
+              (title . nov-render-title)
+              (pre . shrface-shr-tag-pre-highlight)
+              (code . shrface-tag-code)
+              (form . eww-tag-form)
+              (input . eww-tag-input)
+              (button . eww-form-submit)
+              (textarea . eww-tag-textarea)
+              (select . eww-tag-select)
+              (link . eww-tag-link)
+              (meta . eww-tag-meta))
+            shrface-supported-faces-alist))
+
+  (defun shrface-shr-tag-pre-highlight (pre)
+    "Highlighting code in PRE."
+    (let* ((shr-folding-mode 'none)
+           (shr-current-font 'default)
+           (code (with-temp-buffer
+                   (shr-generic pre)
+                   ;; (indent-rigidly (point-min) (point-max) 2)
+                   (buffer-string)))
+           (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
+                     (let ((sym (language-detection-string code)))
+                       (and sym (symbol-name sym)))))
+           (mode (and lang
+                      (shr-tag-pre-highlight--get-lang-mode lang))))
+      (shr-ensure-newline)
+      (shr-ensure-newline)
+      (setq start (point))
+      (insert
+       ;; (propertize (concat "#+BEGIN_SRC " lang "\n") 'face 'org-block-begin-line)
+       (or (and (fboundp mode)
+                (with-demoted-errors "Error while fontifying: %S"
+                  (shr-tag-pre-highlight-fontify code mode)))
+         code)
+       ;; (propertize "#+END_SRC" 'face 'org-block-end-line )
+       )
+      (shr-ensure-newline)
+      (setq end (point))
+      (pcase (frame-parameter nil 'background-mode)
+        ('light
+         (add-face-text-property start end '(:background "#D8DEE9" :extend t)))
+        ('dark
+         (add-face-text-property start end '(:background "#292b2e" :extend t))))
+      (shr-ensure-newline)
+      (insert "\n")))
+
+  (defun shrface-remove-blank-lines-at-the-end (start end)
+    "A fix for `shr--remove-blank-lines-at-the-end' which will remove image at the end of the document."
+    (save-restriction
+      (save-excursion
+        (narrow-to-region start end)
+        (goto-char end)
+        (when (and (re-search-backward "[^ \n]" nil t)
+                   (not (eobp)))
+          (forward-line 1)
+          (delete-region (point) (min (1+ (point)) (point-max)))))))
+
+  (advice-add 'shr--remove-blank-lines-at-the-end :override #'shrface-remove-blank-lines-at-the-end)
+
+  (if (string-equal system-type "android")
+      (setq shrface-bullets-bullet-list '("▼" "▽" "▿" "▾"))
+    (setq shrface-bullets-bullet-list '("▼" "▽" "▿" "▾")))
+  (add-hook 'outline-view-change-hook 'shrface-outline-visibility-changed))
+
+(use-package image-slicing
+  :ensure
+  (:host github
+         :repo "ginqi7/image-slicing")
+  :config
+  (add-to-list 'shr-external-rendering-functions
+             '(img . image-slicing-tag-img))
+  (push #'image-slicing-mode eww-after-render-hook))
+
+(use-package eww
+  :ensure nil
+  :config
+  (require 'shrface)
+  (defun shrface-eww-setup ()
+    (unless shrface-toggle-bullets
+      (shrface-regexp)
+      (setq-local imenu-create-index-function #'shrface-imenu-get-tree)))
+
+  (add-hook 'eww-after-render-hook #'eldoc-mode)
+  (add-hook 'eww-after-render-hook #'eldoc-box-hover-mode)
+  (add-hook 'eww-after-render-hook #'shrface-eww-setup))
+
+
+
 (use-package writeroom-mode
   :ensure t
   :config
@@ -1972,25 +2222,80 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
   :init
   (advice-add 'text-scale-increase :after #'visual-fill-column-adjust)
   (advice-add 'text-scale-decrease :after #'visual-fill-column-adjust)
-  :custom
-  (visual-fill-column-center-text t)
-  (visual-fill-column-width 100))
-
-(use-package centered-cursor-mode
-  :ensure t
-  :diminish
-  :custom
-  (ccm-vpos-init '(round (* 239 (ccm-visible-text-lines)) 408))
-  :hook (nov-mode))
+  :config
+  (setq visual-fill-column-center-text t)
+  (setq visual-fill-column-width 100))
 
 (use-package nov
   :ensure t
-  :mode ("\\.epub\\'" . nov-mode)
+  :mode ("\\.[Ee][Pp][Uu][Bb]\\'" . nov-mode)
   :hook
-  (nov-mode . (lambda () (progn (writeroom-mode 1)
-                           (text-scale-set +1)
-                           (toggle-frame-maximized))))
+
+  (nov-mode . (lambda () (progn
+                      (face-remap-add-relative 'variable-pitch :family "Zhuque Fangsong (technical preview)" :height 1.0)
+                      (text-scale-set +1)
+                      (visual-line-mode 1)
+                      (visual-fill-column-mode 1)
+                      (writeroom-mode 1)
+                      (toggle-frame-maximized))))
+
+  :preface
+
+  (with-no-warnings
+    ;; WORKAROUND: errors while opening `nov' files with Unicode characters
+    ;; @see https://github.com/wasamasa/nov.el/issues/63
+    (defun my-nov-content-unique-identifier (content)
+      "Return the the unique identifier for CONTENT."
+      (let* ((name (nov-content-unique-identifier-name content))
+             (selector (format "package>metadata>identifier[id='%s']"
+                               (regexp-quote name)))
+             (id (car (esxml-node-children (esxml-query selector content)))))
+        (and id (intern id))))
+    (advice-add #'nov-content-unique-identifier :override #'my-nov-content-unique-identifier))
+
+  :config
+
+  (defun shrface-nov-render-html ()
+    (require 'eww)
+    (let ((shrface-org nil)
+          (shr-bullet (concat (char-to-string shrface-item-bullet) " "))
+          (shr-table-vertical-line "|")
+          (shr-width 7000) ;; make it large enough, it would not fill the column (use visual-line-mode/writeroom-mode instead)
+          (shr-indentation 0) ;; remove all unnecessary indentation
+          (tab-width 8)
+          (shr-external-rendering-functions shrface-nov-rendering-functions)
+          (shrface-toggle-bullets nil)
+          (shrface-href-versatile t)
+          (shr-use-fonts nil)           ; nil to use default font
+          (shr-map nov-mode-map))
+
+      ;; HACK: `shr-external-rendering-functions' doesn't cover
+      ;; every usage of `shr-tag-img'
+      (cl-letf (((symbol-function 'shr-tag-img) 'nov-render-img))
+        (shr-render-region (point-min) (point-max)))
+      ;; workaround, need a delay to update the header line
+      ;; (run-with-timer 0.01 nil 'shrface-update-header-line)
+      ;; workaround, show annotations when document updates
+      ))
+
+  (setq nov-render-html-function #'shrface-nov-render-html)
+
+  (defun shrface-nov-setup ()
+    (require 'shrface)
+    (unless shrface-toggle-bullets
+      (shrface-regexp))
+    (set-visited-file-name nil t)
+    (setq tab-width 8)
+    (if (string-equal system-type "android")
+        (setq-local touch-screen-enable-hscroll nil)))
+
+  (add-hook 'nov-mode-hook #'shrface-nov-setup)
+
   :custom
+
+  (nov-variable-pitch t)
+  (nov-text-width 140)
+
   (nov-unzip-program (executable-find "bsdtar"))
   (nov-unzip-args '("-xC" directory "-f" filename)))
 
@@ -2007,6 +2312,20 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
   :ensure (reader :host codeberg :repo "divyaranjan/emacs-reader"
 	          :files ("*.el" "render-core.so")
 	          :pre-build ("make" "all")))
+
+
+
+(use-package frimacs
+  :ensure t
+  :init
+  (add-to-list 'load-path "~/.local/lib/fricas/emacs/")
+  :hook
+  (frimacs-process-mode . (lambda () (progn (require 'fricas-cpl) (require 'fricas)))))
+
+(use-package idris2-mode
+  :ensure (:host github
+                 :repo "idris-community/idris2-mode")
+  :custom (idris2-interpreter-path "~/.pack/bin/idris2"))
 
 
 

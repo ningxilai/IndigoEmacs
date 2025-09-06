@@ -1,4 +1,4 @@
-;; Lang-Chinese --- Summary -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 
@@ -248,19 +248,25 @@
 
 ;; Default, comment out the providers you don't need.
 (use-package fanyi
-  :ensure t
-  :custom
-  (fanyi-providers '(;; 海词
-                     fanyi-haici-provider
-                     ;; 有道同义词词典
-                     fanyi-youdao-thesaurus-provider
-                     ;; Etymonline
-                     fanyi-etymon-provider
-                     ;; Longman
-                     fanyi-longman-provider
-                     ;; English-English dictionary
-                     fanyi-etymon-provider
-                     fanyi-longman-provider)))
+    :ensure t
+    :custom
+    (fanyi-providers '(;; 海词
+                       fanyi-haici-provider
+                       ;; 有道同义词词典
+                       fanyi-youdao-thesaurus-provider
+                       ;; Etymonline
+                       fanyi-etymon-provider
+                       ;; Longman
+                       fanyi-longman-provider
+                       ;; English-English dictionary
+                       fanyi-etymon-provider
+                       fanyi-longman-provider)))
+
+(use-package gt
+    :ensure (:host github :repo "lorniu/gt.el")
+    :custom
+    (gt-langs '(en zh))
+    (gt-default-translator '(gt-translator :engines (gt-youdao-dict-engine))))
 
 (provide 'lang-chinese)
 ;;; lang-chinese.el ends here

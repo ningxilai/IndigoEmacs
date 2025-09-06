@@ -396,8 +396,7 @@ cargo install emacs-lsp-booster
    :config
    (add-to-list 'eglot-server-programs 
                 '(markdown-mode . ("vscode-markdown-language-server")))
-   (add-to-list 'eglot-server-programs 
-                '(typst-ts-mode . ("tinymist")))
+                
    (add-to-list 'eglot-server-programs 
                 '(LaTeX-mode . ("texlab")))
    
@@ -431,6 +430,23 @@ cargo install emacs-lsp-booster
   :after consult eglot
   :bind (:map eglot-mode-map
       ("C-M-." . consult-eglot-symbols)))
+
+(use-package eldoc-box
+  :ensure t
+  :diminish (eldoc-box-hover-mode eldoc-box-hover-at-point-mode)
+  :custom
+  (eldoc-box-lighter nil)
+  (eldoc-box-only-multi-line t)
+  (eldoc-box-clear-with-C-g t)
+  :custom-face
+  (eldoc-box-border ((t (:inherit posframe-border :background unspecified))))
+  (eldoc-box-body ((t (:inherit tooltip))))
+  :hook
+  ((eglot-managed-mode . eldoc-box-hover-at-point-mode))
+  :config
+  ;; Prettify `eldoc-box' frame
+  (setf (alist-get 'left-fringe eldoc-box-frame-parameters) 8
+        (alist-get 'right-fringe eldoc-box-frame-parameters) 8))
 
 (use-package dape
   :defer t

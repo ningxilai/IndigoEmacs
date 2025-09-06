@@ -1,5 +1,8 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package gnu-apl-mode
-  :ensure t
+  :ensure (:host github
+                 :repo "lokedhs/gnu-apl-mode")
   :config
   (setq-default gnu-apl-show-tips-on-start nil)
   :hook
@@ -27,13 +30,15 @@
   )
 
 (use-package dyalog-mode
-  :ensure t
+  :ensure (:host github
+                 :repo "harsman/dyalog-mode")
   :init
   (setq dyalog-fix-whitespace-before-save t
         dyalog-leading-spaces 0)
   :hook
   (dyalog-mode .
                (lambda () (progn
+                            (electric-pair-mode -1)
                             (setq-local buffer-face-mode-face
                                         '(:family "BQN386 Unicode" :height 125))
                             (buffer-face-mode)
@@ -62,5 +67,8 @@
   (j-verb-face ((t (:foreground "Red"))))
   (j-adverb-face ((t (:foreground "Green"))))
   (j-conjunction-face ((t (:foreground "Blue"))))
-  (j-other-face ((t (:foreground "Black"))))
-  )
+  (j-other-face ((t (:foreground "Black")))))
+
+(provide 'lang-apl)
+
+;; ends here

@@ -3,10 +3,11 @@
 ;; Org
 
 (use-package org
-  :ensure t
-  :autoload (org-babel-tangle-file)
-  :defines org-mode-map
-  :config
+    :ensure (org :host github
+                 :repo "bzg/org-mode"
+                 :branch "main")
+    :defines org-mode-map
+    :config
   (setq org-todo-keywords
         '((sequence
            "TODO(t)"  ; A task that needs doing & is ready to do
@@ -104,7 +105,7 @@
      :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O"))))
 
   (setq org-preview-latex-default-process 'dvisvgm) ; 'imagemagick
-  (setq org-format-latex-header (concat "% xelatex\n" org-format-latex-header))
+  (setq-local org-format-latex-header (concat "% xelatex\n" org-format-latex-header))
   (plist-put org-format-latex-options :scale 1.2)
 
   ;; This must be deferred after `org-preview-latex-process-alist' is set
@@ -143,11 +144,7 @@
   (org-mode . org-toggle-pretty-entities)
   (org-mode . (lambda ()(progn
                      (visual-line-mode t)
-                     (org-link-preview t)
-
-                     (setq-local
-                      truncate-lines nil
-                      org-startup-tuncated nil))))
+                     (org-link-preview t))))
 
   (org-after-refile-insert . (lambda ()
                                (when (bound-and-true-p org-capture-is-refiling)
@@ -168,8 +165,6 @@
      ("=" org-emphasis-verbatim org-verbatim verbatim)
      ("~" org-emphasis-code org-code verbatim)
      ("+" (:strike-through t))))
-
-  (require 'no-littering)
 
   (org-directory "etc/org")
   (org-id-locations-file '(expand-file-name ".orgids" org-directory))
@@ -229,6 +224,7 @@
   (org-latex-prefer-user-labels t)
   (org-latex-compiler "xelatex")
   (org-latex-listings 'minted)
+  (org-latex-src-block-backend 'minted)
   (org-latex-packages-alist '(("" "color") ("" "minted") ("" "parskip") ("" "tikz") ("" "amsfonts") ("" "amsmath") ("" "amsthm") ("fontset=macnew,UTF8" "ctex")))
   (org-latex-pdf-process
    (if (executable-find "latexmk")
@@ -302,6 +298,8 @@
      (?B . warning)
      (?C . shadow)))
 
+  (org-startup-tuncated t)
+
   :custom-face
   (org-document-title ((t (:height 1.50 :underline nil))))
   (org-level-1 ((t (:height 1.40))))
@@ -324,8 +322,7 @@
 
   (org-block ((t (:inherit 'fixed-pitch))))
 
-  ;; (setq-default org-num-face
-  ;;               '((:inherit org-special-keyword :underline nil :weight bold)))
+  (org-num-face ((t (:inherit 'org-special-keyword :underline nil :weight bold))))
 
   :bind
   ("C-c a" . org-agenda)
@@ -361,20 +358,19 @@
   :ensure nil
   :custom
   (org-capture-templates
-   '(("f" "Fleeting note"
-      item
+   '(("f" "Fleeting note" item
       (file+headline org-default-notes-file "Notes")
       "- %?")
-     ("p" "Permanent note" plain
-      (file denote-last-path)
-      #'denote-org-capture
-      :no-save t
-      :immediate-finish nil
-      :kill-buffer t
-      :jump-to-captured t)
+     ("p" "Web Paste" entry
+      (file "~/Org/Paste.org")
+      "* [[%:link][%:description]] \n %U \n %:initial \n")
      ("t" "New task" entry
       (file+headline org-default-notes-file "Tasks")
       "* TODO %i%?"))))
+
+(use-package org-protocol-capture-html
+  :ensure (:host github
+                 :repo "alphapapa/org-protocol-capture-html"))
 
 (use-package org-attach
   :ensure nil
@@ -434,7 +430,8 @@
    (lambda () (concat "./" (file-name-base (buffer-file-name)) ".assets")))
   :custom
   (org-download-heading-lvl nil)
-  (org-download-screenshot-method "spectacle -br -o %s")
+  (org-download-screenshot-method "spectacle -br -o %s") ;; 'directory
+  (org-download-image-dir "./img")
   :bind
   (:map org-mode-map
         :prefix-map org-download-cmd-map
@@ -468,20 +465,6 @@
 ;;         (if sentence-end-double-space "  " " "))
 ;;   :bind
 ;;   (("C-c w s i" . lorem-ipsum-insert-paragraphs)))
-
-;; (use-package org-protocol-capture-html
-;;   :ensure (:host github :repo "alphapapa/org-protocol-capture-html")
-;;   :config
-;;   (require 'org-protocol)
-;;   (add-to-list
-;;    'org-capture-temmlates
-;;    '(("w" "web" entry (file "~/Org/web.org")
-;;       "* [[%:link][%:description]] \n %U \n %:initial \n"))))
-
-;; (use-package org-web-tools
-;;   :ensure t
-;;   :bind
-;;   (("C-c w w" . org-web-tools-insert-link-for-url)))
 
 (use-package org-margin
   :ensure (:host github :repo "rougier/org-margin")

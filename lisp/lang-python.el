@@ -1,23 +1,5 @@
 ;; -*- lexical-binding: t; -*-
 
-(use-package flymake-ruff
-  :ensure t
-  :hook
-  (python-mode . (lambda () (when (executable-find "ruff")
-                      (flymake-ruff-load)))))
-
-(use-package ruff-format :ensure t)
-(use-package pip-requirements :ensure t)
-
-(use-package toml-ts-mode
-  :ensure nil
-  :mode "poetry\\.lock\\'")
-
-(use-package reformatter
-  :ensure t
-  :config
-  (reformatter-define black :program "black" :args '("-")))
-
 (use-package python-ts-mode
   :ensure nil
   :mode
@@ -32,6 +14,27 @@
   (python-forward-sexp-function nil)
   :bind (:map python-mode-map
               ("C-c C-z" . python-shell)))
+
+(use-package flymake-ruff
+  :ensure t
+  :hook
+  (python-mode . (lambda () (when (executable-find "ruff")
+                      (flymake-ruff-load)))))
+
+(use-package ruff-format :ensure t)
+
+(use-package reformatter
+  :ensure t
+  :config
+  (reformatter-define black :program "black" :args '("-")))
+
+(use-package pip-requirements
+  :ensure t)
+
+(use-package toml-ts-mode
+  :ensure nil
+  :mode "poetry\\.lock\\'")
+
 
 (provide 'lang-python)
 

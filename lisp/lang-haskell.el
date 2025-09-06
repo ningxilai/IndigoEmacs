@@ -1,4 +1,4 @@
-;; Lang-Chinese --- Summary -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 
