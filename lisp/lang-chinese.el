@@ -4,31 +4,6 @@
 
 ;;; Code:
 
-(use-package ess
-  :ensure t
-  :after quarto-mode
-  :config
-  (add-hook 'ess-mode-hook #'electric-spacing-mode))
-
-(use-package electric-spacing
-  :ensure (:host github
-                 :repo "walmes/electric-spacing")
-  :config
-  (defvar my-electic-pair-modes '(python-mode julia-mode org-mode latex-mode))
-  (defun my-inhibit-electric-pair-mode (char)
-    (not (member major-mode my-electic-pair-modes)))
-  (setq electric-pair-inhibit-predicate #'my-inhibit-electric-pair-mode))
-
-(use-package quarto-mode
-  :ensure t
-  :mode
-  ("\\.Rmd\\'" . poly-markdown-mode)
-  ("\\.qmd\\'" . poly-markdown-mode)
-  :hook (poly-markdown-mode . (lambda()(set-input-method "rime")))
-  :config
-  (use-package poly-R
-    :ensure t))
-
 (use-package grip-mode
   :ensure t
   :config (setq grip-command 'go-grip) ;; auto, grip, go-grip or mdopen // uv tool install grip
@@ -236,15 +211,6 @@
   (global-pangu-spacing-mode t)
   :hook
   (org-mode . (lambda () (setq-local pangu-spacing-real-insert-separtor t))))
-
-(use-package cns
-  :ensure (:host github :repo "kanglmf/emacs-chinese-word-segmentation")
-  :config
-  (setq-default cns-prog "cnws"
-                cns-dict-directory (expand-file-name "repos/emacs-chinese-word-segmentation/cppjieba/dict/" elpaca-directory)
-                cns-recent-segmentation-limit 20
-                cns-debug t)
-  :hook (find-file))
 
 ;; Default, comment out the providers you don't need.
 (use-package fanyi

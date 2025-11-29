@@ -1,5 +1,9 @@
 ;; -*- lexical-binding: t; -*-
 
+;;; Commentary:
+
+;;; Code:
+
 (use-package c-ts-mode
   :ensure nil
   :init

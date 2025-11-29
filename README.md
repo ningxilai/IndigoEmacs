@@ -16,6 +16,7 @@
   - [Reader](#reader)
     - [build](#build)
     - [using](#using)
+  - [Typst](#typst)
 <!--toc:end-->
 
 ## Acknowledge:
@@ -133,6 +134,32 @@ add to `:config`
          ("<down>" . next-complete-history-element)
          ("<up>" . previous-complete-history-element)))
 
+```
+
+## Treesit/Auto-mode-list
+
+``` emacs-lisp
+    (add-to-list 'auto-mode-alist
+                 '("\\(?:CMakeLists\\.txt\\|\\.cmake\\)\\'" . cmake-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.html\\'" . html-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+    (add-to-list 'auto-mode-alist '("/go\\.mod\\'" . go-mod-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.typ\\'" . typst-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\.\\(ba\\)?sh\\'" . bash-ts-mode))
+    (add-to-list 'auto-mode-alist '("\\(?:Dockerfile\\(?:\\..*\\)?\\|\\.[Dd]ockerfile\\)\\'" . dockerfile-ts-mode))
+    
+    (use-package treesit-auto
+        :ensure t
+        :custom
+        (treesit-auto-install 'prompt)
+        :config
+        (global-treesit-auto-mode)
+        (treesit-auto-add-to-auto-mode-alist 'all))
 ```
 
 ## Tramp
@@ -392,7 +419,7 @@ cargo install emacs-lsp-booster
                                       'emacs-lisp-mode 'lisp-mode
                                       'makefile-mode 'snippet-mode)
                                (eglot-ensure))))
-          ((markdown-mode typst-ts-mode LaTeX-mode python-ts-mode c-ts-mode) . eglot-ensure))
+          ((markdown-mode LaTeX-mode python-ts-mode c-ts-mode) . eglot-ensure))
    :config
    (add-to-list 'eglot-server-programs 
                 '(markdown-mode . ("vscode-markdown-language-server")))
@@ -597,5 +624,52 @@ sudo pacman -S libmupdf
     :ensure (reader :type git :host codeberg :repo "divyaranjan/emacs-reader"
         :files ("*.el" "render-core.so")
         :pre-build ("make" "all")))
-;; ends
+```
+
+## Typst
+
+``` emacs-lisp
+;;; -*- lexical-binding: t; -*-
+
+;;; Commentary:
+
+;;; Code:
+
+(use-package typst-ts-mode
+  ;; https://github.com/Ziqi-Yang/tree-sitter-typst
+  :ensure t
+  :mode ("\\.typ'" . typst-ts-mode)
+  :bind (:map typst-ts-mode-map
+              ("C-c C-c" . typst-ts-tmenu))
+  :config
+  (add-hook 'typst-ts-mode-hook #'eglot-ensure)
+  (with-eval-after-load 'eglot
+    (with-eval-after-load 'typst-ts-mode
+      (setq-default eglot-workspace-configuration '(:tinymist (:exportPdf "onSave")))
+      (add-to-list 'eglot-server-programs
+                   `((typst-ts-mode) .
+                     ,(eglot-alternatives `(,typst-ts-lsp-download-path
+                                            "tinymist"
+                                            "typst-lsp"))))))
+
+  :custom
+  ;; don't add "--open" if you'd like `watch` to be an error detector
+  (typst-ts-mode-watch-options "--open")
+
+  ;; experimental settings (I'm the main dev, so I enable these)
+  (typst-ts-mode-enable-raw-blocks-highlight t)
+  (typst-ts-mode-highlight-raw-blocks-at-startup t))
+
+(use-package websocket :ensure t)
+
+(use-package typst-preview
+  :ensure (:host github :repo "havarddj/typst-preview.el")
+  :bind (:map typst-ts-mode-map
+              ("C-c C-t p" . typst-preview-start))
+  :custom
+  (typst-preview-executable "tinymist preview")
+  (typst-preview-browser "default"))
+
+(provide 'lang-typst)
+;;; lang-typst ends here
 ```

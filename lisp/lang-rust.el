@@ -1,5 +1,9 @@
 ;; -*- lexical-binding: t; -*-
 
+;;; Commentary:
+
+;;; Code:
+
 (use-package rust-ts-mode
   :ensure nil
   :config

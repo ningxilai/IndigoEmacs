@@ -1,5 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 
+;;; commentary:
+
+;;; code:
+
+;; gnu apl
+
 (use-package gnu-apl-mode
   :ensure (:host github
                  :repo "lokedhs/gnu-apl-mode")
@@ -8,26 +14,28 @@
   :hook
   (gnu-apl-mode . (lambda ()
                     (progn
-                      (set-input-method "APL-Z")
-                      (setq-local buffer-face-mode-face '(:family "APL386 Unicode" :height 125))
+                      (set-input-method "apl-z")
+                      (setq-local buffer-face-mode-face '(:family "apl386 unicode" :height 125))
                       (buffer-face-mode)
-                      ;; https://github.com/abrudz/APL386
-                      ;; https://aplwiki.com/wiki/Fonts
+                      ;; https://github.com/abrudz/apl386
+                      ;; https://aplwiki.com/wiki/fonts
                       (electric-pair-mode -1)
                       )
                     )
                 )
   (gnu-apl-interactive-mode . (lambda ()
                                 (progn
-                                  (set-input-method "APL-Z")
+                                  (set-input-method "apl-z")
                                   (setq-local buffer-face-mode-face
-                                              '(:family "BQN386 Unicode" :height 125))
+                                              '(:family "bqn386 unicode" :height 125))
                                   (buffer-face-mode)
                                   (electric-pair-mode -1)
                                   )
                                 )
                             )
   )
+
+
 
 (use-package dyalog-mode
   :ensure (:host github

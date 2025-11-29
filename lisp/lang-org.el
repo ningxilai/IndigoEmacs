@@ -1,5 +1,9 @@
 ;; -*- lexical-binding: t; -*-
 
+;;; Commentary:
+
+;;; Code:
+
 ;; Org
 
 (use-package org
@@ -442,6 +446,11 @@
         ("s" . org-download-screenshot)
         ("y" . org-download-yank))
   :hook (org-mode . org-download-enable))
+
+(use-package one
+ :ensure (:host github
+                :repo "tonyaldon/one.el"
+                :build (:not compile)))
 
 ;; (use-package writegood-mode
 ;;   :ensure t

@@ -4,8 +4,6 @@
 
 ;;; Code:
 
-
-
 (use-package latex-change-env
   :ensure t
   :after latex-mode

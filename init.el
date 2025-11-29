@@ -137,7 +137,8 @@
             ;; x-select-enable-primary nil
             xref-search-program 'rg
             word-wrap-by-category t
-            global-auto-revert-non-file-buffers t)
+            global-auto-revert-non-file-buffers t
+            elisp-fontify-semantically nil)
 
     (setq-default use-short-answers t
                   find-file-suppress-same-file-warnings t
@@ -146,7 +147,7 @@
                   load-prefer-newer t
                   ring-bell-function 'ignore
                   dabbrev-check-all-buffers nil
-	          dabbrev-ignored-buffer-regexps '("\\`[ *]")
+    	          dabbrev-ignored-buffer-regexps '("\\`[ *]")
                   hide-ifdef-shadow t
 	          hide-ifdef-initially t
                   split-width-threshold 120
@@ -214,20 +215,6 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
         (if (derived-mode-p 'markdown-mode)
             (whitespace-killer-delete-end-trailing-blank-lines)
           (whitespace-killer-delete-trailing-whitespace-except-current-line)))
-
-      ;; Copy by Seagle0128
-
-      (defun childframe-workable-p ()
-        "Whether childframe is workable."
-        (and (>= emacs-major-version 26)
-             (not noninteractive)
-             (not emacs-basic-display)
-             (or (display-graphic-p)
-                 (featurep 'tty-child-frames))
-             (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
-
-      (setopt blink-matching-paren-highlight-offscreen t
-              show-paren-context-when-offscreen (if (childframe-workable-p) 'child-frame 'overlay))
 
       ;; copy by nano
 
@@ -309,10 +296,7 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 
     (require 'lang-org)
     (require 'lang-chinese)
-    (require 'lang-latex)
-    (require 'lang-apl)
-    (require 'lang-rust)
-    (require 'lang-typst)
+    (require 'lang-commonlisp)
     (require 'lang-c-style)
 
     :custom
@@ -341,6 +325,10 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   :ensure t
   :config
   (async-bytecomp-package-mode t))
+
+(use-package cond-let
+  :ensure (:host github
+                 :repo "tarsius/cond-let"))
 
 (use-package gcmh
   :ensure t
@@ -520,15 +508,18 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 
 
 
-(use-package paren
+(use-package show-paren
   :ensure nil
-  :init
+  :config
   (show-paren-mode t)
   :custom
   (show-paren-delay 0.1)
   (show-paren-when-point-in-periphery t)
-  (show-paren-when-point-inside-paren t)
-  (blink-matching-paren nil))
+  (show-paren-when-point-inside-paren t))
+
+(use-package mic-paren
+  :ensure t
+  :init (paren-activate))
 
 (use-package electric
   :ensure nil
@@ -547,6 +538,15 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
                               (?\「. ?\」)
                               (?\< . ?\>)
                               (?\【. ?\】))))
+
+(use-package electric-spacing
+  :ensure (:host github
+                 :repo "walmes/electric-spacing")
+  :config
+  (defvar my-electic-pair-modes '(python-mode julia-mode org-mode latex-mode))
+  (defun my-inhibit-electric-pair-mode (char)
+    (not (member major-mode my-electic-pair-modes)))
+  (setq electric-pair-inhibit-predicate #'my-inhibit-electric-pair-mode))
 
 
 
@@ -581,12 +581,12 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   (which-key-max-description-length 40))
 
 (use-package helpful
-  :ensure t
-  :bind
-  (("C-h f" . helpful-function)
-   ("C-h x" . helpful-command)
-   ("C-h k" . helpful-key)
-   ("C-h v" . helpful-variable)))
+    :ensure t
+    :bind
+    (("C-h f" . helpful-function)
+     ("C-h x" . helpful-command)
+     ("C-h k" . helpful-key)
+     ("C-h v" . helpful-variable)))
 
 (use-package centered-cursor-mode
   :ensure t
@@ -673,78 +673,80 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
   :hook (prog-mode . global-colorful-mode))
 
 (use-package region-occurrences-highlighter
-  :ensure t
-  :bind (:map region-occurrences-highlighter-nav-mode-map
-              ("M-n" . region-occurrences-highlighter-next)
-              ("M-p" . region-occurrences-highlighter-prev))
-  :hook ((prog-mode text-mode) . region-occurrences-highlighter-mode))
+    :ensure t
+    :bind (:map region-occurrences-highlighter-nav-mode-map
+                ("M-n" . region-occurrences-highlighter-next)
+                ("M-p" . region-occurrences-highlighter-prev))
+    :hook ((prog-mode text-mode) . region-occurrences-highlighter-mode))
 
 (use-package whitespace-cleanup-mode
-  :ensure t
-  :diminish
-  :hook
-  (prog-mode . whitespace-cleanup-mode)
-  (prog-mode . (lambda () (setq-local show-trailing-whitespace t))))
+    :ensure t
+    :diminish
+    :hook
+    (prog-mode . whitespace-cleanup-mode)
+    (prog-mode . (lambda () (setq-local show-trailing-whitespace t))))
 
 (use-package lisp-extra-font-lock
-  :ensure (:host github
-                 :repo "apr3vau/lisp-extra-font-lock")
-  :config
-  (global-font-lock-mode t)
-  :hook ((emacs-lisp-mode lisp-mode) . (lambda () (progn
-                                               (lisp-extra-font-lock-global-mode 1)
-                                               (require 'sly-el-indent)
-                                               (sly-el-indent-setup)
-                                               )))
-  :custom-face
-  (lisp-extra-font-lock-quoted ((t :foreground "grey50"))))
+    :ensure (:host github
+                   :repo "apr3vau/lisp-extra-font-lock")
+    :config
+    (global-font-lock-mode t)
+    :hook ((emacs-lisp-mode lisp-mode) . (lambda () (lisp-extra-font-lock-global-mode 1)))
+    :custom
+    (lisp-extra-font-lock-quoted ((t :foreground "grey50"))))
+
+(use-package highlight-function-calls
+    :ensure t
+    :hook
+    (emacs-lisp-mode . highlight-function-calls-mode))
 
 (use-package sly-el-indent
-  :ensure (:host github
-                 :repo "cireu/sly-el-indent"
-                 :files ("*.el" "lib/sly-cl-indent.el")))
+    :ensure (:host github
+                   :repo "cireu/sly-el-indent"
+                   :files ("*.el" "lib/sly-cl-indent.el"))
+    :hook ((emacs-lisp-mode lisp-mode) . (lambda () (sly-el-indent-setup))))
 
 (use-package aggressive-indent
-  :ensure (:host github
-                 :repo "Malabarba/aggressive-indent-mode")
-  :config (add-hook 'emacs-lisp-mode-hook #'aggressive-indent-mode))
+    :ensure (:host github
+                   :repo "Malabarba/aggressive-indent-mode")
+    :hook (emacs-lisp-mode . aggressive-indent-mode))
 
 (use-package macrostep
-  :ensure (:host github
-                 :repo "emacsorphanage/macrostep")
-  :bind ("C-c e" . macrostep-expand))
+    :ensure (:host github
+                   :repo "emacsorphanage/macrostep")
+    :bind-keymap ("C-c e" . macrostep-expand))
 
 
 
 (use-package icomplete
-  :ensure nil
-  :preface
-  (advice-add 'completion-at-point
-              :after #'minibuffer-hide-completions)
-  :init
-  (setq tab-always-indent 'complete)  ;; Starts completion with TAB
-  :custom
-  (icomplete-delay-completions-threshold 0)
-  (icomplete-compute-delay 0)
-  (icomplete-show-matches-on-no-input t)
-  (icomplete-hide-common-prefix nil)
-  (icomplete-prospects-height 10)
-  (icomplete-separator " . ")
-  (icomplete-with-completion-tables t)
-  (icomplete-in-buffer t)
-  (icomplete-max-delay-chars 0)
-  (icomplete-scroll t)
-  :bind (:map icomplete-minibuffer-map
-              ("C-n" . icomplete-forward-completions)
-              ("C-p" . icomplete-backward-completions)
-              ("C-v" . icomplete-vertical-toggle)
-              ("RET" . icomplete-force-complete-and-exit))
-  :hook
-  (elpaca-after-init . (lambda ()
-                         (fido-mode 1)
-                         (icomplete-mode -1)
-                         (icomplete-vertical-mode -1)
-                         )))
+    :ensure nil
+    :preface
+    (advice-add 'completion-at-point
+                :after #'minibuffer-hide-completions)
+    :init
+    (setq tab-always-indent 'complete)  ;; Starts completion with TAB
+    :custom
+    (icomplete-delay-completions-threshold 0)
+    (icomplete-compute-delay 0)
+    (icomplete-show-matches-on-no-input t)
+    (icomplete-hide-common-prefix nil)
+    (icomplete-prospects-height 10)
+    (icomplete-separator " . ")
+    (icomplete-with-completion-tables t)
+    (icomplete-in-buffer t)
+    (icomplete-max-delay-chars 0)
+    (icomplete-scroll t)
+    :bind (:map icomplete-minibuffer-map
+                ("C-n" . icomplete-forward-completions)
+                ("C-p" . icomplete-backward-completions)
+                ("C-v" . icomplete-vertical-toggle)
+                ("RET" . icomplete-force-complete-and-exit))
+    :hook
+    (elpaca-after-init . (lambda ()
+                           (fido-mode 1)
+                           (icomplete-mode -1)
+                           (icomplete-vertical-mode -1)
+                           )))
 
 (use-package uniquify
   :ensure nil
@@ -768,106 +770,128 @@ SRC https://emacs.stackexchange.com/a/70000/37266 ."
 
 
 (use-package treesit
-  :ensure nil
-  :config
-  (add-to-list 'auto-mode-alist
-               '("\\(?:CMakeLists\\.txt\\|\\.cmake\\)\\'" . cmake-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.html\\'" . html-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
-  (add-to-list 'auto-mode-alist '("/go\\.mod\\'" . go-mod-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.typ\\'" . typst-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.\\(ba\\)?sh\\'" . bash-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\(?:Dockerfile\\(?:\\..*\\)?\\|\\.[Dd]ockerfile\\)\\'" . dockerfile-ts-mode))
+    :ensure nil
+    :preface
+    (setq treesit-enabled-modes t)
 
-  (setq treesit-language-source-alist
-        '((bash       . ("https://github.com/tree-sitter/tree-sitter-bash.git"))
-          (c          . ("https://github.com/tree-sitter/tree-sitter-c.git"))
-          (cmake      . ("https://github.com/uyha/tree-sitter-cmake.git"))
-          (cpp        . ("https://github.com/tree-sitter/tree-sitter-cpp.git"))
-          (csharp     . ("https://github.com/tree-sitter/tree-sitter-c-sharp.git"))
-          (css        . ("https://github.com/tree-sitter/tree-sitter-css.git"))
-          (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile.git"))
-          (go         . ("https://github.com/tree-sitter/tree-sitter-go.git"))
-          (gomod      . ("https://github.com/camdencheek/tree-sitter-go-mod.git"))
-          (html       . ("https://github.com/tree-sitter/tree-sitter-html.git"))
-          (java       . ("https://github.com/tree-sitter/tree-sitter-java.git"))
-          (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript.git"))
-          (json       . ("https://github.com/tree-sitter/tree-sitter-json.git"))
-          (markdown   . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown" nil "tree-sitter-markdown/src"))
-          (markdown-inline   . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown" nil "tree-sitter-markdown-inline/src"))
-          (python     . ("https://github.com/tree-sitter/tree-sitter-python.git"))
-          (ruby       . ("https://github.com/tree-sitter/tree-sitter-ruby.git"))
-          (rust       . ("https://github.com/tree-sitter/tree-sitter-rust.git"))
-          (toml       . ("https://github.com/tree-sitter/tree-sitter-toml.git"))
-          (tsx        . ("https://github.com/tree-sitter/tree-sitter-typescript.git" nil "tsx/src"))
-          (typst      . ("https://github.com/uben0/tree-sitter-typst.git"))
-          (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript.git" nil "typescript/src"))
-          (yaml       . ("https://github.com/ikatyang/tree-sitter-yaml.git"))))
-  :custom
-  (toml-ts-mode-indent-offset 4)
-  (cmake-ts-mode-indent-offset 4)
-  (json-ts-mode-indent-offset 4)
-  (go-ts-mode-indent-offset 4)
+    ;; At 3 (the default), too many users think syntax highlighting is broken or
+    ;; simply "looks off."
+    (setq treesit-font-lock-level 4)
 
-  (treesit-font-lock-level 4)
-  (treesit--indent-verbose t)
-  (treesit--font-lock-verbose nil)
-  (major-mode-remap-alist
-   '((c-mode          . c-ts-mode)
-     (c++-mode        . c++-ts-mode)
-     (c-or-c++-mode   . c-or-c++-ts-mode)
-     (cmake-mode      . cmake-ts-mode)
-     (conf-toml-mode  . toml-ts-mode)
-     (csharp-mode     . csharp-ts-mode)
-     (css-mode        . css-ts-mode)
-     (java-mode       . java-ts-mode)
-     (js-mode         . js-ts-mode)
-     (js-json-mode    . json-ts-mode)
-     (python-mode     . python-ts-mode)
-     (sh-mode         . bash-ts-mode)
-     (typescript-mode . typescript-ts-mode))))
+    (save-match-data
+      (dolist (sym '(auto-mode-alist interpreter-mode-alist))
+        (set
+         sym (cl-loop for (src . fn) in (symbol-value sym)
+                   unless (and (functionp fn)
+                               (string-match "-ts-mode\\(?:-maybe\\)?$" (symbol-name fn)))
+                   collect (cons src fn)))))
+
+    :init
+    (setopt treesit-language-source-alist
+            '((awk . ("https://github.com/Beaglefoot/tree-sitter-awk.git"))
+              (bash       . ("https://github.com/tree-sitter/tree-sitter-bash.git"))
+              (bibtex . ("https://github.com/latex-lsp/tree-sitter-bibtex.git"))
+              (blueprint . ("https://github.com/huanie/tree-sitter-blueprint.git"))
+              (commonlisp . ("https://github.com/tree-sitter-grammars/tree-sitter-commonlisp"))
+              (c          . ("https://github.com/tree-sitter/tree-sitter-c.git"))
+              (cmake      . ("https://github.com/uyha/tree-sitter-cmake.git"))
+              (cpp        . ("https://github.com/tree-sitter/tree-sitter-cpp.git"))
+              (csharp     . ("https://github.com/tree-sitter/tree-sitter-c-sharp.git"))
+              (css        . ("https://github.com/tree-sitter/tree-sitter-css.git"))
+              (dockerfile . ("https://github.com/camdencheek/tree-sitter-dockerfile.git"))
+              (go         . ("https://github.com/tree-sitter/tree-sitter-go.git"))
+              (gomod      . ("https://github.com/camdencheek/tree-sitter-go-mod.git"))
+              (html       . ("https://github.com/tree-sitter/tree-sitter-html.git"))
+              (java       . ("https://github.com/tree-sitter/tree-sitter-java.git"))
+              (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript.git"))
+              (json       . ("https://github.com/tree-sitter/tree-sitter-json.git"))
+              (latex . ("https://github.com/latex-lsp/tree-sitter-latex.git"))
+              (make . ("https://github.com/tree-sitter-grammars/tree-sitter-make.git"))
+              (nu . ("https://github.com/nushell/tree-sitter-nu.git"))
+              (org . ("https://github.com/milisims/tree-sitter-org.git"))
+              (markdown   . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown.git" nil "tree-sitter-markdown/src"))
+              (markdown-inline . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown.git" nil "tree-sitter-markdown-inline/src"))
+              (perl . ("https://github.com/ganezdragon/tree-sitter-perl.git"))
+              (proto . ("https://github.com/mitchellh/tree-sitter-proto.git"))
+              (python     . ("https://github.com/tree-sitter/tree-sitter-python.git"))
+              (r . ("https://github.com/r-lib/tree-sitter-r.git"))
+              (ruby       . ("https://github.com/tree-sitter/tree-sitter-ruby.git"))
+              (rust       . ("https://github.com/tree-sitter/tree-sitter-rust.git"))
+              (sql . ("https://github.com/DerekStride/tree-sitter-sql.git" "gh-page"))
+              (surface . ("https://github.com/connorlay/tree-sitter-surface.git"))
+              (toml       . ("https://github.com/tree-sitter/tree-sitter-toml.git"))
+              (tsx        . ("https://github.com/tree-sitter/tree-sitter-typescript.git" nil "tsx/src"))
+              (typst      . ("https://github.com/uben0/tree-sitter-typst.git"))
+              (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript.git" nil "typescript/src"))
+              (verilog . ("https://github.com/gmlarumbe/tree-sitter-verilog.git"))
+              (vhdl . ("https://github.com/alemuller/tree-sitter-vhdl.git"))
+              (vue . ("https://github.com/tree-sitter-grammars/tree-sitter-vue.git"))
+              (wast . ("https://github.com/wasm-lsp/tree-sitter-wasm.git" nil "wast/src"))
+              (wat . ("https://github.com/wasm-lsp/tree-sitter-wasm.git" nil "wat/src"))
+              (wgsl . ("https://github.com/mehmetoguzderin/tree-sitter-wgsl.git"))
+              (yaml       . ("https://github.com/ikatyang/tree-sitter-yaml.git"))))
+
+    :custom
+
+    (toml-ts-mode-indent-offset 4)
+    (cmake-ts-mode-indent-offset 4)
+    (json-ts-mode-indent-offset 4)
+    (go-ts-mode-indent-offset 4)
+
+    (treesit-font-lock-level 4)
+    (treesit--indent-verbose t)
+    (treesit--font-lock-verbose nil)
+    (major-mode-remap-alist
+     '((c-mode          . c-ts-mode)
+       (c++-mode        . c++-ts-mode)
+       (c-or-c++-mode   . c-or-c++-ts-mode)
+       (cmake-mode      . cmake-ts-mode)
+       (conf-toml-mode  . toml-ts-mode)
+       (csharp-mode     . csharp-ts-mode)
+       (css-mode        . css-ts-mode)
+       (java-mode       . java-ts-mode)
+       (js-mode         . js-ts-mode)
+       (js-json-mode    . json-ts-mode)
+       (python-mode     . python-ts-mode)
+       (sh-mode         . bash-ts-mode)
+       (typescript-mode . typescript-ts-mode))))
 
 (use-package fingertip
-  :ensure (:host github :repo "manateelazycat/fingertip")
-  :hook (lisp-mode emacs-lisp-mode scheme-mode markdown-mode)
-  :bind
-  (:map fingertip-mode-map
-        ("(" . fingertip-open-round)
-        ("[" . fingertip-open-bracket)
-        ("{" . fingertip-open-curly)
-        (")" . fingertip-close-round)
-        ("]" . fingertip-close-bracket)
-        ("}" . fingertip-close-curly)
-        ("=" . fingertip-equal)
+    :ensure (:host github :repo "manateelazycat/fingertip")
+    :hook (lisp-mode emacs-lisp-mode scheme-mode markdown-mode)
+    :bind
+    (:map fingertip-mode-map
+          ("(" . fingertip-open-round)
+          ("[" . fingertip-open-bracket)
+          ("{" . fingertip-open-curly)
+          (")" . fingertip-close-round)
+          ("]" . fingertip-close-bracket)
+          ("}" . fingertip-close-curly)
+          ("=" . fingertip-equal)
 
-        ("%" . fingertip-match-paren)
-        ("\"" . fingertip-double-quote)
-        ("'" . fingertip-single-quote)
+          ("%" . fingertip-match-paren)
+          ("\"" . fingertip-double-quote)
+          ("'" . fingertip-single-quote)
 
-        ("SPC" . fingertip-space)
-        ("RET" . fingertip-newline)
+          ("SPC" . fingertip-space)
+          ("RET" . fingertip-newline)
 
-        ("M-o" . fingertip-backward-delete)
-        ("C-d" . fingertip-forward-delete)
-        ("C-k" . fingertip-kill)
+          ("M-o" . fingertip-backward-delete)
+          ("C-d" . fingertip-forward-delete)
+          ("C-k" . fingertip-kill)
 
-        ("M-\"" . fingertip-wrap-double-quote)
-        ("M-'" . fingertip-wrap-single-quote)
-        ("M-[" . fingertip-wrap-bracket)
-        ("M-{" . fingertip-wrap-curly)
-        ("M-(" . fingertip-wrap-round)
-        ("M-)" . fingertip-unwrap)
+          ("M-\"" . fingertip-wrap-double-quote)
+          ("M-'" . fingertip-wrap-single-quote)
+          ("M-[" . fingertip-wrap-bracket)
+          ("M-{" . fingertip-wrap-curly)
+          ("M-(" . fingertip-wrap-round)
+          ("M-)" . fingertip-unwrap)
 
-        ("M-p" . fingertip-jump-right)
-        ("M-n" . fingertip-jump-left)
-        ("M-:" . fingertip-jump-out-pair-and-newline)
+          ("M-p" . fingertip-jump-right)
+          ("M-n" . fingertip-jump-left)
+          ("M-:" . fingertip-jump-out-pair-and-newline)
 
-        ("C-j" . fingertip-jump-up)))
+          ("C-j" . fingertip-jump-up)))
 
 
 
@@ -1877,7 +1901,7 @@ Other buffer group by `centaur-tabs-get-group-name' with project name."
                            'snippet-mode
                            'ron-mode)
                     (lsp-deferred))))
-   ((typst-ts-mode cmake-ts-mode markdown-mode yaml-mode yaml-ts-mode haskell-mode shell-script-mode) . lsp-deferred)
+   ((cmake-ts-mode markdown-mode yaml-mode yaml-ts-mode haskell-mode shell-script-mode) . lsp-deferred)
    (lsp-mode . (lambda ()
                  ;; Integrate `which-key'
                  (lsp-enable-which-key-integration)
@@ -2307,11 +2331,6 @@ Other buffer group by `centaur-tabs-get-group-name' with project name."
   :after djvu
   :ensure (:host github :repo "dalanicolai/djvu3")
   :commands djvu-read-mode djvu-outline-mode djvu-occur-mode)
-
-(use-package reader
-  :ensure (reader :host codeberg :repo "divyaranjan/emacs-reader"
-	          :files ("*.el" "render-core.so")
-	          :pre-build ("make" "all")))
 
 
 

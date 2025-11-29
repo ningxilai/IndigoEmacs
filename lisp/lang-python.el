@@ -1,5 +1,9 @@
 ;; -*- lexical-binding: t; -*-
 
+;;; Commentary:
+
+;;; Code:
+
 (use-package python-ts-mode
   :ensure nil
   :mode

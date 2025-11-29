@@ -1,5 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 
+;;; Commentary:
+
+;;; Code:
+
+;; Ruby
+
 (use-package ruby-ts-mode
   :ensure nil
   :custom
